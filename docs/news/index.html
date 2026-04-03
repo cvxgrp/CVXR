@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/cvxr_intro.html">Introduction to CVXR</a></li>
-    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8</a></li>
+    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8.2</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -37,14 +37,73 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.8.1" id="cvxr-181">CVXR 1.8.1<a class="anchor" aria-label="anchor" href="#cvxr-181"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.8.2" id="cvxr-182">CVXR 1.8.2<a class="anchor" aria-label="anchor" href="#cvxr-182"></a></h2>
+<div class="section level3">
+<h3 id="new-solvers-scip-and-xpress-total-1-8-2">New solvers: SCIP and XPRESS (15 total)<a class="anchor" aria-label="anchor" href="#new-solvers-scip-and-xpress-total-1-8-2"></a></h3>
+<ul><li>Added SCIP solver (14th solver) via the R <code>scip</code> package. Supports LP, SOCP, MI-LP, and MI-SOCP problems. SCIP is registered in the conic solver path with <code>SUPPORTED_CONSTRAINTS = list(Zero, NonNeg, SOC)</code> and <code>MIP_CAPABLE = TRUE</code>.</li>
+<li>SCIP solver parameters can be passed via <code>scip_params</code> sub-list (matching CVXPY convention) for path-style parameter names like <code>"limits/time"</code>, <code>"limits/gap"</code>.</li>
+<li>Duals are not currently extracted (R <code>scip</code> package lacks dual API).</li>
+<li>29 tests mirroring CVXPY’s <code>TestSCIP</code> class.</li>
+<li>Added XPRESS solver (15th solver) via the R <code>xpress</code> package with dual-interface architecture: QP path (<code>XPRESS_QP_Solver</code>) for LP/QP and conic path (<code>XPRESS_Conic_Solver</code>) for SOCP/MI-LP/MI-SOCP. Both paths support Zero and NonNeg constraints; the conic path also supports SOC. MIP warm-start is supported.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="diag-and-norm-dispatch-fixes-1-8-2">
+<code>diag()</code> and <code>norm()</code> dispatch fixes<a class="anchor" aria-label="anchor" href="#diag-and-norm-dispatch-fixes-1-8-2"></a></h3>
+<ul><li>
+<code><a href="../reference/math_atoms.html">diag()</a></code> now works on CVXR expressions: <code>diag(vector_expr)</code> creates a diagonal matrix (<code>DiagVec</code>), <code>diag(square_matrix_expr)</code> extracts the diagonal (<code>DiagMat</code>). Falls through to <code>Matrix::diag()</code> for non-Expression inputs, correctly handling both Matrix S4 objects and base R matrices.</li>
+<li>
+<code><a href="../reference/math_atoms.html">norm()</a></code> fallthrough now delegates to <code><a href="https://rdrr.io/pkg/Matrix/man/norm-methods.html" class="external-link">Matrix::norm()</a></code> instead of <code><a href="https://rdrr.io/r/base/norm.html" class="external-link">base::norm()</a></code>, fixing <code>norm(sparse_matrix)</code> when CVXR is loaded.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/t.html" class="external-link">t()</a></code> and <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code> switched from S7 <code>method()</code> to <code><a href="https://rdrr.io/r/base/ns-internal.html" class="external-link">registerS3method()</a></code> to avoid demoting Matrix’s S4 generics.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="cvxpy-parity-1-8-2">CVXPY 1.8.2 parity<a class="anchor" aria-label="anchor" href="#cvxpy-parity-1-8-2"></a></h3>
+<p>All applicable bug fixes from CVXPY v1.8.2 have been ported, each annotated with <code>## CVXPY v1.8.2 fix:</code> in the source.</p>
+</div>
+<div class="section level3">
+<h3 id="solver_opts-and-use_quad_obj-1-8-2">
+<code>solver_opts()</code> and <code>use_quad_obj</code>
+<a class="anchor" aria-label="anchor" href="#solver_opts-and-use_quad_obj-1-8-2"></a></h3>
+<ul><li>New <code><a href="../reference/solver_opts.html">solver_opts()</a></code> constructor for unified solver options. Standard tolerance parameters (<code>feastol</code>, <code>reltol</code>, <code>abstol</code>, <code>num_iter</code>) and solver-specific parameters now flow through <code>psolve(...)</code> via the <code><a href="../reference/solver_opts.html">solver_opts()</a></code> constructor.</li>
+<li>New <code>use_quad_obj</code> option (default <code>TRUE</code>): when <code>FALSE</code>, forces conic decomposition path instead of QP, enabling <code>quad_form_canon</code> to detect indefinite P matrices.</li>
+<li>New <code><a href="../reference/supports_quad_obj.html">supports_quad_obj()</a></code> generic on conic solvers (Clarabel and SCS return <code>TRUE</code>, others <code>FALSE</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="element-wise-matrix-indexing-specialindex-1-8-2">Element-wise matrix indexing (<code>SpecialIndex</code>)<a class="anchor" aria-label="anchor" href="#element-wise-matrix-indexing-specialindex-1-8-2"></a></h3>
+<ul><li>
+<p>New <code>SpecialIndex</code> atom (mirroring CVXPY’s <code>special_index</code>) enables R-idiomatic element-wise selection on matrix expressions:</p>
+<ul><li>2-column matrix indexing: <code>x[cbind(rows, cols)]</code>
+</li>
+<li>Logical matrix indexing: <code>x[mask]</code>
+</li>
+<li>Linear integer indexing: <code>x[c(1, 5, 9)]</code>
+</li>
+<li>Logical vector indexing: <code>x[c(TRUE, FALSE, ...)]</code>
+</li>
+</ul></li>
+<li>
+<p>This makes it natural to constrain specific entries of a matrix variable, e.g., fixing observed entries of a partially-known matrix:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Rmiss</span><span class="op">)</span>, arr.ind <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">ind</span><span class="op">]</span> <span class="op">==</span> <span class="va">Rmiss</span><span class="op">[</span><span class="va">ind</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</li>
+<li><p>Previously, <code>x[i]</code> on a matrix expression errored with “Single-index selection on matrices not supported.” The workaround required an element-wise multiply with a binary mask, which was unintuitive.</p></li>
+<li><p>Internally uses sparse selection matrix multiplication (reshape → sparse matmul), requiring no C++ changes.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-8-2">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-8-2"></a></h3>
+<ul><li>Fixed O(n²) memory usage in <code><a href="../reference/sum_squares.html">sum_squares()</a></code>, <code>power(x, 2)</code>, <code><a href="../reference/quad_over_lin.html">quad_over_lin()</a></code>, and <code><a href="../reference/huber.html">huber()</a></code> when the first argument has many elements (e.g., regression residuals with thousands of observations). The quadratic canonicalizer was converting a sparse identity matrix to dense form. Memory now scales linearly with problem size.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.1" id="cvxr-181">CVXR 1.8.1<a class="anchor" aria-label="anchor" href="#cvxr-181"></a></h2><p class="text-muted">CRAN release: 2026-03-06</p>
 <div class="section level3">
 <h3 id="complete-rewrite-using-s7-object-system-1-8-1">Complete rewrite using S7 object system<a class="anchor" aria-label="anchor" href="#complete-rewrite-using-s7-object-system-1-8-1"></a></h3>
 <p>This is a ground-up rewrite of CVXR using R’s S7 object system, designed to be isomorphic with CVXPY 1.8.1 for long-term maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.</p>
 <div class="section level4">
 <h4 id="new-features-1-8-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-8-1"></a></h4>
 <ul><li>S7 class system replaces S4 for all expression, constraint, and problem classes. Significantly faster construction and method dispatch.</li>
-<li>13 solvers: Clarabel (default), SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.</li>
+<li>13 solvers at initial release: Clarabel (default), SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.</li>
 <li>Mixed-integer programming via GLPK_MI, ECOS_BB, Gurobi, or HiGHS (<code>boolean = TRUE</code> or <code>integer = TRUE</code> in <code><a href="../reference/Variable.html">Variable()</a></code>).</li>
 <li>Parameter support via <code><a href="../reference/Parameter.html">Parameter()</a></code> class with DPP (Disciplined Parameterized Programming) for efficient re-solves when only parameter values change.</li>
 <li>50+ atom classes covering LP, QP, SOCP, SDP, exponential cone, and power cone problems.</li>

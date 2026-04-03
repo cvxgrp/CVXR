@@ -1,6 +1,105 @@
 # Changelog
 
+## CVXR 1.8.2
+
+### New solvers: SCIP and XPRESS (15 total)
+
+- Added SCIP solver (14th solver) via the R `scip` package. Supports LP,
+  SOCP, MI-LP, and MI-SOCP problems. SCIP is registered in the conic
+  solver path with `SUPPORTED_CONSTRAINTS = list(Zero, NonNeg, SOC)` and
+  `MIP_CAPABLE = TRUE`.
+- SCIP solver parameters can be passed via `scip_params` sub-list
+  (matching CVXPY convention) for path-style parameter names like
+  `"limits/time"`, `"limits/gap"`.
+- Duals are not currently extracted (R `scip` package lacks dual API).
+- 29 tests mirroring CVXPY’s `TestSCIP` class.
+- Added XPRESS solver (15th solver) via the R `xpress` package with
+  dual-interface architecture: QP path (`XPRESS_QP_Solver`) for LP/QP
+  and conic path (`XPRESS_Conic_Solver`) for SOCP/MI-LP/MI-SOCP. Both
+  paths support Zero and NonNeg constraints; the conic path also
+  supports SOC. MIP warm-start is supported.
+
+### `diag()` and `norm()` dispatch fixes
+
+- [`diag()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) now
+  works on CVXR expressions: `diag(vector_expr)` creates a diagonal
+  matrix (`DiagVec`), `diag(square_matrix_expr)` extracts the diagonal
+  (`DiagMat`). Falls through to `Matrix::diag()` for non-Expression
+  inputs, correctly handling both Matrix S4 objects and base R matrices.
+- [`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)
+  fallthrough now delegates to
+  [`Matrix::norm()`](https://rdrr.io/pkg/Matrix/man/norm-methods.html)
+  instead of [`base::norm()`](https://rdrr.io/r/base/norm.html), fixing
+  `norm(sparse_matrix)` when CVXR is loaded.
+- [`t()`](https://rdrr.io/r/base/t.html) and
+  [`mean()`](https://rdrr.io/r/base/mean.html) switched from S7
+  `method()` to
+  [`registerS3method()`](https://rdrr.io/r/base/ns-internal.html) to
+  avoid demoting Matrix’s S4 generics.
+
+### CVXPY 1.8.2 parity
+
+All applicable bug fixes from CVXPY v1.8.2 have been ported, each
+annotated with `## CVXPY v1.8.2 fix:` in the source.
+
+### `solver_opts()` and `use_quad_obj`
+
+- New
+  [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md)
+  constructor for unified solver options. Standard tolerance parameters
+  (`feastol`, `reltol`, `abstol`, `num_iter`) and solver-specific
+  parameters now flow through `psolve(...)` via the
+  [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md)
+  constructor.
+- New `use_quad_obj` option (default `TRUE`): when `FALSE`, forces conic
+  decomposition path instead of QP, enabling `quad_form_canon` to detect
+  indefinite P matrices.
+- New
+  [`supports_quad_obj()`](https://www.cvxgrp.org/CVXR/reference/supports_quad_obj.md)
+  generic on conic solvers (Clarabel and SCS return `TRUE`, others
+  `FALSE`).
+
+### Element-wise matrix indexing (`SpecialIndex`)
+
+- New `SpecialIndex` atom (mirroring CVXPY’s `special_index`) enables
+  R-idiomatic element-wise selection on matrix expressions:
+
+  - 2-column matrix indexing: `x[cbind(rows, cols)]`
+  - Logical matrix indexing: `x[mask]`
+  - Linear integer indexing: `x[c(1, 5, 9)]`
+  - Logical vector indexing: `x[c(TRUE, FALSE, ...)]`
+
+- This makes it natural to constrain specific entries of a matrix
+  variable, e.g., fixing observed entries of a partially-known matrix:
+
+  ``` r
+
+  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+  ```
+
+- Previously, `x[i]` on a matrix expression errored with “Single-index
+  selection on matrices not supported.” The workaround required an
+  element-wise multiply with a binary mask, which was unintuitive.
+
+- Internally uses sparse selection matrix multiplication (reshape →
+  sparse matmul), requiring no C++ changes.
+
+### Bug Fixes
+
+- Fixed O(n²) memory usage in
+  [`sum_squares()`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md),
+  `power(x, 2)`,
+  [`quad_over_lin()`](https://www.cvxgrp.org/CVXR/reference/quad_over_lin.md),
+  and [`huber()`](https://www.cvxgrp.org/CVXR/reference/huber.md) when
+  the first argument has many elements (e.g., regression residuals with
+  thousands of observations). The quadratic canonicalizer was converting
+  a sparse identity matrix to dense form. Memory now scales linearly
+  with problem size.
+
 ## CVXR 1.8.1
+
+CRAN release: 2026-03-06
 
 ### Complete rewrite using S7 object system
 
@@ -13,8 +112,8 @@ faster than CVXR 1.0-15 on typical problems.
 - S7 class system replaces S4 for all expression, constraint, and
   problem classes. Significantly faster construction and method
   dispatch.
-- 13 solvers: Clarabel (default), SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK,
-  GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.
+- 13 solvers at initial release: Clarabel (default), SCS, OSQP, HiGHS,
+  MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX, CVXOPT, PIQP.
 - Mixed-integer programming via GLPK_MI, ECOS_BB, Gurobi, or HiGHS
   (`boolean = TRUE` or `integer = TRUE` in
   [`Variable()`](https://www.cvxgrp.org/CVXR/reference/Variable.md)).

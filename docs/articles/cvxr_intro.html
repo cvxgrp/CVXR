@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cvxr_intro.html">Introduction to CVXR</a></li>
-    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8</a></li>
+    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8.2</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -65,7 +65,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu and
 Balasubramanian Narasimhan</h4>
             
-            <h4 data-toc-skip class="date">2026-03-05</h4>
+            <h4 data-toc-skip class="date">2026-04-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="d-none name"><code>cvxr_intro.Rmd</code></div>
@@ -132,12 +132,12 @@ via <code>lm</code>:</p>
 <span><span class="co">#&gt;     power, sd, var</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     norm, outer</span></span>
+<span><span class="co">#&gt;     diag, norm, outer</span></span>
 <span></span>
 <span><span class="va">betaHat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="va">objective</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">Y</span> <span class="op">-</span> <span class="va">X</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">betaHat</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span><span class="op">)</span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span> <span class="co">## use default solver</span></span></code></pre></div>
 <p>The optimal value and estimated coefficients:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Optimal value:"</span>, <span class="va">result</span>, <span class="st">"\n"</span><span class="op">)</span></span>
@@ -193,23 +193,23 @@ and all other
 are nonnegative:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">A</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/math_atoms.html">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">constraint1</span> <span class="op">&lt;-</span> <span class="va">A</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">betaHat</span> <span class="op">&lt;=</span> <span class="fl">0</span></span>
 <span><span class="va">constraint2</span> <span class="op">&lt;-</span> <span class="va">B</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">betaHat</span> <span class="op">&gt;=</span> <span class="fl">0</span></span>
 <span></span>
 <span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">constraint1</span>, <span class="va">constraint2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co">## verbose = TRUE for details</span></span>
-<span><span class="co">#&gt; ────────────────────────────────── CVXR v1.8.1 ─────────────────────────────────</span></span>
+<span><span class="co">#&gt; ────────────────────────────────── CVXR v1.8.2 ─────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Problem: 1 variable, 2 constraints (QP)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"CLARABEL"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::Clarabel_Solver</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.01s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.017s</span></span>
 <span><span class="co">#&gt; ─────────────────────────────── Numerical solver ───────────────────────────────</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Summary ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Status: optimal</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Optimal value: 1287.63</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.01s</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.017s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.012s</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         [,1]</span></span>
 <span><span class="co">#&gt;  [1,]  0.000</span></span>
@@ -231,15 +231,39 @@ mathematically intuitive.</p>
 <div class="section level2">
 <h2 id="available-solvers">Available Solvers<a class="anchor" aria-label="anchor" href="#available-solvers"></a>
 </h2>
-<p>CVXR supports multiple solvers:</p>
+<p>CVXR 1.8.2 supports 15 solvers, both open source and commercial:
+Clarabel, SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB,
+CPLEX, CVXOPT, PIQP, SCIP, and XPRESS.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/installed_solvers.html">installed_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  </span></span>
 <span><span class="co">#&gt;  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  </span></span>
-<span><span class="co">#&gt; [13] "PIQP"</span></span></code></pre></div>
+<span><span class="co">#&gt; [13] "PIQP"     "SCIP"     "XPRESS"</span></span></code></pre></div>
 <p>You can specify a solver explicitly:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="whats-new-in-1-8-2">What’s New in 1.8.2<a class="anchor" aria-label="anchor" href="#whats-new-in-1-8-2"></a>
+</h2>
+<ul>
+<li><p><strong>15 solvers</strong>: SCIP and XPRESS added (up from 13 in
+1.8.1).</p></li>
+<li>
+<p><strong>Element-wise matrix indexing</strong>: Constrain specific
+entries of a matrix variable using R’s native indexing idioms:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ind</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">Rmiss</span><span class="op">)</span>, arr.ind <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="va">ind</span><span class="op">]</span> <span class="op">==</span> <span class="va">Rmiss</span><span class="op">[</span><span class="va">ind</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Also supports logical matrix indexing (<code>X[mask]</code>) and
+linear integer indexing (<code>X[c(1, 5, 9)]</code>).</p>
+</li>
+<li><p><strong>CVXPY 1.8.2 parity</strong>: All applicable bug fixes
+ported.</p></li>
+<li><p><strong>Unified solver options</strong> via
+<code><a href="../reference/solver_opts.html">solver_opts()</a></code>.</p></li>
+</ul>
+<p>See <code>NEWS.md</code> for full details.</p>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further Reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
@@ -249,18 +273,19 @@ mathematically intuitive.</p>
 examples</li>
 <li>The <a href="https://www.cvxpy.org/" class="external-link">CVXPY documentation</a> covers
 the underlying mathematical framework</li>
-<li>Fu, Narasimhan, and Boyd (2020). “CVXR: An R Package for Disciplined
-Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
-<a href="doi:10.18637/jss.v094.i14" class="uri">doi:10.18637/jss.v094.i14</a>
-</li>
+<li>
+<a href="https://doi.org/10.18637/jss.v094.i14" class="external-link">The published
+paper</a>: Fu, Narasimhan, and Boyd (2020). “CVXR: An R Package for
+Disciplined Convex Optimization.” <em>Journal of Statistical
+Software</em>, 94(14), <a href="DOI:10.18637/jss.v094.i14" class="uri">DOI:10.18637/jss.v094.i14</a>.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">#&gt; R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">#&gt; Platform: aarch64-apple-darwin20</span></span>
 <span><span class="co">#&gt; Running under: macOS Tahoe 26.3.1</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -278,21 +303,22 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] CVXR_1.8.1</span></span>
+<span><span class="co">#&gt; [1] CVXR_1.8.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] piqp_0.6.2        Matrix_1.7-4      jsonlite_2.0.0    compiler_4.5.2   </span></span>
-<span><span class="co">#&gt;  [5] highs_1.12.0-3    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       </span></span>
-<span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.1 textshaping_1.0.4 yaml_2.3.12      </span></span>
+<span><span class="co">#&gt;  [1] Matrix_1.7-5      piqp_0.6.2        jsonlite_2.0.0    compiler_4.5.3   </span></span>
+<span><span class="co">#&gt;  [5] highs_1.13.1-1    Rcpp_1.1.1        slam_0.1-55       cccp_0.3-3       </span></span>
+<span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.2 textshaping_1.0.5 yaml_2.3.12      </span></span>
 <span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         </span></span>
-<span><span class="co">#&gt; [17] knitr_1.51        htmlwidgets_1.6.4 backports_1.5.0   Rcplex_0.3-8     </span></span>
-<span><span class="co">#&gt; [21] checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3        osqp_1.0.0       </span></span>
-<span><span class="co">#&gt; [25] bslib_0.10.0      rlang_1.1.7       cachem_1.1.0      xfun_0.56        </span></span>
-<span><span class="co">#&gt; [29] fs_1.6.6          sass_0.4.10       S7_0.2.1          otel_0.2.0       </span></span>
-<span><span class="co">#&gt; [33] cli_3.6.5         pkgdown_2.2.0     Rglpk_0.6-5.1     digest_0.6.39    </span></span>
-<span><span class="co">#&gt; [37] grid_4.5.2        gmp_0.7-5.1       lifecycle_1.0.5   ECOSolveR_0.6.1  </span></span>
-<span><span class="co">#&gt; [41] scs_3.2.7         evaluate_1.0.5    codetools_0.2-20  ragg_1.5.0       </span></span>
-<span><span class="co">#&gt; [45] Rmosek_11.1.1     rmarkdown_2.30    tools_4.5.2       htmltools_0.5.9</span></span></code></pre></div>
+<span><span class="co">#&gt; [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  </span></span>
+<span><span class="co">#&gt; [21] Rcplex_0.3-8      checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3       </span></span>
+<span><span class="co">#&gt; [25] osqp_1.0.0        bslib_0.10.0      rlang_1.1.7       cachem_1.1.0     </span></span>
+<span><span class="co">#&gt; [29] xfun_0.57         fs_2.0.1          sass_0.4.10       S7_0.2.1         </span></span>
+<span><span class="co">#&gt; [33] otel_0.2.0        cli_3.6.5         pkgdown_2.2.0     Rglpk_0.6-5.1    </span></span>
+<span><span class="co">#&gt; [37] digest_0.6.39     grid_4.5.3        xpress_9.8.1      gmp_0.7-5.1      </span></span>
+<span><span class="co">#&gt; [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         evaluate_1.0.5   </span></span>
+<span><span class="co">#&gt; [45] codetools_0.2-20  Rmosek_11.1.1     ragg_1.5.2        rmarkdown_2.31   </span></span>
+<span><span class="co">#&gt; [49] tools_4.5.3       htmltools_0.5.9</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -1,10 +1,10 @@
 ---
-title: "What's New in CVXR 1.8"
+title: "What's New in CVXR 1.8.2"
 author: "Anqi Fu, Balasubramanian Narasimhan, and Stephen Boyd"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{What's New in CVXR 1.8}
+  %\VignetteIndexEntry{What's New in CVXR 1.8.2}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,9 +18,9 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-CVXR 1.8 is a ground-up rewrite using R's
+CVXR 1.8.2 is a ground-up rewrite using R's
 [S7](https://rconsortium.github.io/S7/) object system, designed to
-mirror [CVXPY 1.8](https://www.cvxpy.org/) for long-term
+mirror [CVXPY 1.8.2](https://www.cvxpy.org/) for long-term
 maintainability. It is approximately 4--5x faster than the previous
 S4-based release and adds many new features.
 
@@ -67,28 +67,34 @@ result$status
 Old function names still work but emit once-per-session deprecation
 warnings.
 
-## 13 Solvers
+## 15 Solvers
 
-CVXR 1.8 ships with four built-in solvers and supports nine additional
-solvers via optional packages:
+CVXR 1.8.2 ships with four built-in solvers and supports eleven
+additional solvers via optional packages:
 
 ```{r}
 installed_solvers()
 ```
 
-| Solver | R Package | Problem Classes |
-|--------|-----------|-----------------|
-| CLARABEL | `clarabel` | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| SCS | `scs` | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| OSQP | `osqp` | LP, QP |
-| HIGHS | `highs` | LP, QP, MILP |
-| MOSEK | `Rmosek` | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| GUROBI | `gurobi` | LP, QP, SOCP, MIP |
-| ECOS / ECOS_BB | `ECOSolveR` | LP, SOCP, ExpCone (+ MIP) |
-| GLPK / GLPK_MI | `Rglpk` | LP (+ MILP) |
-| CPLEX | `Rcplex` | LP, QP, MIP |
-| CVXOPT | `cccp` | LP, SOCP, SDP |
-| PIQP | `piqp` | LP, QP |
+```{r, echo = FALSE}
+check <- "\U2713"
+d <- data.frame(
+  Solver = c("CLARABEL", "SCS", "OSQP", "HIGHS", "ECOS", "ECOS_BB",
+             "GLPK", "GLPK_MI", "CPLEX", "GUROBI", "MOSEK", "CVXOPT",
+             "PIQP", "SCIP", "XPRESS"),
+  Package = c("clarabel", "scs", "osqp", "highs", "ECOSolveR", "ECOSolveR",
+              "Rglpk", "Rglpk", "Rcplex", "gurobi", "Rmosek", "cccp",
+              "piqp", "scip", "xpress"),
+  LP   = c(check, check, check, check, check, " ", check, check, check, check, check, check, check, check, check),
+  QP   = c(check, check, check, check, check, " ", " ", " ", check, check, check, " ", check, " ", check),
+  SOCP = c(check, check, " ", " ", check, " ", " ", " ", check, check, check, check, " ", check, check),
+  SDP  = c(check, check, " ", " ", " ", " ", " ", " ", " ", " ", check, " ", " ", " ", " "),
+  EXP  = c(check, check, " ", " ", " ", " ", " ", " ", " ", " ", check, " ", " ", " ", " "),
+  MIP  = c(" ", check, " ", check, " ", check, " ", check, " ", check, check, " ", " ", check, check),
+  stringsAsFactors = FALSE
+)
+knitr::kable(d, align = "lccccccc")
+```
 
 CLARABEL is the default solver and handles the widest range of problem
 types among the built-in solvers. You can specify a solver explicitly:

@@ -1,6 +1,8 @@
 # Trace of a square matrix expression
 
-Trace of a square matrix expression
+For `matrix_trace(A %*% B)`, uses the O(n^2) identity
+`trace(A %*% B) = sum(A * t(B))` instead of forming the full matrix
+product.
 
 ## Usage
 
@@ -16,4 +18,4 @@ matrix_trace(x)
 
 ## Value
 
-A Trace atom (scalar)
+A Trace atom or equivalent expression (scalar)

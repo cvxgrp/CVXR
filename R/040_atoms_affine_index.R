@@ -139,3 +139,163 @@ method(is_symmetric, Index) <- function(x) {
 method(is_hermitian, Index) <- function(x) {
   x@shape[1L] == x@shape[2L] && x@shape[1L] == 1L
 }
+
+# ========================================================================
+# SpecialIndex -- element-wise indexing (2-column matrix, logical, linear)
+# ========================================================================
+## CVXPY SOURCE: atoms/affine/index.py class special_index
+## Supports R's single-subscript matrix indexing forms:
+##   x[cbind(rows, cols)]   -- 2-column matrix (element-wise)
+##   x[logical_matrix]      -- logical matrix
+##   x[integer_vector]      -- linear column-major indexing
+
+SpecialIndex <- new_class("SpecialIndex", parent = AffAtom, package = "CVXR",
+  properties = list(
+    key        = new_property(class = class_any),       # original key
+    select_vec = new_property(class = class_integer)    # 1-based linear indices (column-major)
+  ),
+  constructor = function(expr, key) {
+    expr <- as_expr(expr)
+    eshape <- expr@shape
+
+    ## -- Validate key and compute select_vec (1-based linear indices) --
+    if (is.matrix(key) && ncol(key) == 2L && (is.integer(key) || is.double(key))) {
+      ## 2-column matrix: each row is a (row, col) pair
+      if (is.double(key)) storage.mode(key) <- "integer"
+      if (nrow(key) == 0L) {
+        select_vec <- integer(0L)
+      } else {
+        if (anyNA(key))
+          cli_abort("Index key contains NA values.")
+        if (any(key[, 1L] < 1L | key[, 1L] > eshape[1L]))
+          cli_abort("Row index out of bounds: must be in [1, {eshape[1L]}].")
+        if (any(key[, 2L] < 1L | key[, 2L] > eshape[2L]))
+          cli_abort("Column index out of bounds: must be in [1, {eshape[2L]}].")
+        ## Fast path: compute linear indices directly (no idx_mat allocation)
+        select_vec <- (key[, 2L] - 1L) * eshape[1L] + key[, 1L]
+      }
+    } else if (is.matrix(key) && is.logical(key)) {
+      ## Logical matrix: select where TRUE
+      if (nrow(key) != eshape[1L] || ncol(key) != eshape[2L])
+        cli_abort("Logical matrix dimensions ({nrow(key)} x {ncol(key)}) must match expression shape ({eshape[1L]} x {eshape[2L]}).")
+      idx_mat <- matrix(seq_len(prod(eshape)), nrow = eshape[1L], ncol = eshape[2L])
+      select_vec <- idx_mat[key]
+    } else if (is.integer(key) && !is.matrix(key)) {
+      ## Integer vector: linear column-major indexing
+      n <- prod(eshape)
+      if (anyNA(key))
+        cli_abort("Index key contains NA values.")
+      if (any(key < 1L))
+        cli_abort("Negative and zero indices are not supported for element-wise indexing.")
+      if (any(key > n))
+        cli_abort("Linear index out of bounds: must be in [1, {n}].")
+      select_vec <- key
+    } else {
+      cli_abort("Unsupported key type for {.cls SpecialIndex}.")
+    }
+
+    shape <- c(length(select_vec), 1L)
+
+    new_object(S7_object(),
+      id    = next_expr_id(),
+      .cache = new.env(parent = emptyenv()),
+      args  = list(expr),
+      shape = shape,
+      key   = key,
+      select_vec = select_vec
+    )
+  }
+)
+
+# -- shape_from_args --------------------------------------------------
+
+method(shape_from_args, SpecialIndex) <- function(x) {
+  c(length(x@select_vec), 1L)
+}
+
+# -- sign_from_args ---------------------------------------------------
+## Inherits from AffAtom: sum_signs(args)
+
+# -- log-log curvature ------------------------------------------------
+
+method(is_atom_log_log_convex, SpecialIndex) <- function(x) TRUE
+method(is_atom_log_log_concave, SpecialIndex) <- function(x) TRUE
+
+# -- numeric_value ----------------------------------------------------
+## Use select_vec (linear indices) for consistency with graph_implementation
+
+method(numeric_value, SpecialIndex) <- function(x, values, ...) {
+  val <- values[[1L]]
+  if (inherits(val, "sparseMatrix")) val <- as.matrix(val)
+  if (!is.matrix(val)) val <- as.matrix(val)
+  ## Flatten column-major, select by linear index
+  matrix(as.vector(val)[x@select_vec], ncol = 1L)
+}
+
+# -- get_data ---------------------------------------------------------
+## Must match constructor signature: SpecialIndex(expr, key)
+## expr_copy calls do.call(SpecialIndex, c(new_args, get_data(x)))
+
+method(get_data, SpecialIndex) <- function(x) {
+  list(x@key)
+}
+
+# -- graph_implementation ---------------------------------------------
+## CVXPY SOURCE: index.py special_index.graph_implementation (lines 189-214)
+## Flatten → sparse selection matrix → multiply
+
+method(graph_implementation, SpecialIndex) <- function(x, arg_objs, shape, data = NULL, ...) {
+  select_vec <- x@select_vec       # 1-based linear indices
+  n <- expr_size(x@args[[1L]])     # total elements in original expr
+  k <- length(select_vec)
+
+  ## 1. Flatten arg to column vector (column-major)
+  vec_arg <- reshape_linop(arg_objs[[1L]], c(n, 1L))
+
+  ## 2. Sparse selection matrix: k × n, entry (i, select_vec[i]) = 1
+  sel_mat <- Matrix::sparseMatrix(
+    i = seq_len(k), j = select_vec,
+    x = rep(1.0, k), dims = c(k, n)
+  )
+  ## Ensure dgCMatrix for C++ bridge
+  if (!inherits(sel_mat, "dgCMatrix")) {
+    sel_mat <- methods::as(sel_mat, "dgCMatrix")
+  }
+  mul_const <- create_const(sel_mat, c(k, n), sparse = TRUE)
+
+  ## 3. Multiply: sel_mat %*% vec(expr) → c(k, 1)
+  result <- mul_expr_linop(mul_const, vec_arg, shape)
+
+  list(result, list())
+}
+
+# -- expr_name --------------------------------------------------------
+
+method(expr_name, SpecialIndex) <- function(x) {
+  key <- x@key
+  if (is.matrix(key) && ncol(key) == 2L && is.integer(key)) {
+    n <- nrow(key)
+    if (n <= 3L) {
+      pairs <- vapply(seq_len(n), function(i)
+        sprintf("(%d,%d)", key[i, 1L], key[i, 2L]), character(1L))
+      idx_str <- paste(pairs, collapse = ",")
+    } else {
+      idx_str <- sprintf("%d elements", n)
+    }
+  } else if (is.matrix(key) && is.logical(key)) {
+    idx_str <- sprintf("%d TRUE of %dx%d", sum(key), nrow(key), ncol(key))
+  } else {
+    idx_str <- sprintf("%d indices", length(x@select_vec))
+  }
+  sprintf("%s[%s]", expr_name(x@args[[1L]]), idx_str)
+}
+
+# -- is_symmetric / is_hermitian --------------------------------------
+
+method(is_symmetric, SpecialIndex) <- function(x) {
+  x@shape[1L] == x@shape[2L] && x@shape[1L] == 1L
+}
+
+method(is_hermitian, SpecialIndex) <- function(x) {
+  x@shape[1L] == x@shape[2L] && x@shape[1L] == 1L
+}

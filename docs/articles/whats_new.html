@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>What's New in CVXR 1.8 • CVXR</title>
+<title>What's New in CVXR 1.8.2 • CVXR</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -15,7 +15,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="What's New in CVXR 1.8">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="What's New in CVXR 1.8.2">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/cvxr_intro.html">Introduction to CVXR</a></li>
-    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8</a></li>
+    <li><a class="dropdown-item" href="../articles/whats_new.html">What's New in CVXR 1.8.2</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -61,11 +61,11 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>What's New in CVXR 1.8</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>What's New in CVXR 1.8.2</h1>
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan, and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2026-03-05</h4>
+            <h4 data-toc-skip class="date">2026-04-03</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/whats_new.Rmd" class="external-link"><code>vignettes/whats_new.Rmd</code></a></small>
       <div class="d-none name"><code>whats_new.Rmd</code></div>
@@ -76,8 +76,8 @@ Balasubramanian Narasimhan, and Stephen Boyd</h4>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>CVXR 1.8 is a ground-up rewrite using R’s <a href="https://rconsortium.github.io/S7/" class="external-link">S7</a> object system, designed
-to mirror <a href="https://www.cvxpy.org/" class="external-link">CVXPY 1.8</a> for long-term
+<p>CVXR 1.8.2 is a ground-up rewrite using R’s <a href="https://rconsortium.github.io/S7/" class="external-link">S7</a> object system, designed
+to mirror <a href="https://www.cvxpy.org/" class="external-link">CVXPY 1.8.2</a> for long-term
 maintainability. It is approximately 4–5x faster than the previous
 S4-based release and adds many new features.</p>
 <p>This vignette summarizes the key changes from CVXR 1.x that may
@@ -99,7 +99,7 @@ returns the optimal value directly. Variable values are extracted with
 <span><span class="co">#&gt;     power, sd, var</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     norm, outer</span></span>
+<span><span class="co">#&gt;     diag, norm, outer</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span>, name <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">opt_val</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span><span class="op">)</span></span>
@@ -166,76 +166,176 @@ backward-compatible list:</p>
 warnings.</p>
 </div>
 <div class="section level2">
-<h2 id="solvers">13 Solvers<a class="anchor" aria-label="anchor" href="#solvers"></a>
+<h2 id="solvers">15 Solvers<a class="anchor" aria-label="anchor" href="#solvers"></a>
 </h2>
-<p>CVXR 1.8 ships with four built-in solvers and supports nine
+<p>CVXR 1.8.2 ships with four built-in solvers and supports eleven
 additional solvers via optional packages:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/installed_solvers.html">installed_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  </span></span>
 <span><span class="co">#&gt;  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  </span></span>
-<span><span class="co">#&gt; [13] "PIQP"</span></span></code></pre></div>
+<span><span class="co">#&gt; [13] "PIQP"     "SCIP"     "XPRESS"</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
-<th>Solver</th>
-<th>R Package</th>
-<th>Problem Classes</th>
+<th align="left">Solver</th>
+<th align="center">Package</th>
+<th align="center">LP</th>
+<th align="center">QP</th>
+<th align="center">SOCP</th>
+<th align="center">SDP</th>
+<th align="center">EXP</th>
+<th align="center">MIP</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>CLARABEL</td>
-<td><code>clarabel</code></td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
+<td align="left">CLARABEL</td>
+<td align="center">clarabel</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>SCS</td>
-<td><code>scs</code></td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
+<td align="left">SCS</td>
+<td align="center">scs</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
 </tr>
 <tr class="odd">
-<td>OSQP</td>
-<td><code>osqp</code></td>
-<td>LP, QP</td>
+<td align="left">OSQP</td>
+<td align="center">osqp</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>HIGHS</td>
-<td><code>highs</code></td>
-<td>LP, QP, MILP</td>
+<td align="left">HIGHS</td>
+<td align="center">highs</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr class="odd">
-<td>MOSEK</td>
-<td><code>Rmosek</code></td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
+<td align="left">ECOS</td>
+<td align="center">ECOSolveR</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>GUROBI</td>
-<td><code>gurobi</code></td>
-<td>LP, QP, SOCP, MIP</td>
+<td align="left">ECOS_BB</td>
+<td align="center">ECOSolveR</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr class="odd">
-<td>ECOS / ECOS_BB</td>
-<td><code>ECOSolveR</code></td>
-<td>LP, SOCP, ExpCone (+ MIP)</td>
+<td align="left">GLPK</td>
+<td align="center">Rglpk</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>GLPK / GLPK_MI</td>
-<td><code>Rglpk</code></td>
-<td>LP (+ MILP)</td>
+<td align="left">GLPK_MI</td>
+<td align="center">Rglpk</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr class="odd">
-<td>CPLEX</td>
-<td><code>Rcplex</code></td>
-<td>LP, QP, MIP</td>
+<td align="left">CPLEX</td>
+<td align="center">Rcplex</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>CVXOPT</td>
-<td><code>cccp</code></td>
-<td>LP, SOCP, SDP</td>
+<td align="left">GUROBI</td>
+<td align="center">gurobi</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
 </tr>
 <tr class="odd">
-<td>PIQP</td>
-<td><code>piqp</code></td>
-<td>LP, QP</td>
+<td align="left">MOSEK</td>
+<td align="center">Rmosek</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr class="even">
+<td align="left">CVXOPT</td>
+<td align="center">cccp</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">PIQP</td>
+<td align="center">piqp</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">SCIP</td>
+<td align="center">scip</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr class="odd">
+<td align="left">XPRESS</td>
+<td align="center">xpress</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
 </tr>
 </tbody>
 </table>
@@ -253,11 +353,12 @@ uninstalling them:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/available_solvers.html">available_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "CLARABEL" "SCS"      "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"  </span></span>
 <span><span class="co">#&gt;  [7] "GLPK"     "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"  </span></span>
-<span><span class="co">#&gt; [13] "PIQP"</span></span>
+<span><span class="co">#&gt; [13] "PIQP"     "SCIP"     "XPRESS"</span></span>
 <span><span class="fu"><a href="../reference/available_solvers.html">exclude_solvers</a></span><span class="op">(</span><span class="st">"SCS"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/available_solvers.html">available_solvers</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "CLARABEL" "OSQP"     "HIGHS"    "MOSEK"    "GUROBI"   "GLPK"    </span></span>
-<span><span class="co">#&gt;  [7] "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"   "PIQP"</span></span>
+<span><span class="co">#&gt;  [7] "GLPK_MI"  "ECOS"     "ECOS_BB"  "CPLEX"    "CVXOPT"   "PIQP"    </span></span>
+<span><span class="co">#&gt; [13] "SCIP"     "XPRESS"</span></span>
 <span><span class="fu"><a href="../reference/available_solvers.html">include_solvers</a></span><span class="op">(</span><span class="st">"SCS"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

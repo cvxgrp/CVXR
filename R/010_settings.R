@@ -57,6 +57,9 @@ PIQP_SOLVER <- "PIQP"
 #' @rdname solver-constants
 #' @export
 SCIP_SOLVER <- "SCIP"
+#' @rdname solver-constants
+#' @export
+XPRESS_SOLVER <- "XPRESS"
 
 # -- DCP curvature strings --------------------------------------------
 
@@ -304,6 +307,11 @@ UPPER_BOUNDS <- "upper_bounds"
   SCIP = list(
     feastol  = list(name = "numerics/feastol", value = 1e-6),
     num_iter = list(name = "lp/iterlim",       value = 2147483647L)
+  ),
+  XPRESS = list(
+    feastol  = list(name = "FEASTOL",      value = 1e-6),
+    reltol   = list(name = "BARGAPTARGET", value = 1e-9),
+    num_iter = list(name = "LPITERLIMIT",  value = 2147483647L)
   )
   ## GLPK, GLPK_MI: no standard parameter mappings
 )

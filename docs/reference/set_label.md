@@ -1,48 +1,32 @@
-# Set a Label on a Constraint
+# Attach a label to an expression
 
-Attaches a human-readable label to a constraint for use in
-visualizations and pretty-printing. Labels are visualization-only and
-never affect the solver pipeline.
+CVXPY-parity setter that returns its first argument so calls can be
+chained (e.g. `sum_squares(x) |> set_label("cost")`). See
+[`format_labeled()`](https://www.cvxgrp.org/CVXR/reference/format_labeled.md)
+for the pretty-printer that consumes labels.
 
 ## Usage
 
 ``` r
-set_label(constraint, label)
+set_label(x, value)
 ```
 
 ## Arguments
 
-- constraint:
+- x:
 
-  A `Constraint` object.
+  An Expression object.
 
-- label:
+- value:
 
-  A character string label.
+  A label (character; coerced via `as.character`). Pass `NULL` to clear
+  an existing label.
 
 ## Value
 
-The modified constraint (invisibly).
+`x` with the label updated.
 
-## Details
+## See also
 
-Because R uses copy-on-modify semantics, you must either assign the
-result back or use `set_label` fluently when building constraint lists.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-x <- Variable(3, name = "x")
-
-# Assign back
-con <- (x >= 0)
-con <- set_label(con, "non-negativity")
-
-# Fluent use in constraint lists
-constraints <- list(
-  set_label(x >= 1, "lower bound"),
-  set_label(sum_entries(x) <= 10, "budget")
-)
-} # }
-```
+[`label()`](https://www.cvxgrp.org/CVXR/reference/label.md),
+[`format_labeled()`](https://www.cvxgrp.org/CVXR/reference/format_labeled.md)

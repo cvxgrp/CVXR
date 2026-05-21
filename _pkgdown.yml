@@ -27,6 +27,7 @@ reference:
   contents:
   - Variable
   - Parameter
+  - CallbackParam
   - Constant
   - Problem
   - Minimize
@@ -63,6 +64,17 @@ reference:
   - available_solvers
   - residual
   - violation
+
+- title: Differentiation
+  desc: Differentiate through the solution map (requires the diffcp package)
+  contents:
+  - backward
+  - derivative
+  - gradient
+  - delta
+  - var_dict
+  - param_dict
+  - reduction-chain-rule
 
 - title: Solvers
   desc: Solver name constants
@@ -268,6 +280,9 @@ reference:
   - name
   - id
   - set_label
+  - label
+  - "label<-"
+  - format_labeled
 
 - title: Problem properties
   desc: Extract components from a Problem object
@@ -287,6 +302,9 @@ reference:
   - expr_H
   - make_sparse_diagonal_matrix
   - rel_entr
+  - partial_optimize
+  - size_metrics
+  - SizeMetrics
 
 - title: Data
   desc: Example datasets

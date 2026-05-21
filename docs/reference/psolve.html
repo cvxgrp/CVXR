@@ -13,7 +13,7 @@ solver_stats."><meta property="og:image" content="https://www.cvxgrp.org/CVXR/lo
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2-1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@ solver_stats."><meta property="og:image" content="https://www.cvxgrp.org/CVXR/lo
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Solve a Convex Optimization Problem</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/132_problems_problem.R" class="external-link"><code>R/132_problems_problem.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/136_problems_problem.R" class="external-link"><code>R/136_problems_problem.R</code></a></small>
       <div class="d-none name"><code>psolve.Rd</code></div>
     </div>
 
@@ -59,6 +59,8 @@ dual values with <code><a href="dual_value.html">dual_value</a></code>, and solv
 <span>  qcp <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  warm_start <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  requires_grad <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  solver_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -93,6 +95,22 @@ via bisection. Only needed for non-DCP DQCP problems.</p></dd>
 <dt id="arg-warm-start">warm_start<a class="anchor" aria-label="anchor" href="#arg-warm-start"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, use the current variable
 values as a warm-start point for the solver.</p></dd>
+
+
+<dt id="arg-requires-grad">requires_grad<a class="anchor" aria-label="anchor" href="#arg-requires-grad"></a></dt>
+<dd><p>Logical; if <code>TRUE</code>, route the solve through
+the DIFFCP wrapper so <code><a href="backward.html">backward()</a></code> /
+<code><a href="derivative.html">derivative()</a></code> can recover gradients.</p></dd>
+
+
+<dt id="arg-solver-path">solver_path<a class="anchor" aria-label="anchor" href="#arg-solver-path"></a></dt>
+<dd><p>Optional fallback chain.  A character vector of
+solver names or a list whose entries are either character names or
+length-2 <code>list(name, opts)</code> pairs.  Each solver is tried in
+sequence; the first that succeeds returns its result.  If every
+solver fails, a <code>SolverError</code>-classed condition is raised
+with the per-solver error messages.  Cannot be combined with
+<code>solver</code>.  Mirrors CVXPY's <code>solver_path</code> argument.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

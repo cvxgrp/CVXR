@@ -18,6 +18,8 @@ psolve(
   qcp = FALSE,
   verbose = FALSE,
   warm_start = FALSE,
+  requires_grad = FALSE,
+  solver_path = NULL,
   ...
 )
 ```
@@ -51,6 +53,23 @@ psolve(
 
   Logical; if `TRUE`, use the current variable values as a warm-start
   point for the solver.
+
+- requires_grad:
+
+  Logical; if `TRUE`, route the solve through the DIFFCP wrapper so
+  [`backward()`](https://www.cvxgrp.org/CVXR/reference/backward.md) /
+  [`derivative()`](https://www.cvxgrp.org/CVXR/reference/derivative.md)
+  can recover gradients.
+
+- solver_path:
+
+  Optional fallback chain. A character vector of solver names or a list
+  whose entries are either character names or length-2
+  `list(name, opts)` pairs. Each solver is tried in sequence; the first
+  that succeeds returns its result. If every solver fails, a
+  `SolverError`-classed condition is raised with the per-solver error
+  messages. Cannot be combined with `solver`. Mirrors CVXPY's
+  `solver_path` argument.
 
 - ...:
 

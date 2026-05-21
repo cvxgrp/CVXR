@@ -91,6 +91,8 @@ Variables, parameters, constants, problems, and constraints
   Create an Optimization Variable
 - [`Parameter()`](https://www.cvxgrp.org/CVXR/reference/Parameter.md) :
   Create a Parameter
+- [`CallbackParam()`](https://www.cvxgrp.org/CVXR/reference/CallbackParam.md)
+  : Callback Parameter
 - [`Constant()`](https://www.cvxgrp.org/CVXR/reference/Constant.md) :
   Create a Constant Expression
 - [`Problem()`](https://www.cvxgrp.org/CVXR/reference/Problem.md) :
@@ -164,6 +166,38 @@ Solving problems and extracting results
 - [`violation()`](https://www.cvxgrp.org/CVXR/reference/violation.md) :
   Get the Violation of a Constraint
 
+## Differentiation
+
+Differentiate through the solution map (requires the diffcp package)
+
+- [`backward()`](https://www.cvxgrp.org/CVXR/reference/backward.md) :
+  Compute the gradient of a solution with respect to Parameters
+
+- [`derivative()`](https://www.cvxgrp.org/CVXR/reference/derivative.md)
+  : Apply the derivative of the solution map to perturbations
+
+- [`gradient()`](https://www.cvxgrp.org/CVXR/reference/gradient.md)
+  [`` `gradient<-`() ``](https://www.cvxgrp.org/CVXR/reference/gradient.md)
+  : Access the gradient of a Variable or Parameter
+
+- [`delta()`](https://www.cvxgrp.org/CVXR/reference/delta.md)
+  [`` `delta<-`() ``](https://www.cvxgrp.org/CVXR/reference/delta.md) :
+
+  Access the perturbation `delta` of a Variable or Parameter
+
+- [`var_dict()`](https://www.cvxgrp.org/CVXR/reference/var_dict.md) :
+  Get all Variables of a Problem as a Named List
+
+- [`param_dict()`](https://www.cvxgrp.org/CVXR/reference/param_dict.md)
+  : Get all Parameters of a Problem as a Named List
+
+- [`param_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  [`param_forward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  [`var_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  [`var_forward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  : Reduction chain-rule hooks (backward / forward, parameter /
+  variable)
+
 ## Solvers
 
 Solver name constants
@@ -171,6 +205,7 @@ Solver name constants
 - [`SCS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`OSQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`CLARABEL_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`DIFFCP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`HIGHS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`MOSEK_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`GUROBI_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
@@ -512,7 +547,13 @@ Query properties of CVXR expressions
 - [`id()`](https://www.cvxgrp.org/CVXR/reference/id.md) : Get Expression
   ID
 - [`set_label()`](https://www.cvxgrp.org/CVXR/reference/set_label.md) :
-  Set a Label on a Constraint
+  Attach a label to an expression
+- [`label()`](https://www.cvxgrp.org/CVXR/reference/label.md) : Get the
+  label of an expression
+- [`` `label<-`() ``](https://www.cvxgrp.org/CVXR/reference/label-set.md)
+  : Set the label of an expression
+- [`format_labeled()`](https://www.cvxgrp.org/CVXR/reference/format_labeled.md)
+  : Pretty-print an expression with labels substituted
 
 ## Problem properties
 
@@ -545,6 +586,12 @@ Helpers and introspection
   : Make a CSC sparse diagonal matrix
 - [`rel_entr()`](https://www.cvxgrp.org/CVXR/reference/rel_entr.md) :
   Relative Entropy: x\*log(x/y)
+- [`partial_optimize()`](https://www.cvxgrp.org/CVXR/reference/partial_optimize.md)
+  : Partial optimization transform
+- [`size_metrics()`](https://www.cvxgrp.org/CVXR/reference/size_metrics.md)
+  : Get Size Metrics for a Problem
+- [`SizeMetrics()`](https://www.cvxgrp.org/CVXR/reference/SizeMetrics.md)
+  : Problem Size Metrics
 
 ## Data
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2-1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,33 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.8.2" id="cvxr-182">CVXR 1.8.2<a class="anchor" aria-label="anchor" href="#cvxr-182"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.8.2-1" id="cvxr-182-1">CVXR 1.8.2-1<a class="anchor" aria-label="anchor" href="#cvxr-182-1"></a></h2>
+<ul><li>New derivative API for differentiable convex programs via the <code>diffcp</code> R package: <code>psolve(prob, requires_grad = TRUE)</code> followed by <code>backward(prob)</code> or <code>derivative(prob)</code>; <code>gradient(x)&lt;-</code> and <code>delta(x)&lt;-</code> set tangent / cotangent values on leaves.</li>
+<li>New <code><a href="https://rdrr.io/r/base/sign.html" class="external-link">sign()</a></code> atom (DQCP, scalar input).</li>
+<li>New <code><a href="../reference/partial_optimize.html">partial_optimize()</a></code> transform.</li>
+<li>
+<code><a href="../reference/psolve.html">psolve()</a></code> gains a <code>solver_path</code> argument for solver fallback chains.</li>
+<li>New <code><a href="../reference/set_label.html">set_label()</a></code> / <code>label&lt;-</code> / <code><a href="../reference/format_labeled.html">format_labeled()</a></code> for attaching user-supplied labels to expressions.</li>
+<li>
+<code><a href="../reference/power.html">power()</a></code>, <code><a href="../reference/geo_mean.html">geo_mean()</a></code>, and <code><a href="../reference/p_norm.html">p_norm()</a></code> with <code>approx = TRUE</code> now warn when the selected solver supports power cones (<code>approx = FALSE</code> uses the exact <code>PowCone3D</code> / <code>PowConeND</code> form).</li>
+<li>MOSEK now supports mixed-integer programs (requires <code>Rmosek</code> 11.1.1+).</li>
+<li>
+<code><a href="../reference/solver_stats.html">solver_stats()</a></code> for MOSEK now populates <code>solve_time</code>, <code>num_iters</code>, and <code>extra_stats</code>.</li>
+<li>New <code><a href="../reference/param_dict.html">param_dict()</a></code>, <code><a href="../reference/var_dict.html">var_dict()</a></code>, and <code><a href="../reference/size_metrics.html">size_metrics()</a></code> accessors on <code>Problem</code>.</li>
+<li>
+<code>Variable(value = ...)</code> accepts an initial value at construction.</li>
+<li>New <code>CallbackParam</code> class — a <code>Parameter</code> subclass whose value is computed on every read by a user-supplied callback.</li>
+<li>
+<code><a href="../reference/project.html">project()</a></code> accepts index-based <code>boolean = c(i, j, ...)</code> and <code>integer = c(i, j, ...)</code> attributes (1-based).</li>
+<li>
+<code><a href="../reference/validate_arguments.html">validate_arguments()</a></code> now called on <code>Cummax</code>, <code>Cumprod</code>, and <code>MinEntries</code> constructors.</li>
+<li>Faster expression construction via a new <code>.fast_new</code> helper for S7 objects.</li>
+<li>Fix <code>Variable(c(n, n), diag = TRUE)</code> handling through <code>CvxAttr2Constr</code>.</li>
+<li>Fix <code><a href="../reference/perspective.html">perspective()</a></code> canonicalizer on PSD, NSD, and diag matrix variables.</li>
+<li>Fix <code><a href="../reference/project.html">project()</a></code> on sparse <code>Matrix</code>-package objects.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.8.2" id="cvxr-182">CVXR 1.8.2<a class="anchor" aria-label="anchor" href="#cvxr-182"></a></h2><p class="text-muted">CRAN release: 2026-04-04</p>
 <div class="section level3">
 <h3 id="new-solvers-scip-and-xpress-total-1-8-2">New solvers: SCIP and XPRESS (15 total)<a class="anchor" aria-label="anchor" href="#new-solvers-scip-and-xpress-total-1-8-2"></a></h3>
 <ul><li>Added SCIP solver (14th solver) via the R <code>scip</code> package. Supports LP, SOCP, MI-LP, and MI-SOCP problems. SCIP is registered in the conic solver path with <code>SUPPORTED_CONSTRAINTS = list(Zero, NonNeg, SOC)</code> and <code>MIP_CAPABLE = TRUE</code>.</li>
@@ -216,9 +242,9 @@
 <div class="section level4">
 <h4 id="known-limitations-1-8-1">Known limitations<a class="anchor" aria-label="anchor" href="#known-limitations-1-8-1"></a></h4>
 <ul><li>Matrix package objects (<code>dgCMatrix</code>, <code>dgeMatrix</code>, <code>ddiMatrix</code>, <code>sparseVector</code>) cannot be used directly with CVXR operators due to S4 dispatch preempting S7/S3. Wrap with <code><a href="../reference/as_cvxr_expr.html">as_cvxr_expr()</a></code> first. Base R <code>matrix</code>/<code>numeric</code> work natively. This is an R dispatch limitation requiring upstream changes in S7 and/or Matrix.</li>
-<li>Warm-start for HiGHS is blocked (R <code>highs</code> package lacks <code>setSolution()</code> API).</li>
-<li>Derivative/sensitivity API deferred (requires <code>diffcp</code>, no R equivalent).</li>
-<li>Deferred to a future release: RelEntrConeQuad, quantum atoms, MOSEK MIP.</li>
+<li>Warm-start for HiGHS is implemented (works with <code>highs</code> 1.14) but the upstream R <code>highs</code> PR exposing <code>setSolution()</code> has not yet been actioned by the maintainers; lives on branch <code>highs-warm-start</code>.</li>
+<li>Complex SOC dual variables are not recovered (CVXPY itself does not implement this — <code>complex2real.py:56</code> declares <code>UNIMPLEMENTED_COMPLEX_DUALS = (SOC, OpRelEntrConeQuad)</code>). Complex SOC <em>primal</em> canonicalization works.</li>
+<li>Deferred to a future release: RelEntrConeQuad / OpRelEntrConeQuad, quantum atoms, CPLEX conic (SOC) path.</li>
 </ul></div>
 </div>
 </div>

@@ -6,7 +6,14 @@ Variables are decision variables that the solver optimizes over.
 ## Usage
 
 ``` r
-Variable(shape = c(1L, 1L), name = NULL, var_id = NULL, latex_name = NULL, ...)
+Variable(
+  shape = c(1L, 1L),
+  name = NULL,
+  value = NULL,
+  var_id = NULL,
+  latex_name = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -21,6 +28,12 @@ Variable(shape = c(1L, 1L), name = NULL, var_id = NULL, latex_name = NULL, ...)
 
   Optional character string name for the variable. If `NULL`, an
   automatic name `"var<id>"` is generated.
+
+- value:
+
+  Optional numeric initial value (scalar, vector, or matrix matching
+  `shape`). Validated and projected onto the attribute domain via the
+  same path as `value(var) <- val`.
 
 - var_id:
 

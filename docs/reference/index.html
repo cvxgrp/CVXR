@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.2-1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,13 @@
 
         </dt>
         <dd>Create a Parameter</dd>
+
+        <dt>
+
+          <code><a href="CallbackParam.html">CallbackParam()</a></code>
+
+        </dt>
+        <dd>Callback Parameter</dd>
 
         <dt>
 
@@ -292,6 +299,64 @@
         </dt>
         <dd>Get the Violation of a Constraint</dd>
       </dl></div><div class="section level2">
+      <h2 id="differentiation">Differentiation<a class="anchor" aria-label="anchor" href="#differentiation"></a></h2>
+
+      <div class="section-desc"><p>Differentiate through the solution map (requires the diffcp package)</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="backward.html">backward()</a></code>
+
+        </dt>
+        <dd>Compute the gradient of a solution with respect to Parameters</dd>
+
+        <dt>
+
+          <code><a href="derivative.html">derivative()</a></code>
+
+        </dt>
+        <dd>Apply the derivative of the solution map to perturbations</dd>
+
+        <dt>
+
+          <code><a href="gradient.html">gradient()</a></code> <code><a href="gradient.html">`gradient&lt;-`()</a></code>
+
+        </dt>
+        <dd>Access the gradient of a Variable or Parameter</dd>
+
+        <dt>
+
+          <code><a href="delta.html">delta()</a></code> <code><a href="delta.html">`delta&lt;-`()</a></code>
+
+        </dt>
+        <dd>Access the perturbation <code>delta</code> of a Variable or Parameter</dd>
+
+        <dt>
+
+          <code><a href="var_dict.html">var_dict()</a></code>
+
+        </dt>
+        <dd>Get all Variables of a Problem as a Named List</dd>
+
+        <dt>
+
+          <code><a href="param_dict.html">param_dict()</a></code>
+
+        </dt>
+        <dd>Get all Parameters of a Problem as a Named List</dd>
+
+        <dt>
+
+          <code><a href="reduction-chain-rule.html">param_backward()</a></code> <code><a href="reduction-chain-rule.html">param_forward()</a></code> <code><a href="reduction-chain-rule.html">var_backward()</a></code> <code><a href="reduction-chain-rule.html">var_forward()</a></code>
+
+        </dt>
+        <dd>Reduction chain-rule hooks (backward / forward, parameter / variable)</dd>
+      </dl></div><div class="section level2">
       <h2 id="solvers">Solvers<a class="anchor" aria-label="anchor" href="#solvers"></a></h2>
 
       <div class="section-desc"><p>Solver name constants</p></div>
@@ -303,7 +368,7 @@
 
       <dl><dt>
 
-          <code><a href="solver-constants.html">SCS_SOLVER</a></code> <code><a href="solver-constants.html">OSQP_SOLVER</a></code> <code><a href="solver-constants.html">CLARABEL_SOLVER</a></code> <code><a href="solver-constants.html">HIGHS_SOLVER</a></code> <code><a href="solver-constants.html">MOSEK_SOLVER</a></code> <code><a href="solver-constants.html">GUROBI_SOLVER</a></code> <code><a href="solver-constants.html">GLPK_SOLVER</a></code> <code><a href="solver-constants.html">GLPK_MI_SOLVER</a></code> <code><a href="solver-constants.html">ECOS_SOLVER</a></code> <code><a href="solver-constants.html">ECOS_BB_SOLVER</a></code> <code><a href="solver-constants.html">CPLEX_SOLVER</a></code> <code><a href="solver-constants.html">CVXOPT_SOLVER</a></code> <code><a href="solver-constants.html">PIQP_SOLVER</a></code> <code><a href="solver-constants.html">SCIP_SOLVER</a></code> <code><a href="solver-constants.html">XPRESS_SOLVER</a></code>
+          <code><a href="solver-constants.html">SCS_SOLVER</a></code> <code><a href="solver-constants.html">OSQP_SOLVER</a></code> <code><a href="solver-constants.html">CLARABEL_SOLVER</a></code> <code><a href="solver-constants.html">DIFFCP_SOLVER</a></code> <code><a href="solver-constants.html">HIGHS_SOLVER</a></code> <code><a href="solver-constants.html">MOSEK_SOLVER</a></code> <code><a href="solver-constants.html">GUROBI_SOLVER</a></code> <code><a href="solver-constants.html">GLPK_SOLVER</a></code> <code><a href="solver-constants.html">GLPK_MI_SOLVER</a></code> <code><a href="solver-constants.html">ECOS_SOLVER</a></code> <code><a href="solver-constants.html">ECOS_BB_SOLVER</a></code> <code><a href="solver-constants.html">CPLEX_SOLVER</a></code> <code><a href="solver-constants.html">CVXOPT_SOLVER</a></code> <code><a href="solver-constants.html">PIQP_SOLVER</a></code> <code><a href="solver-constants.html">SCIP_SOLVER</a></code> <code><a href="solver-constants.html">XPRESS_SOLVER</a></code>
 
         </dt>
         <dd>Solver Name Constants</dd>
@@ -1322,7 +1387,28 @@
           <code><a href="set_label.html">set_label()</a></code>
 
         </dt>
-        <dd>Set a Label on a Constraint</dd>
+        <dd>Attach a label to an expression</dd>
+
+        <dt>
+
+          <code><a href="label.html">label()</a></code>
+
+        </dt>
+        <dd>Get the label of an expression</dd>
+
+        <dt>
+
+          <code><a href="label-set.html">`label&lt;-`()</a></code>
+
+        </dt>
+        <dd>Set the label of an expression</dd>
+
+        <dt>
+
+          <code><a href="format_labeled.html">format_labeled()</a></code>
+
+        </dt>
+        <dd>Pretty-print an expression with labels substituted</dd>
       </dl></div><div class="section level2">
       <h2 id="problem-properties">Problem properties<a class="anchor" aria-label="anchor" href="#problem-properties"></a></h2>
 
@@ -1418,6 +1504,27 @@
 
         </dt>
         <dd>Relative Entropy: x*log(x/y)</dd>
+
+        <dt>
+
+          <code><a href="partial_optimize.html">partial_optimize()</a></code>
+
+        </dt>
+        <dd>Partial optimization transform</dd>
+
+        <dt>
+
+          <code><a href="size_metrics.html">size_metrics()</a></code>
+
+        </dt>
+        <dd>Get Size Metrics for a Problem</dd>
+
+        <dt>
+
+          <code><a href="SizeMetrics.html">SizeMetrics()</a></code>
+
+        </dt>
+        <dd>Problem Size Metrics</dd>
       </dl></div><div class="section level2">
       <h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a></h2>
 

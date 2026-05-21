@@ -11,6 +11,8 @@ OSQP_SOLVER
 
 CLARABEL_SOLVER
 
+DIFFCP_SOLVER
+
 HIGHS_SOLVER
 
 MOSEK_SOLVER
@@ -37,6 +39,8 @@ XPRESS_SOLVER
 ```
 
 ## Format
+
+An object of class `character` of length 1.
 
 An object of class `character` of length 1.
 

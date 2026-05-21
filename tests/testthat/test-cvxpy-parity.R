@@ -1079,21 +1079,64 @@ test_that("problem: solver error raised on invalid QP", {
 
 ## @cvxpy test_problem.py::TestProblem::test_variables_with_value
 test_that("problem: Variable with initial value", {
-  ## CVXPY: Variable(name="without_bounds", value=0.0)
-  ## CVXR's Variable constructor does not accept 'value' directly.
-  skip("Variable() does not accept 'value' parameter in CVXR")
+  ## Mirrors CVXPY test_problem.py::TestProblem::test_variables_with_value:
+  ## three smoke calls plus a value-roundtrip check.
+  expect_no_error(Variable(name = "without_bounds", value = 0.0))
+  expect_no_error(Variable(name = "with_none_bounds",
+                           value = 0.0, bounds = NULL))
+  expect_no_error(Variable(name = "with_none_none_bounds",
+                           value = 0.0, bounds = list(NULL, NULL)))
+
+  ## Value is actually stored and retrievable via value().
+  ## CVXR's intf_convert boxes inputs as matrices, so value() returns a
+  ## (1,1) matrix for scalar Variables — strip dims before comparison.
+  v_scalar <- Variable(name = "v", value = 3.5)
+  expect_equal(as.numeric(value(v_scalar)), 3.5)
+
+  v_vec <- Variable(3, name = "vv", value = c(1, 2, 3))
+  expect_equal(as.numeric(value(v_vec)), c(1, 2, 3))
+
+  ## Wrong shape rejected up-front.
+  expect_error(Variable(c(2, 2), value = c(1, 2, 3)),
+               regexp = "Invalid dimensions")
 })
 
 ## @cvxpy test_problem.py::TestProblem::test_param_dict
 test_that("problem: param_dict property", {
   ## CVXPY: p.param_dict == {"p1": p1, "p2": p2, "p3": p3}
-  skip("param_dict property not implemented in CVXR Problem class")
+  ## (CVXPY's exact problem uses (2,)<=(4,4) broadcasting which CVXR's
+  ## strict 2D shape checking rejects at construction.  We use scalar
+  ## reductions to keep shapes valid while still referencing every
+  ## parameter; param_dict is independent of constraint shapes.)
+  a <- Variable(name = "a")
+  b <- Variable(2, name = "b")
+  p1 <- Parameter(name = "p1")
+  p2 <- Parameter(3, nonpos = TRUE, name = "p2")
+  p3 <- Parameter(c(4, 4), nonneg = TRUE, name = "p3")
+  prob <- Problem(Minimize(p1),
+                  list(a + p1 <= sum_entries(p2),
+                       sum_entries(b) <= sum_entries(p3)))
+  pd <- param_dict(prob)
+  expect_setequal(names(pd), c("p1", "p2", "p3"))
+  expect_identical(pd[["p1"]], p1)
+  expect_identical(pd[["p2"]], p2)
+  expect_identical(pd[["p3"]], p3)
 })
 
 ## @cvxpy test_problem.py::TestProblem::test_var_dict
 test_that("problem: var_dict property", {
   ## CVXPY: p.var_dict == {"a": a, "x": x, "b": b, "A": A}
-  skip("var_dict property not implemented in CVXR Problem class")
+  a <- Variable(name = "a")
+  x <- Variable(name = "x")
+  b <- Variable(c(2, 1), name = "b")
+  A <- Variable(c(2, 2), name = "A")
+  prob <- Problem(Minimize(a), list(a <= x, b <= A + 2))
+  vd <- var_dict(prob)
+  expect_setequal(names(vd), c("a", "x", "b", "A"))
+  expect_identical(vd[["a"]], a)
+  expect_identical(vd[["x"]], x)
+  expect_identical(vd[["b"]], b)
+  expect_identical(vd[["A"]], A)
 })
 
 ## @cvxpy test_problem.py::TestProblem::test_compilation_time
@@ -1110,8 +1153,35 @@ test_that("problem: compilation_time after solve", {
 
 ## @cvxpy test_problem.py::TestProblem::test_size_metrics
 test_that("problem: size_metrics property", {
-  ## CVXPY: p.size_metrics.num_scalar_variables, etc.
-  skip("size_metrics property not implemented in CVXR Problem class")
+  ## Mirrors CVXPY test_problem.py::TestProblem::test_size_metrics in
+  ## the variable/parameter/constant counts and max_data_dimension.
+  ## The constraint shapes are reduced to scalars (via sum_entries)
+  ## because CVXPY relies on (2,)<=(4,4) NumPy broadcast — CVXR's
+  ## strict 2D shape system rejects that at construction time.
+  ## So num_scalar_*_constr counts here differ from CVXPY's, by design.
+  a    <- Variable(name = "a")
+  b    <- Variable(2, name = "b")
+  cvar <- Variable(name = "c")
+  p1   <- Parameter(name = "p1")
+  p2   <- Parameter(3, nonpos = TRUE, name = "p2")
+  p3   <- Parameter(c(4, 4), nonneg = TRUE, name = "p3")
+  k1 <- 2
+  k2 <- 0.5
+  prob <- Problem(Minimize(p1),
+                  list(a + p1 <= sum_entries(p2),               # leq, size 1
+                       sum_entries(b) <= sum_entries(p3) + k1,   # leq, size 1
+                       cvar == k2))                              # eq,  size 1
+  sm <- size_metrics(prob)
+  expect_true(S7_inherits(sm, SizeMetrics))
+  expect_equal(sm@num_scalar_variables, 1L + 2L + 1L)            # a + b + cvar
+  expect_equal(sm@num_scalar_data,
+               as.integer(prod(p1@shape)) +
+               as.integer(prod(p2@shape)) +
+               as.integer(prod(p3@shape)) +
+               2L)                                               # k1, k2
+  expect_equal(sm@num_scalar_eq_constr,  1L)
+  expect_equal(sm@num_scalar_leq_constr, 1L + 1L)
+  expect_equal(sm@max_data_dimension,    4L)                     # p3 is 4x4
 })
 
 # ═══════════════════════════════════════════════════════════════════════

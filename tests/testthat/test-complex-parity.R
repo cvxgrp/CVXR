@@ -626,6 +626,9 @@ test_that("test_validation: complex arguments rejected by non-complex atoms", {
     function(v) geo_mean(v),
     function(v) log_sum_exp(v),
     function(v) max_entries(v),
+    function(v) min_entries(v),    # MinEntries -- validate_arguments() restored
+    function(v) cummax(v),         # Cummax     -- validate_arguments() restored
+    function(v) cumprod(v),        # Cumprod    -- validate_arguments() restored
     function(v) entr(v),
     function(v) exp(v),
     function(v) log(v),

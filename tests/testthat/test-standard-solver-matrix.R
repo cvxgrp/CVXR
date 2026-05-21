@@ -615,6 +615,35 @@ test_that("MOSEK: pcp_3", {
   verify_obj(h$prob, h$expect_obj, 1e-3, "MOSEK")
 })
 
+## @cvxpy NONE  (CVXPY surfaces these via prob.solver_stats since v1.x)
+test_that("MOSEK: solver_stats populated (SOLVE_TIME / NUM_ITERS / EXTRA_STATS)", {
+  skip_if_not_installed("Rmosek")
+  set.seed(1)
+  x <- Variable(5)
+  A <- matrix(rnorm(50), 10, 5); b <- rnorm(10) + 3
+  prob <- Problem(Minimize(sum_squares(A %*% x - b)))
+  psolve(prob, solver = "MOSEK")
+  ss <- solver_stats(prob)
+
+  ## SOLVE_TIME -- a non-negative finite numeric (MOSEK's OPTIMIZER_TIME).
+  expect_true(is.numeric(ss@solve_time))
+  expect_true(length(ss@solve_time) == 1L && !is.na(ss@solve_time))
+  expect_gte(ss@solve_time, 0)
+
+  ## NUM_ITERS -- intpnt + sim_primal + sim_dual + mio_num_relax,
+  ## non-negative.  For this continuous QP MOSEK uses the interior
+  ## point algorithm so the count is positive.
+  expect_true(is.numeric(ss@num_iters))
+  expect_gte(ss@num_iters, 0L)
+
+  ## EXTRA_STATS -- MIO-specific counts.  Continuous problem -> zero.
+  expect_named(ss@extra_stats,
+               c("mio_intpnt_iter", "mio_simplex_iter"),
+               ignore.order = TRUE)
+  expect_equal(ss@extra_stats[["mio_intpnt_iter"]],  0L)
+  expect_equal(ss@extra_stats[["mio_simplex_iter"]], 0L)
+})
+
 # ══════════════════════════════════════════════════════════════════
 # Cross-solver consistency checks
 # ══════════════════════════════════════════════════════════════════
@@ -760,9 +789,8 @@ test_that("AllSolvers: MIP solvers handle integer variables correctly", {
   x <- Variable(integer = TRUE)
   prob <- Problem(Maximize(x), list(x <= 3.5, x >= 0))
   ## Try each MI solver that is installed
-  ## MOSEK MIP not supported in CVXR (Post-v1.0)
-  mi_solvers <- c("ECOS_BB", "GLPK_MI", "GUROBI", "CPLEX", "XPRESS")
-  mi_pkgs <- c("ECOSolveR", "Rglpk", "gurobi", "Rcplex", "xpress")
+  mi_solvers <- c("ECOS_BB", "GLPK_MI", "GUROBI", "CPLEX", "XPRESS", "MOSEK")
+  mi_pkgs <- c("ECOSolveR", "Rglpk", "gurobi", "Rcplex", "xpress", "Rmosek")
   tested <- FALSE
   for (i in seq_along(mi_solvers)) {
     if (requireNamespace(mi_pkgs[i], quietly = TRUE)) {
@@ -1462,7 +1490,6 @@ test_that("MOSEK: lp_bound_attr", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_lp_0
 test_that("MOSEK: mi_lp_0", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_lp_0()
   verify_obj(h$prob, h$expect_obj, 1e-4, "MOSEK")
 })
@@ -1470,7 +1497,6 @@ test_that("MOSEK: mi_lp_0", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_lp_1
 test_that("MOSEK: mi_lp_1", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_lp_1()
   verify_obj(h$prob, h$expect_obj, 1e-4, "MOSEK")
 })
@@ -1478,7 +1504,6 @@ test_that("MOSEK: mi_lp_1", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_lp_2
 test_that("MOSEK: mi_lp_2 (knapsack)", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_lp_2()
   verify_obj(h$prob, h$expect_obj, 1e-3, "MOSEK")
 })
@@ -1486,7 +1511,6 @@ test_that("MOSEK: mi_lp_2 (knapsack)", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_lp_3
 test_that("MOSEK: mi_lp_3 (infeasible boolean MIP)", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_lp_3()
   psolve(h$prob, solver = "MOSEK")
   expect_true(status(h$prob) %in% c("infeasible", "infeasible_inaccurate"))
@@ -1495,7 +1519,6 @@ test_that("MOSEK: mi_lp_3 (infeasible boolean MIP)", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_lp_5
 test_that("MOSEK: mi_lp_5", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_lp_5()
   verify_obj(h$prob, h$expect_obj, 1e-4, "MOSEK")
 })
@@ -1503,7 +1526,6 @@ test_that("MOSEK: mi_lp_5", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_socp_1
 test_that("MOSEK: mi_socp_1", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_socp_1()
   verify_obj(h$prob, h$expect_obj, 1e-3, "MOSEK")
 })
@@ -1511,7 +1533,6 @@ test_that("MOSEK: mi_socp_1", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_socp_2
 test_that("MOSEK: mi_socp_2", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_socp_2()
   verify_obj(h$prob, h$expect_obj, 1e-4, "MOSEK")
 })
@@ -1519,7 +1540,6 @@ test_that("MOSEK: mi_socp_2", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_mi_pcp_0
 test_that("MOSEK: mi_pcp_0 (mixed-integer power cone)", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK MIP not supported in CVXR (Post-v1.0)")
   h <- sth_mi_pcp_0()
   verify_obj(h$prob, h$expect_obj, 1e-3, "MOSEK")
 })

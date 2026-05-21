@@ -756,20 +756,23 @@ test_that("expressions: boolean indexing on Constants", {
 ## @cvxpy test_expressions.py::TestExpressions::test_project_boolean_indices
 test_that("expressions: project() with boolean indices", {
   ## CVXPY: Variable((3,), boolean=(np.array([0, 2]),))
-  ## val = [-0.2, 0.5, 1.7], project -> [0, 0.5, 1]
-  ## Only indices 0 and 2 are projected to boolean.
-  ## In CVXR, project() with index-based boolean does not work correctly
-  ## (project checks isTRUE(a$boolean) which is FALSE when boolean is a list).
-  skip("CVXR project() does not handle index-based boolean specification")
+  ##   val = [-0.2, 0.5, 1.7], project -> [0, 0.5, 1]
+  ## CVXR uses 1-based indices, so boolean = c(1, 3).
+  v <- Variable(3, boolean = c(1, 3))
+  val <- c(-0.2, 0.5, 1.7)
+  projected <- project(v, val)
+  expect_equal(as.numeric(projected), c(0, 0.5, 1), tolerance = 1e-12)
 })
 
 ## @cvxpy test_expressions.py::TestExpressions::test_project_integer_indices
 test_that("expressions: project() with integer indices", {
   ## CVXPY: Variable((3,), integer=(np.array([1]),))
-  ## val = [1.2, 2.7, -0.8], project -> [1.2, 3, -0.8]
-  ## Only index 1 is projected to integer.
-  ## Same issue as boolean indices: project() doesn't handle index-based integer.
-  skip("CVXR project() does not handle index-based integer specification")
+  ##   val = [1.2, 2.7, -0.8], project -> [1.2, 3, -0.8]
+  ## CVXR 1-based, so integer = c(2).
+  v <- Variable(3, integer = c(2))
+  val <- c(1.2, 2.7, -0.8)
+  projected <- project(v, val)
+  expect_equal(as.numeric(projected), c(1.2, 3, -0.8), tolerance = 1e-12)
 })
 
 # =========================================================================
@@ -1262,15 +1265,21 @@ test_that("expressions: out of bounds indexing raises error", {
 ## @cvxpy test_expressions.py::TestExpressions::test_project_boolean_indices
 test_that("expressions: project with boolean indices", {
   ## CVXPY: Variable((3,), boolean=(np.array([0, 2]),))
-  ## Only indices 0, 2 are boolean. project([-0.2, 0.5, 1.7]) -> [0, 0.5, 1]
-  skip("CVXR project() does not handle index-based boolean specification")
+  ##   Only indices 0, 2 are boolean. project([-0.2, 0.5, 1.7]) -> [0, 0.5, 1]
+  ## CVXR 1-based.
+  v <- Variable(3, boolean = c(1, 3))
+  projected <- project(v, c(-0.2, 0.5, 1.7))
+  expect_equal(as.numeric(projected), c(0, 0.5, 1), tolerance = 1e-12)
 })
 
 ## @cvxpy test_expressions.py::TestExpressions::test_project_integer_indices
 test_that("expressions: project with integer indices", {
   ## CVXPY: Variable((3,), integer=(np.array([1]),))
-  ## Only index 1 is integer. project([1.2, 2.7, -0.8]) -> [1.2, 3, -0.8]
-  skip("CVXR project() does not handle index-based integer specification")
+  ##   Only index 1 is integer. project([1.2, 2.7, -0.8]) -> [1.2, 3, -0.8]
+  ## CVXR 1-based.
+  v <- Variable(3, integer = c(2))
+  projected <- project(v, c(1.2, 2.7, -0.8))
+  expect_equal(as.numeric(projected), c(1.2, 3, -0.8), tolerance = 1e-12)
 })
 
 ## @cvxpy test_expressions.py::TestExpressions::test_quad_form_matmul

@@ -1107,10 +1107,26 @@ test_that("sparse_bool_constant: And with sparse matrix mask", {
 })
 
 ## @cvxpy test_logic.py::TestLogicName::test_format_labeled
+## CVXR renders Not as "!x" (R idiom), CVXPY as "~x"; otherwise identical.
 test_that("format_labeled: labeled logic expressions", {
-  skip("format_labeled/set_label not implemented in CVXR")
-  ## CVXPY test: And(x, y).set_label("my_and").format_labeled() == "my_and"
-  ## This feature is not yet available in CVXR
+  x <- Variable(boolean = TRUE, name = "x")
+  y <- Variable(boolean = TRUE, name = "y")
+
+  ## Own label takes precedence over structural name
+  expect_equal(format_labeled(set_label(And(x, y), "my_and")), "my_and")
+
+  ## Inner-labelled sub-expression renders as its label;
+  ## unlabelled outer recurses structurally.
+  inner <- set_label(And(x, y), "both")
+  expect_equal(format_labeled(Or(inner, Not(x))), "both | !x")
+
+  ## label(x) <- replacement form
+  e <- sum_entries(x + y)
+  label(e) <- "total"
+  expect_equal(format_labeled(e), "total")
+  label(e) <- NULL
+  expect_null(label(e))
+  expect_equal(format_labeled(e), expr_name(e))
 })
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1203,10 +1219,81 @@ test_that("verbose: solver output controlled by verbose flag", {
 })
 
 ## @cvxpy test_problem.py::TestProblem::test_solve_solver_path
-test_that("solve_solver_path: skipped (not implemented in CVXR)", {
-  skip("solver_path argument not implemented in CVXR")
-  ## CVXPY allows solver_path = [(solver1, opts1), solver2, ...]
-  ## to try multiple solvers in sequence
+test_that("solve_solver_path: fallback chain (CVXPY parity)", {
+  skip_if_not_installed("clarabel")
+  skip_if_not_installed("osqp")
+  set.seed(42)
+  A <- matrix(rnorm(40 * 40), 40, 40)
+  b <- A %*% rnorm(40)
+
+  ## (1) Valid inputs: any of the solvers succeeds, returns a result.
+  obj <- Minimize(sum_squares(A %*% Variable(40) - b))
+  prob <- Problem(obj)
+
+  ## (a) mixed list with per-entry opts + bare string.
+  ## CVXPY's test only checks the call returns a number; OSQP+max_iter=1
+  ## technically "succeeds" with status="user_limit", which short-circuits
+  ## the fallback (the loop only continues on errors, not poor status).
+  res <- psolve(prob, solver_path = list(
+    list("OSQP", list(max_iter = 1L)),
+    "CLARABEL"
+  ))
+  expect_true(is.numeric(res))
+
+  ## (b) all entries as length-2 lists, one with empty opts
+  res <- psolve(prob, solver_path = list(
+    list("OSQP",     list(max_iter = 1L)),
+    list("CLARABEL", list())
+  ))
+  expect_true(is.numeric(res))
+
+  ## (c) case-insensitive names (CVXPY parity)
+  res <- psolve(prob, solver_path = list(
+    list("osqp", list(max_iter = 1L)),
+    "Clarabel"
+  ))
+  expect_true(is.numeric(res))
+
+  ## (d) bare character vector
+  res <- psolve(prob, solver_path = c("OSQP", "CLARABEL"))
+  expect_true(is.numeric(res))
+
+  ## (2) All solvers fail -> SolverError-classed condition.
+  ## Non-convex quad_form (assume_PSD bypasses the indefinite check)
+  ## sent to OSQP with max_iter=1 errors out.
+  x1 <- Variable(1)
+  bad <- Problem(Minimize(quad_form(x1 + 1, matrix(-1, 1, 1), TRUE)))
+  expect_error(
+    psolve(bad, solver_path = list(list("OSQP", list(max_iter = 1L)))),
+    class = "SolverError"
+  )
+
+  ## (3) Malformed solver_path -> ValueError analogue (rlang error,
+  ## NOT class "SolverError"; classifies as a usage error).
+  bad_inputs <- list(
+    list(`str` = list()),       # named list (not a flat entries list)
+    "str",                       # bare string at top level (treated as 1-elt vec; passes — moved below)
+    list(),                      # empty list
+    list(1),                     # numeric entry
+    list(list()),                # length-0 entry
+    list(list(1)),               # length-1 entry (not str)
+    list(list(1, list())),       # non-string name
+    list(list("OSQP", list())),  # valid; should NOT error
+    list(list("OSQP"))           # length-1 list entry (missing opts)
+  )
+  ## Valid cases pulled out of the loop
+  valid_idx <- c(2L, 8L)         # bare string + list(list("OSQP", list()))
+  invalid_idx <- setdiff(seq_along(bad_inputs), valid_idx)
+  for (i in invalid_idx) {
+    expect_error(psolve(prob, solver_path = bad_inputs[[i]]),
+                 info = paste("bad input #", i))
+  }
+
+  ## (4) Cannot specify both `solver` and `solver_path`.
+  expect_error(
+    psolve(prob, solver_path = list("CLARABEL"), solver = "CLARABEL"),
+    regexp = "both"
+  )
 })
 
 ## @cvxpy test_problem.py::TestProblem::test_cp_node_count_warn

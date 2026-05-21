@@ -32,6 +32,39 @@ value <- new_generic("value", "x")
 #' @keywords internal
 grad <- new_generic("grad", "x")
 
+#' Per-atom Subgradient Hook (private)
+#'
+#' R counterpart of CVXPY's `Atom._grad(self, values)`. Returns a list
+#' of one Jacobian per argument, shape `(prod(arg.shape), prod(self.shape))`.
+#' Called by the chain-rule walker `grad(x)`. The leading dot follows R's
+#' private-name convention (cf. `.Machine`, `.libPaths`, `.cvxr_*`); the
+#' name maps one-to-one onto CVXPY's `_grad`.
+#'
+#' @param x An atom expression.
+#' @param values A list of numeric values, one per argument.
+#' @param ... Reserved for future use; method dispatch ignores it.
+#' @returns A list of sparse Jacobians (one per argument).
+#' @keywords internal
+.grad <- new_generic(".grad", "x",
+  function(x, values, ...) S7_dispatch())
+
+#' Per-column Subgradient for AxisAtoms (private)
+#'
+#' R counterpart of CVXPY's `AxisAtom._column_grad(self, value)`.
+#' Receives a single column (a 1-D fiber) of the input and returns the
+#' gradient of the atom's reduction over that column. Used by
+#' `.grad(AxisAtom)`, which walks the input by fibers and assembles
+#' the full Jacobian.
+#'
+#' @param x An axis-atom expression.
+#' @param value A numeric vector (the fiber).
+#' @param ... Reserved for future use; method dispatch ignores it.
+#' @returns A numeric vector of the same length, or `NULL` if the
+#'   gradient is undefined for this fiber.
+#' @keywords internal
+.column_grad <- new_generic(".column_grad", "x",
+  function(x, value, ...) S7_dispatch())
+
 #' Get the Domain Constraints of an Expression
 #' @param x An expression object.
 #' @param ... Not used.
@@ -132,6 +165,44 @@ parameters <- new_generic("parameters", "x")
 #' @export
 constants <- new_generic("constants", "x")
 
+#' Get all Parameters of a Problem as a Named List
+#'
+#' Mirrors CVXPY's \code{Problem.param_dict} property
+#' (\code{cvxpy/problems/problem.py:260-264}): returns a named list keyed by
+#' each parameter's name, where the value is the \code{\link{Parameter}}
+#' object itself.
+#'
+#' @param x A \code{\link{Problem}} object.
+#' @param ... Not used.
+#' @returns Named list of \code{\link{Parameter}} objects, keyed by name.
+#' @export
+param_dict <- new_generic("param_dict", "x")
+
+#' Get all Variables of a Problem as a Named List
+#'
+#' Mirrors CVXPY's \code{Problem.var_dict} property
+#' (\code{cvxpy/problems/problem.py:267-271}): returns a named list keyed by
+#' each variable's name, where the value is the \code{\link{Variable}}
+#' object itself.
+#'
+#' @param x A \code{\link{Problem}} object.
+#' @param ... Not used.
+#' @returns Named list of \code{\link{Variable}} objects, keyed by name.
+#' @export
+var_dict <- new_generic("var_dict", "x")
+
+#' Get Size Metrics for a Problem
+#'
+#' Mirrors CVXPY's \code{Problem.size_metrics} property
+#' (\code{cvxpy/problems/problem.py:486-490}, class at lines 1690-1752):
+#' returns a \code{SizeMetrics} object summarising the problem's scale.
+#'
+#' @param x A \code{\link{Problem}} object.
+#' @param ... Not used.
+#' @returns A \code{SizeMetrics} object with seven numeric fields.
+#' @export
+size_metrics <- new_generic("size_metrics", "x")
+
 #' Get the DCP Sign of an Expression
 #'
 #' Returns the sign of an expression under DCP analysis. Use this instead
@@ -202,6 +273,59 @@ is_symmetric <- new_generic("is_symmetric", "x")
 #' @returns Character string.
 #' @keywords internal
 expr_name <- new_generic("expr_name", "x")
+
+#' Get the label of an expression
+#'
+#' Returns the human-readable label set via [set_label()] (or
+#' `label(x) <- ...`), or `NULL` if no label has been set.
+#'
+#' @param x An Expression object.
+#' @returns A length-1 character string, or `NULL`.
+#' @seealso [set_label()], [format_labeled()]
+#' @export
+label <- new_generic("label", "x", function(x) S7_dispatch())
+
+#' Set the label of an expression
+#'
+#' R replacement form of [set_label()].  `label(x) <- value` stores
+#' `value` (coerced to character) in `x`'s internal label slot; setting
+#' to `NULL` clears the label.  Equivalent to `x <- set_label(x, value)`.
+#'
+#' @param x An Expression object.
+#' @param value A character string, or `NULL` to clear.
+#' @returns `x`, invisibly, with the label updated.
+#' @seealso [set_label()], [format_labeled()]
+#' @export
+`label<-` <- new_generic("label<-", "x",
+  function(x, value) S7_dispatch())
+
+#' Attach a label to an expression
+#'
+#' CVXPY-parity setter that returns its first argument so calls can be
+#' chained (e.g. `sum_squares(x) |> set_label("cost")`).  See
+#' [format_labeled()] for the pretty-printer that consumes labels.
+#'
+#' @param x An Expression object.
+#' @param value A label (character; coerced via `as.character`).
+#'   Pass `NULL` to clear an existing label.
+#' @returns `x` with the label updated.
+#' @seealso [label()], [format_labeled()]
+#' @export
+set_label <- new_generic("set_label", "x",
+  function(x, value) S7_dispatch())
+
+#' Pretty-print an expression with labels substituted
+#'
+#' Recursive analogue of [expr_name()] that substitutes user-supplied
+#' labels (see [set_label()]) for sub-expressions wherever they are set,
+#' falling back to the structural name on unlabelled nodes.  Mirrors
+#' CVXPY's `Expression.format_labeled`.
+#'
+#' @param x An Expression object.
+#' @returns A character string.
+#' @seealso [set_label()], [label()]
+#' @export
+format_labeled <- new_generic("format_labeled", "x", function(x) S7_dispatch())
 
 #' Set the Value of a Leaf Expression
 #'

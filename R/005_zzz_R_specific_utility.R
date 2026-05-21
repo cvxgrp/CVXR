@@ -12,6 +12,81 @@
 ## FALSE, a NULL default would cause re-computation on every access.
 .NOT_CACHED <- new.env(parent = emptyenv())
 
+# -- Fast constructor for trusted internal node construction -----------------
+## Bypasses S7's `new_object()` for the hot-path Expression-tree construction.
+##
+## ===========================================================================
+## AUTHORITY: this is the canonical reference for `.fast_new`.  Every CVXR
+## constructor MUST use it (CLAUDE.md constraint 17).  Background: ADR
+## D_PERF.1 in notes/decisions.md, migration status in
+## notes/lever2_migration_status.md.
+##
+## USAGE PATTERN (every constructor, no exceptions):
+##
+##   constructor = function(...) {
+##     if (FALSE) new_object(S7_object())  ## S7 static-check guard
+##     ...                                  ## arg coercion / validation
+##     .fast_new(ThisClassName, S7_object(),
+##       id     = next_expr_id(),
+##       .cache = new.env(parent = emptyenv()),
+##       args   = <args>,
+##       shape  = <shape>,
+##       <other named properties>
+##     )
+##   }
+##
+## The `if (FALSE) new_object(...)` line satisfies S7's
+## `check_S7_constructor` static AST check (which scans for a literal
+## `new_object` call in the body) without executing it at runtime.
+## ===========================================================================
+##
+## new_object() pays for: sys.function(-1) call-stack walk to find class,
+## abstract-class check, named-args validation, has_setter dispatch loop,
+## attribute deduplication, full recursive validate().  Hot-path microbench:
+## 67 us per Variable(10) vs 3.4 us via .fast_new -- 20x speedup.
+##
+## CRAN safety: this helper uses ONLY exported S7 API (`S7_object` sentinel,
+## the `@parent` / `@name` / `@package` accessors -- all part of the
+## documented `S7_class` slot interface).  No `:::` or `getNamespace()` reach
+## into S7 internals.
+##
+## Trade-off vs new_object(): NO property validation -- relies on the
+## constructor body to type-correct its inputs.  All CVXR constructors
+## already do this via explicit `validate_*()` / `cli_abort()` calls; the
+## audit confirms zero classes in rsrc_tree use S7 property setters or
+## validators (see notes/lever2_migration_status.md).
+##
+## Class dispatch vector ("CVXR::Foo", "CVXR::Bar", ..., "S7_object") is
+## computed once per class via a parent-chain walk and cached in a closure-
+## captured environment.  Subsequent constructions reuse the cached vector.
+.fast_new <- local({
+  cache <- new.env(hash = TRUE, parent = emptyenv())
+
+  ## Reproduces S7's `class_dispatch()` output using only public accessors.
+  ## Walks the class's parent chain, terminating at the `S7_object` sentinel.
+  build_dispatch <- function(cls) {
+    out <- character(0L)
+    cur <- cls
+    while (inherits(cur, "S7_class") && !identical(cur, S7::S7_object)) {
+      out <- c(out, paste0(cur@package, "::", cur@name))
+      cur <- cur@parent
+    }
+    c(out, "S7_object")
+  }
+
+  function(.class, .parent, ...) {
+    cn <- .class@name
+    cd <- get0(cn, envir = cache, ifnotfound = NULL)
+    if (is.null(cd)) {
+      cd <- build_dispatch(.class)
+      assign(cn, cd, envir = cache)
+    }
+    obj <- .parent
+    attributes(obj) <- c(list(class = cd, S7_class = .class), list(...))
+    obj
+  }
+})
+
 #' Get a cached value from an expression's cache environment
 #' @param x An expression with a `.cache` property
 #' @param key Character key

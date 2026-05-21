@@ -8,6 +8,8 @@ rsrc_tree/utilities/sign.R
 rsrc_tree/utilities/shape.R
 rsrc_tree/utilities/error.R
 rsrc_tree/utilities/power_tools.R
+rsrc_tree/utilities/grad.R
+rsrc_tree/utilities/solver_context.R
 rsrc_tree/settings.R
 rsrc_tree/lin_ops/LinOp.R
 rsrc_tree/lin_ops/LinOpVector.R
@@ -25,6 +27,7 @@ rsrc_tree/expressions/leaf.R
 rsrc_tree/expressions/variable.R
 rsrc_tree/expressions/constants/constant.R
 rsrc_tree/expressions/constants/parameter.R
+rsrc_tree/expressions/constants/callback_param.R
 rsrc_tree/atoms/atom.R
 rsrc_tree/atoms/affine/affine_atom.R
 rsrc_tree/atoms/affine/conj.R
@@ -118,6 +121,7 @@ rsrc_tree/atoms/length.R
 rsrc_tree/atoms/condition_number.R
 rsrc_tree/atoms/gen_lambda_max.R
 rsrc_tree/atoms/dist_ratio.R
+rsrc_tree/atoms/sign.R
 rsrc_tree/zzz_R_specific/operators.R
 rsrc_tree/constraints/constraint.R
 rsrc_tree/constraints/zero.R
@@ -224,6 +228,7 @@ rsrc_tree/reductions/dqcp2dcp/sets.R
 rsrc_tree/reductions/dqcp2dcp/tighten.R
 rsrc_tree/reductions/dqcp2dcp/dqcp2dcp.R
 rsrc_tree/reductions/discrete2mixedint/valinvec2mixedint.R
+rsrc_tree/transforms/partial_optimize.R
 rsrc_tree/reductions/solvers/bisection.R
 rsrc_tree/utilities/replace_quad_forms.R
 rsrc_tree/utilities/coeff_extractor.R
@@ -237,6 +242,7 @@ rsrc_tree/reductions/solvers/qp_solvers/qp_solver.R
 rsrc_tree/reductions/solvers/conic_solvers/conic_solver.R
 rsrc_tree/reductions/solvers/conic_solvers/scs_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/clarabel_conif.R
+rsrc_tree/reductions/solvers/conic_solvers/diffcp_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/mosek_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/gurobi_conif.R
 rsrc_tree/reductions/solvers/conic_solvers/highs_conif.R
@@ -264,3 +270,4 @@ rsrc_tree/zzz_R_specific/math_atoms.R
 rsrc_tree/zzz_R_specific/masking.R
 rsrc_tree/zzz_R_specific/aliases.R
 rsrc_tree/zzz_R_specific/data.R
+rsrc_tree/zzz_R_specific/grad_delta_attrs.R

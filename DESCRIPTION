@@ -1,7 +1,8 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.8.2
+Version: 1.8.2-1
+Date: 2026-05-20
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -37,6 +38,7 @@ Imports:
     Rcpp (>= 1.1),
     clarabel (>= 0.11),
     cli (>= 3.6),
+    diffcp (>= 0.1),
     gmp (>= 0.7),
     highs (>= 1.12),
     osqp (>= 1.0),
@@ -65,6 +67,6 @@ License: Apache License 2.0 | file LICENSE
 LazyData: true
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+RoxygenNote: 7.3.3

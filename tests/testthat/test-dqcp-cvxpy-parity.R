@@ -1023,7 +1023,7 @@ test_that("CVXPY parity: test_length_example — minimize length(x) with mse con
 
 ## @cvxpy test_dqcp.py::TestDqcp::test_sign
 test_that("CVXPY parity: test_sign — sign() in DQCP context", {
-  skip("sign atom (atoms/sign.py) not implemented in CVXR; R sign() conflicts")
+  skip_if_not_installed("scs")
 
   ## Part 1: Minimize sign(x) with x in [-2, -0.5] -> value = -1
   x1 <- Variable()

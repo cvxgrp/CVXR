@@ -1585,8 +1585,14 @@ test_that("Concatenate atom (stub — not in CVXR)", {
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_squeeze
-test_that("Squeeze atom (stub — not in CVXR)", {
-  skip("Squeeze atom not implemented in CVXR")
+test_that("Squeeze atom (N/A in CVXR's 2D shape system)", {
+  ## CVXPY's squeeze removes size-1 dimensions from any-rank arrays.
+  ## CVXPY's test uses np.random.rand(2,1,3,1,1,4) — a 6-D array —
+  ## which CVXR cannot express (CLAUDE.md rule: "CVXR only supports
+  ## 2D shapes").  In 2D: c(1,1) and c(n,1) have no removable trivial
+  ## dims; c(1,n) -> c(n,1) is just t().  No CVXR primitive is
+  ## missing — Squeeze is N/A here, not a port that's outstanding.
+  skip("Squeeze N/A in CVXR's 2D shape system; CVXPY test uses 6-D input")
 })
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -2377,7 +2383,19 @@ test_that("domain: matrix_frac(x, A + I) domain constrains A + I >> 0 (CVXPY par
 
 ## @cvxpy test_domain.py::TestDomain::test_partial_problem
 test_that("domain: partial_optimize domain (CVXPY parity)", {
-  skip("CVXR does not implement partial_optimize transform")
+  skip_if_not_installed("clarabel")
+  a <- Variable(name = "a")
+  x <- Variable(2, name = "x")
+  for (obj in list(Minimize(a^-1), Maximize(log(a)))) {
+    orig_prob <- Problem(obj, list(x + a >= c(5, 8)))
+    expr  <- partial_optimize(orig_prob, dont_opt_vars = list(x, a))
+    dom   <- domain(expr)
+    constr <- c(list(a >= -100, x >= 0), dom)
+    prob  <- Problem(Minimize(sum_entries(x + a)), constr)
+    psolve(prob, solver = "CLARABEL")
+    expect_equal(value(prob), 13, tolerance = 1e-3)
+    expect_true(as.numeric(value(a)) >= 0)
+  }
 })
 
 # ── test_pnorm ────────────────────────────────────────────────────
@@ -2543,7 +2561,22 @@ test_that("power: approx=FALSE errors when solver lacks power cone support (CVXP
 
 ## @cvxpy test_power_atom.py::TestPowerAtom::test_approx_warning
 test_that("power: warning fires for approx=TRUE with many SOCs (CVXPY parity)", {
-  skip("CVXR does not yet emit SOC approximation warnings like CVXPY")
+  skip_if_not_installed("clarabel")
+  x <- Variable(3)
+  obj <- Minimize(x[1] + x[2] - x[3])
+
+  ## approx=TRUE on a power-cone-capable solver should warn
+  expect_warning(
+    psolve(Problem(obj, list(power(x, 3.3, approx = TRUE) <= rep(1, 3))),
+           solver = "CLARABEL"),
+    regexp = "Power atom"
+  )
+
+  ## approx=FALSE should not warn
+  expect_no_warning(
+    psolve(Problem(obj, list(power(x, 3.3, approx = FALSE) <= rep(1, 3))),
+           solver = "CLARABEL")
+  )
 })
 
 # ── TestGeoMeanApprox ──────────────────────────────────────────────
@@ -2599,7 +2632,20 @@ test_that("geo_mean: approx and exact give same answer (CVXPY parity)", {
 
 ## @cvxpy test_power_atom.py::TestGeoMeanApprox::test_approx_warning
 test_that("geo_mean: warning fires for approx=TRUE with many SOCs (CVXPY parity)", {
-  skip("CVXR does not yet emit SOC approximation warnings like CVXPY")
+  skip_if_not_installed("clarabel")
+  x <- Variable(5, pos = TRUE)
+  constr <- list(sum_entries(x) <= 5)
+
+  expect_warning(
+    psolve(Problem(Maximize(geo_mean(x, approx = TRUE)), constr),
+           solver = "CLARABEL"),
+    regexp = "geo_mean"
+  )
+
+  expect_no_warning(
+    psolve(Problem(Maximize(geo_mean(x, approx = FALSE)), constr),
+           solver = "CLARABEL")
+  )
 })
 
 # ── TestGeoMeanSingleWeight ───────────────────────────────────────
@@ -2717,7 +2763,20 @@ test_that("pnorm: approx and exact give same answer (CVXPY parity)", {
 
 ## @cvxpy test_power_atom.py::TestPnormApprox::test_approx_warning
 test_that("pnorm: warning fires for approx=TRUE with many SOCs (CVXPY parity)", {
-  skip("CVXR does not yet emit SOC approximation warnings like CVXPY")
+  skip_if_not_installed("clarabel")
+  x <- Variable(3)
+  constr <- list(sum_entries(x) >= 3, x >= 0)
+
+  expect_warning(
+    psolve(Problem(Minimize(p_norm(x, 3.3, approx = TRUE)), constr),
+           solver = "CLARABEL"),
+    regexp = "pnorm"
+  )
+
+  expect_no_warning(
+    psolve(Problem(Minimize(p_norm(x, 3.3, approx = FALSE)), constr),
+           solver = "CLARABEL")
+  )
 })
 
 # ── TestInvProdApprox ─────────────────────────────────────────────
@@ -2896,22 +2955,79 @@ test_that("perspective: power(x, 4) perspective == quad_over_lin(quad_over_lin(x
 
 ## @cvxpy test_perspective.py::test_psd_tr_persp
 test_that("perspective: trace(P) with PSD variable (CVXPY parity)", {
-  skip("Perspective canonicalizer has broadcast shape mismatch bug with PSD matrix variables")
+  skip_if_not_installed("scs")
+  ## Reference: minimize trace(P) s.t. P == I_2.
+  ref_P <- Variable(c(2, 2), PSD = TRUE)
+  ref_prob <- Problem(Minimize(matrix_trace(ref_P)),
+                      list(ref_P == diag(2)))
+  ref_val <- psolve(ref_prob, solver = "SCS")
+
+  ## Perspective: trace is homogenous of degree 1 so its perspective is itself.
+  P <- Variable(c(2, 2), PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  prob <- Problem(Minimize(perspective(matrix_trace(P), s)),
+                  list(P == diag(2), s == 1))
+  val <- psolve(prob, solver = "SCS")
+  expect_equal(val, ref_val, tolerance = 1e-3)
 })
 
 ## @cvxpy test_perspective.py::test_psd_mf_persp
 test_that("perspective: matrix_frac with PSD variable (CVXPY parity)", {
-  skip("Perspective canonicalizer has broadcast shape mismatch bug with PSD matrix variables")
+  skip_if_not_installed("scs")
+  ## matrix_frac is homogenous of degree 1, so its perspective is itself.
+  ## n=3 picked as a representative non-trivial size from CVXPY's [2, 3, 11].
+  n <- 3L
+  ref_x <- Variable(n)
+  ref_P <- Variable(c(n, n), PSD = TRUE)
+  ref_prob <- Problem(Minimize(matrix_frac(ref_x, ref_P)),
+                      list(ref_x == 5, ref_P == diag(n)))
+  ref_val <- psolve(ref_prob, solver = "SCS")
+
+  x <- Variable(n)
+  P <- Variable(c(n, n), PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  prob <- Problem(Minimize(perspective(matrix_frac(x, P), s)),
+                  list(x == 5, P == diag(n), s == 1))
+  val <- psolve(prob, solver = "SCS")
+  expect_equal(val, ref_val, tolerance = 1e-2)
 })
 
 ## @cvxpy test_perspective.py::test_psd_tr_square
 test_that("perspective: square(trace(P)) with PSD variable (CVXPY parity)", {
-  skip("Perspective canonicalizer has broadcast shape mismatch bug with PSD matrix variables")
+  skip_if_not_installed("scs")
+  ## Tr(X)^2 perspective is quad_over_lin(Tr(X), s).
+  n <- 3L
+  ref_s <- Variable(nonneg = TRUE)
+  ref_P <- Variable(c(n, n), PSD = TRUE)
+  ref_prob <- Problem(Minimize(quad_over_lin(matrix_trace(ref_P), ref_s)),
+                      list(ref_s <= 5, ref_P %>>% diag(n)))
+  ref_val <- psolve(ref_prob, solver = "SCS")
+
+  P <- Variable(c(n, n), PSD = TRUE)
+  s <- Variable(nonneg = TRUE)
+  f <- perspective(square(matrix_trace(P)), s)
+  prob <- Problem(Minimize(perspective(f, s)),
+                  list(s <= 5, P %>>% diag(n)))
+  val <- psolve(prob, solver = "SCS")
+  expect_equal(val, ref_val, tolerance = 1e-3)
 })
 
 ## @cvxpy test_perspective.py::test_diag
 test_that("perspective: trace with diag variable (CVXPY parity)", {
-  skip("Perspective canonicalizer has broadcast shape mismatch bug with diag matrix variables")
+  skip_if_not_installed("clarabel")
+  ## Reference: minimize trace(X) s.t. diag(X) >= [1, 2], X diagonal.
+  X_ref <- Variable(c(2, 2), diag = TRUE)
+  ref_prob <- Problem(Minimize(matrix_trace(X_ref)),
+                      list(diag(X_ref) >= c(1, 2)))
+  ref_val <- psolve(ref_prob, solver = "CLARABEL")
+
+  ## trace is homogenous degree 1, perspective is itself.
+  X <- Variable(c(2, 2), diag = TRUE)
+  s <- Variable(nonneg = TRUE)
+  prob <- Problem(Minimize(perspective(matrix_trace(X), s)),
+                  list(diag(X) >= c(1, 2), s == 1))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(val, ref_val, tolerance = 1e-3)
 })
 
 ## @cvxpy test_perspective.py::test_dpp

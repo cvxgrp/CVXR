@@ -1,3 +1,37 @@
+# CVXR 1.8.2-1
+
+* New derivative API for differentiable convex programs via the
+  `diffcp` R package: `psolve(prob, requires_grad = TRUE)` followed
+  by `backward(prob)` or `derivative(prob)`; `gradient(x)<-` and
+  `delta(x)<-` set tangent / cotangent values on leaves.
+* New `sign()` atom (DQCP, scalar input).
+* New `partial_optimize()` transform.
+* `psolve()` gains a `solver_path` argument for solver fallback chains.
+* New `set_label()` / `label<-` / `format_labeled()` for attaching
+  user-supplied labels to expressions.
+* `power()`, `geo_mean()`, and `p_norm()` with `approx = TRUE` now
+  warn when the selected solver supports power cones (`approx = FALSE`
+  uses the exact `PowCone3D` / `PowConeND` form).
+* MOSEK now supports mixed-integer programs (requires `Rmosek` 11.1.1+).
+* `solver_stats()` for MOSEK now populates `solve_time`, `num_iters`,
+  and `extra_stats`.
+* New `param_dict()`, `var_dict()`, and `size_metrics()` accessors on
+  `Problem`.
+* `Variable(value = ...)` accepts an initial value at construction.
+* New `CallbackParam` class — a `Parameter` subclass whose value is
+  computed on every read by a user-supplied callback.
+* `project()` accepts index-based `boolean = c(i, j, ...)` and
+  `integer = c(i, j, ...)` attributes (1-based).
+* `validate_arguments()` now called on `Cummax`, `Cumprod`, and
+  `MinEntries` constructors.
+* Faster expression construction via a new `.fast_new` helper for S7
+  objects.
+* Fix `Variable(c(n, n), diag = TRUE)` handling through
+  `CvxAttr2Constr`.
+* Fix `perspective()` canonicalizer on PSD, NSD, and diag matrix
+  variables.
+* Fix `project()` on sparse `Matrix`-package objects.
+
 # CVXR 1.8.2
 
 ## New solvers: SCIP and XPRESS (15 total)
@@ -231,9 +265,15 @@ maintainability. ~4-5x faster than CVXR 1.0-15 on typical problems.
   S4 dispatch preempting S7/S3. Wrap with `as_cvxr_expr()` first.
   Base R `matrix`/`numeric` work natively. This is an R dispatch
   limitation requiring upstream changes in S7 and/or Matrix.
-* Warm-start for HiGHS is blocked (R `highs` package lacks `setSolution()` API).
-* Derivative/sensitivity API deferred (requires `diffcp`, no R equivalent).
-* Deferred to a future release: RelEntrConeQuad, quantum atoms, MOSEK MIP.
+* Warm-start for HiGHS is implemented (works with `highs` 1.14) but the
+  upstream R `highs` PR exposing `setSolution()` has not yet been
+  actioned by the maintainers; lives on branch `highs-warm-start`.
+* Complex SOC dual variables are not recovered (CVXPY itself does not
+  implement this — `complex2real.py:56` declares
+  `UNIMPLEMENTED_COMPLEX_DUALS = (SOC, OpRelEntrConeQuad)`). Complex
+  SOC *primal* canonicalization works.
+* Deferred to a future release: RelEntrConeQuad / OpRelEntrConeQuad,
+  quantum atoms, CPLEX conic (SOC) path.
 
 # CVXR 1.0-15
 

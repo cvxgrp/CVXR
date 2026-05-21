@@ -126,11 +126,28 @@ test_that("DPP gap: log_det with parameter works with ignore_dpp=TRUE", {
 })
 
 ## @cvxpy test_dpp.py::TestCallbackParam::test_callback_param
-test_that("DPP gap: CallbackParam (NOT IMPLEMENTED)", {
-  skip("CallbackParam is not implemented in CVXR")
-  ## CVXPY: CallbackParam callback returns p.value * q.value
-  ## problem.is_dpp() should be TRUE
-  ## Solving should use the callback-provided value
+test_that("DPP gap: CallbackParam", {
+  ## Mirrors CVXPY test_dpp.py::TestCallbackParam::test_callback_param.
+  x <- Variable()
+  p <- Parameter()
+  q <- Parameter()
+  cb <- CallbackParam(callback = function() value(p) * value(q))
+  prob <- Problem(Minimize(x), list(x >= cb))
+
+  expect_true(is_dpp(prob))
+
+  value(p) <- 1.0
+  value(q) <- 4.0
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), 4.0, tolerance = 1e-5)
+
+  value(p) <- 2.0
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), 8.0, tolerance = 1e-5)
+
+  ## CallbackParam value-setter explicitly errors.
+  expect_error(value(cb) <- 1.0,
+               regexp = "Cannot set the value")
 })
 
 # ======================================================================
@@ -200,21 +217,17 @@ test_that("DPP-DGP gap: mixed monomial (params + vars) is DGP-DPP", {
 })
 
 ## @cvxpy test_dpp.py::TestDgp::test_nested_power_not_dpp
-test_that("DPP-DGP gap: nested power DGP-DPP detection", {
+test_that("nested power DGP-DPP detection matches CVXPY", {
   alpha <- Parameter(value = 1.0)
   x <- Variable(pos = TRUE)
 
   pow1 <- power(x, alpha)
   expect_true(with_dpp_scope(is_log_log_convex(pow1)))
 
-  ## Nested: (x^alpha)^alpha — CVXPY considers this NOT DGP-DPP because
-  ## the base of the outer power is itself a parametric expression.
-  ## CVXR is more permissive here (considers it DGP-DPP).
-  ## This is a known behavioral difference; the solve path handles both.
+  ## Nested: (x^alpha)^alpha — NOT DGP-DPP because the base of the outer
+  ## power is itself a parametric expression. CVXPY: assertFalse.
   pow2 <- power(pow1, alpha)
-  ## CVXPY: assertFalse(pow2.is_dgp(dpp=True))
-  ## CVXR: with_dpp_scope returns TRUE — more permissive
-  expect_true(with_dpp_scope(is_log_log_convex(pow2)))
+  expect_false(with_dpp_scope(is_log_log_convex(pow2)))
 })
 
 ## @cvxpy test_dpp.py::TestDgp::test_non_dpp_problem_raises_error

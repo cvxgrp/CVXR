@@ -57,12 +57,18 @@ test_that("cumsum(x) creates Cumsum atom via Math dispatch", {
   expect_equal(cs@shape, c(3L, 1L))
 })
 
-## ── Math group: sign → error ─────────────────────────────────────
+## ── Math group: sign(x) routes to Sign atom ──────────────────────
 
 ## @cvxpy NONE
-test_that("sign(x) gives clear error for CVXR expressions", {
+## sign(x) used to abort with "use expr_sign" -- that error has been
+## replaced by routing through the Math handler to the Sign DQCP atom
+## (v1.8.2-1, sign-atom branch).  expr_sign() is still the
+## curvature-query generic; they are distinct concepts.
+test_that("sign(x) dispatches to the Sign atom for CVXR expressions", {
   x <- Variable(3)
-  expect_error(sign(x), "expr_sign")
+  s <- sign(x)
+  expect_s3_class(s, "CVXR::Sign")
+  expect_equal(s@shape, c(3L, 1L))
 })
 
 ## ── Math group: log2, log10, log1p ───────────────────────────────

@@ -555,8 +555,8 @@ sth_mi_lp_2 <- function() {
                645, 267, 972, 895, 213, 748, 487, 923, 29, 674)
   X <- Variable(n, boolean = TRUE)
   prob <- Problem(
-    Maximize(sum_entries(multiply(profits, X))),
-    list(sum_entries(multiply(weights, X)) <= c_cap)
+    Maximize(sum_entries(profits * X)),
+    list(sum_entries(weights * X) <= c_cap)
   )
   list(
     prob = prob,
@@ -641,73 +641,94 @@ sth_mi_lp_3 <- function() {
 }
 
 sth_mi_lp_4 <- function() {
-  ## Boolean abs value MIP
+  ## MI without constraints: maximize 0.23 * x over boolean x.
   ## CVXPY SOURCE: solver_test_helpers.py mi_lp_4()
   x <- Variable(boolean = TRUE)
-  prob <- Problem(Minimize(abs(x)), list())
+  prob <- Problem(Maximize(Constant(0.23) * x), list())
   list(
     prob = prob,
-    expect_obj = 0,
-    expect_x = 0,
-    cone_type = "MIP_LP"
+    expect_obj = 0.23,
+    expect_x   = 1,
+    cone_type  = "MIP_LP"
   )
 }
 
 sth_mi_lp_5 <- function() {
-  ## Multiple integer vars with simple constraints
+  ## Infeasible boolean problem (Sage trac #31962, comment 48).
   ## CVXPY SOURCE: solver_test_helpers.py mi_lp_5()
-  x <- Variable(2, integer = TRUE)
-  prob <- Problem(
-    Minimize(sum_entries(x)),
-    list(x[1] + x[2] >= 3, x >= 0)
+  ##   Minimize(0) over 11 boolean z subject to 5 sum=1 pairs and
+  ##   10 disjunction-style sum<=1 inequalities; no feasible assignment.
+  z <- Variable(11, boolean = TRUE)
+  constraints <- list(
+    z[3]  + z[2]  == 1,   # CVXPY z[2]+z[1]
+    z[5]  + z[4]  == 1,   # CVXPY z[4]+z[3]
+    z[7]  + z[6]  == 1,   # CVXPY z[6]+z[5]
+    z[9]  + z[8]  == 1,   # CVXPY z[8]+z[7]
+    z[11] + z[10] == 1,   # CVXPY z[10]+z[9]
+    z[5]  + z[2]  <= 1,
+    z[3]  + z[4]  <= 1,
+    z[7]  + z[3]  <= 1,
+    z[2]  + z[6]  <= 1,
+    z[9]  + z[7]  <= 1,
+    z[6]  + z[8]  <= 1,
+    z[11] + z[9]  <= 1,
+    z[8]  + z[10] <= 1,
+    z[10] + z[5]  <= 1,
+    z[4]  + z[11] <= 1
   )
+  prob <- Problem(Minimize(0), constraints)
   list(
     prob = prob,
-    expect_obj = 3,
-    expect_x = NULL,  # multiple optima (e.g., (0,3), (1,2), (2,1), (3,0))
-    cone_type = "MIP_LP"
+    expect_obj = Inf,    # infeasible Minimize: CVXR convention opt_val = Inf
+    expect_x   = NULL,
+    cone_type  = "MIP_LP"
   )
 }
 
 sth_lp_6 <- function() {
-  ## LP with dual variables checked
+  ## LP with no constraints (unbounded Maximize).
   ## CVXPY SOURCE: solver_test_helpers.py lp_6()
-  x <- Variable(2)
-  prob <- Problem(
-    Minimize(x[1] + 2 * x[2]),
-    list(x[1] + x[2] >= 1, x >= 0)
-  )
+  x <- Variable()
+  prob <- Problem(Maximize(Constant(0.23) * x), list())
   list(
     prob = prob,
-    expect_obj = 1,
-    expect_x = c(1, 0),
-    con_duals = list(1, c(0, 2)),
-    cone_type = "LP"
+    expect_obj = Inf,    # unbounded Maximize: user-facing +Inf
+    expect_x   = NULL,
+    cone_type  = "LP"
   )
 }
 
 # ── PowCone helpers (continued) ─────────────────────────────────
 
 sth_mi_pcp_0 <- function() {
-  ## Mixed-integer power cone problem
+  ## Mixed-integer power cone problem.
   ## CVXPY SOURCE: solver_test_helpers.py mi_pcp_0()
-  x <- Variable(3)
-  y <- Variable(integer = TRUE)
+  ##   max  x3 + x4 - x0
+  ##   s.t. x0 + x1 + x2 / 2 == 2,
+  ##        (x0, x1, x3) in Pow3D(0.2)
+  ##        (x2, q,  x4) in Pow3D(0.4)
+  ##        0.1 <= q <= 1.9, q integer
+  ## (q is integer in [0.1, 1.9] so q = 1 at the optimum.)
+  x     <- Variable(3)
+  hypos <- Variable(c(1, 2))   # CVXPY Variable(shape=(2,)) is 1D; R uses (1,2)
+  q     <- Variable(integer = TRUE)
+  objective <- Minimize(-sum_entries(hypos) + x[1])
+  arg1 <- hstack(x[1], x[3])
+  arg2 <- hstack(x[2], q)
+  pc_con <- PowCone3D(arg1, arg2, hypos, matrix(c(0.2, 0.4), 1, 2))
   constraints <- list(
-    PowCone3D(x[1], x[2], x[3], 0.25),
-    x[1] >= 2,
-    x[2] >= 1,
-    y >= x[3],
-    y <= -1
+    x[1] + x[2] + 0.5 * x[3] == 2,
+    pc_con,
+    0.1 <= q,
+    q <= 1.9
   )
-  objective <- Minimize(y)
   prob <- Problem(objective, constraints)
   list(
     prob = prob,
-    expect_obj = -1,
-    expect_x = NULL,
-    expect_y = -1,
-    cone_type = "MIP_PCP"
+    expect_obj = -1.8073406786220672,
+    expect_x   = c(0.06393515, 0.78320961, 2.30571048),
+    expect_q   = 1,
+    cone_type  = "MIP_PCP"
   )
 }
 

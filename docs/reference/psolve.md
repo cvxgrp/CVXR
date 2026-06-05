@@ -19,6 +19,9 @@ psolve(
   verbose = FALSE,
   warm_start = FALSE,
   requires_grad = FALSE,
+  nlp = FALSE,
+  enforce_dpp = FALSE,
+  ignore_dpp = FALSE,
   solver_path = NULL,
   ...
 )
@@ -60,6 +63,23 @@ psolve(
   [`backward()`](https://www.cvxgrp.org/CVXR/reference/backward.md) /
   [`derivative()`](https://www.cvxgrp.org/CVXR/reference/derivative.md)
   can recover gradients.
+
+- nlp:
+
+  Logical; if `TRUE`, solve the problem as a disciplined nonlinear
+  program (DNLP) using the NLP reduction chain and an NLP solver (e.g.
+  `"UNO"`). The problem must satisfy
+  [`is_dnlp()`](https://www.cvxgrp.org/CVXR/reference/is_dnlp.md).
+
+- enforce_dpp:
+
+  Logical; if `TRUE`, raise an error when a parametrized problem is not
+  DPP instead of compiling it as non-DPP.
+
+- ignore_dpp:
+
+  Logical; if `TRUE`, treat a DPP problem as non-DPP (skip the DPP fast
+  path).
 
 - solver_path:
 

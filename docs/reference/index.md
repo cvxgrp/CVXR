@@ -18,6 +18,8 @@ Variables, parameters, constants, problems, and constraints
   Create a Minimization Objective
 - [`Maximize()`](https://www.cvxgrp.org/CVXR/reference/Maximize.md) :
   Create a Maximization Objective
+- [`scalarize`](https://www.cvxgrp.org/CVXR/reference/scalarize.md) :
+  Scalarize multiple objectives into a single objective
 - [`Equality()`](https://www.cvxgrp.org/CVXR/reference/Equality.md) :
   Create an Equality Constraint
 - [`Inequality()`](https://www.cvxgrp.org/CVXR/reference/Inequality.md)
@@ -82,6 +84,9 @@ Solving problems and extracting results
   Get the Residual of a Constraint
 - [`violation()`](https://www.cvxgrp.org/CVXR/reference/violation.md) :
   Get the Violation of a Constraint
+- [`sample_bounds()`](https://www.cvxgrp.org/CVXR/reference/sample_bounds.md)
+  [`` `sample_bounds<-`() ``](https://www.cvxgrp.org/CVXR/reference/sample_bounds.md)
+  : Sampling Bounds for NLP Random Restarts
 
 ## Differentiation
 
@@ -108,12 +113,15 @@ Differentiate through the solution map (requires the diffcp package)
 - [`param_dict()`](https://www.cvxgrp.org/CVXR/reference/param_dict.md)
   : Get all Parameters of a Problem as a Named List
 
-- [`param_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
-  [`param_forward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
-  [`var_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+- [`var_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
   [`var_forward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
-  : Reduction chain-rule hooks (backward / forward, parameter /
-  variable)
+  [`param_backward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  [`param_forward()`](https://www.cvxgrp.org/CVXR/reference/reduction-chain-rule.md)
+  : Reduction chain-rule hooks (dict-in / dict-out)
+
+- [`var_id_map()`](https://www.cvxgrp.org/CVXR/reference/reduction-id-map.md)
+  [`param_id_map()`](https://www.cvxgrp.org/CVXR/reference/reduction-id-map.md)
+  : Reduction leaf-id maps
 
 ## Solvers
 
@@ -135,6 +143,10 @@ Solver name constants
   [`PIQP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`SCIP_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   [`XPRESS_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`IPOPT_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`KNITRO_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`UNO_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
+  [`COPT_SOLVER`](https://www.cvxgrp.org/CVXR/reference/solver-constants.md)
   : Solver Name Constants
 
 ## Status constants
@@ -186,6 +198,8 @@ Functions applied element-by-element
   Elementwise log of the gamma function
 - [`log_normcdf()`](https://www.cvxgrp.org/CVXR/reference/log_normcdf.md)
   : Elementwise log of the standard normal CDF
+- [`normcdf()`](https://www.cvxgrp.org/CVXR/reference/normcdf.md) :
+  Standard Normal Cumulative Distribution Function
 - [`neg()`](https://www.cvxgrp.org/CVXR/reference/neg.md) : Negative
   part: -min(x, 0)
 - [`pos()`](https://www.cvxgrp.org/CVXR/reference/pos.md) : Positive
@@ -276,6 +290,8 @@ Matrix operations and structural atoms
   a Block Matrix
 - [`conv()`](https://www.cvxgrp.org/CVXR/reference/conv.md) : 1D
   discrete convolution
+- [`convolve()`](https://www.cvxgrp.org/CVXR/reference/convolve.md) : 1D
+  discrete convolution (numpy-style)
 - [`DiagMat()`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) :
   Extract Diagonal from a Matrix
 - [`DiagVec()`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) :
@@ -411,6 +427,8 @@ Query properties of CVXR expressions
   if an Expression is DCP-Compliant
 - [`is_dgp()`](https://www.cvxgrp.org/CVXR/reference/is_dgp.md) : Check
   if a Constraint is DGP-Compliant
+- [`is_dnlp()`](https://www.cvxgrp.org/CVXR/reference/is_dnlp.md) :
+  Check if an Expression or Problem is DNLP-Compliant
 - [`is_dpp()`](https://www.cvxgrp.org/CVXR/reference/is_dpp.md) : Check
   DPP Compliance
 - [`is_dqcp()`](https://www.cvxgrp.org/CVXR/reference/is_dqcp.md) :
@@ -455,6 +473,16 @@ Query properties of CVXR expressions
   Is the Expression a Vector?
 - [`is_zero()`](https://www.cvxgrp.org/CVXR/reference/is_zero.md) :
   Check if Expression is Zero
+- [`is_smooth()`](https://www.cvxgrp.org/CVXR/reference/is_smooth.md) :
+  Check if an Expression is Smooth
+- [`is_atom_smooth()`](https://www.cvxgrp.org/CVXR/reference/is_atom_smooth.md)
+  : Check if an Atom is Smooth
+- [`is_linearizable_convex()`](https://www.cvxgrp.org/CVXR/reference/is_linearizable_convex.md)
+  : Check if an Expression is Linearizable-Convex
+- [`is_linearizable_concave()`](https://www.cvxgrp.org/CVXR/reference/is_linearizable_concave.md)
+  : Check if an Expression is Linearizable-Concave
+- [`get_bounds()`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)
+  : Lower/Upper Bounds of a Leaf
 - [`length_expr()`](https://www.cvxgrp.org/CVXR/reference/length_expr.md)
   : Length of a Vector (Last Nonzero Index)
 - [`size()`](https://www.cvxgrp.org/CVXR/reference/size.md) : Get

@@ -12,11 +12,14 @@ power(x, p, max_denom = 1024L, approx = TRUE)
 
 - x:
 
-  An Expression
+  An Expression (the base), OR a positive constant if `p` is a variable
+  (the identity `b^x = exp(x * log(b))` is used).
 
 - p:
 
-  Numeric exponent
+  Numeric exponent, Parameter, or Expression. If `p` is a non-constant
+  Expression and `x` is a positive constant, dispatches to
+  `exp(p * log(x))`.
 
 - max_denom:
 
@@ -29,7 +32,8 @@ power(x, p, max_denom = 1024L, approx = TRUE)
 
 ## Value
 
-A Power or PowerApprox atom
+A Power or PowerApprox atom, or an exp expression for the const-base
+case.
 
 ## Note
 

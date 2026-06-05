@@ -36,41 +36,15 @@ PIQP_SOLVER
 SCIP_SOLVER
 
 XPRESS_SOLVER
+
+IPOPT_SOLVER
+
+KNITRO_SOLVER
+
+UNO_SOLVER
+
+COPT_SOLVER
 ```
-
-## Format
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
 
 ## Value
 

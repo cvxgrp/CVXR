@@ -7,7 +7,7 @@ enables caching the compilation across parameter value changes.
 ## Usage
 
 ``` r
-is_dpp(x, ...)
+is_dpp(x, context = "dcp")
 ```
 
 ## Arguments
@@ -16,9 +16,10 @@ is_dpp(x, ...)
 
   An expression, constraint, or problem object.
 
-- ...:
+- context:
 
-  Not used.
+  Either `"dcp"` (default) or `"dgp"`: which discipline to check
+  parameterization against. Mirrors CVXPY's `is_dpp(context=...)`.
 
 ## Value
 

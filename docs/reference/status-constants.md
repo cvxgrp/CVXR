@@ -26,26 +26,6 @@ USER_LIMIT
 INFEASIBLE_OR_UNBOUNDED
 ```
 
-## Format
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
-An object of class `character` of length 1.
-
 ## Value
 
 A character string.

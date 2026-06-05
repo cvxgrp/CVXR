@@ -1,11 +1,124 @@
-# CVXR 1.8.2-1
+# CVXR 1.9.1
 
-* New derivative API for differentiable convex programs via the
-  `diffcp` R package: `psolve(prob, requires_grad = TRUE)` followed
-  by `backward(prob)` or `derivative(prob)`; `gradient(x)<-` and
-  `delta(x)<-` set tangent / cotangent values on leaves.
-* New `sign()` atom (DQCP, scalar input).
+This is the first CRAN release since 1.8.2 and is a large one: it tracks
+CVXPY 1.9.1 and folds in the changes from the internal 1.8.2-1 and 1.9.0
+development cycles. The headline additions are a derivative API for
+differentiable convex programs, disciplined nonlinear programming (DNLP),
+and interval-bounds propagation with native solver-bound support.
+
+## Disciplined nonlinear programming (DNLP)
+
+* Solve smooth nonlinear programs with `psolve(prob, nlp = TRUE)`. The
+  problem must satisfy the new `is_dnlp()` grammar (disciplined
+  nonlinear program); DCP problems are a subset, so any DCP problem is
+  also a valid DNLP.
+* New smooth atoms usable in DNLPs: `sin()`, `cos()`, `tan()`,
+  `sinh()`, `tanh()`, `asinh()`, `atanh()`, and `normcdf()`.
+* `prod()` is now recognized as a smooth atom, so problems involving
+  products of entries (including `prod_entries(X, axis = ...)`) are
+  DNLP and solvable through the NLP path.
+* The classically-differentiable atoms now report `is_atom_smooth()`
+  matching CVXPY 1.9: affine atoms, `exp`, `log`, `entr`, `logistic`,
+  `kl_div`, `rel_entr`, `xexp`, `power` (with a constant exponent),
+  `geo_mean`, `log_sum_exp`, `quad_form`, `quad_over_lin`, and `prod`.
+  As a result smooth convex/concave functions such as `sum_squares()`
+  are linearizable in both directions (`is_smooth()` is `TRUE`), while
+  piecewise atoms (`abs`, `min`, `max`) remain convex/concave-only.
+  New predicate exports: `is_smooth()`, `is_atom_smooth()`,
+  `is_linearizable_convex()`, `is_linearizable_concave()`.
+* Piecewise-linear atoms used in a DNLP (`abs`, `max`, `max_elemwise`,
+  `norm_inf`, `sum_largest`, and `sum_smallest`) now initialize their
+  epigraph variables during canonicalization, so the NLP backend has a
+  complete starting point. `sum_largest` initializes its threshold to the
+  (k+1)-th largest entry, matching CVXPY's warm-start fix.
+* New `convolve()` atom, CVXPY 1.9's preferred (numpy-style) name for the
+  1-D discrete-convolution `conv()` atom. For numeric input it falls through
+  to `stats::convolve()`.
+* The DNLP path is powered by derivatives from the optional
+  `sparsediff` package and can solve through the optional `ipopt` and
+  `Uno` R packages. NLP solver names: `"IPOPT"`, `"UNO"` (and the
+  variants `"uno_ipm"` / `"uno_sqp"`), `"KNITRO"`, and `"COPT"`;
+  `"KNITRO"` and `"COPT"` are registered but require solver bindings
+  not yet available in R. When installed, `IPOPT` is the first automatic
+  NLP solver, matching CVXPY's preference order.
+* `quad_over_lin()` and `sum_squares()` now canonicalize axis-aware
+  reductions (`axis = 1` and `axis = 2`) into batched second-order cone
+  constraints, closing the CVXPY parity gap for
+  `sum_squares(..., axis = ...)` in objectives and constraints.
+* **The `UNO` interface defaults to the interior-point `ipopt` preset
+  (plus MUMPS), which differs from CVXPY's `filtersqp` default.**
+  CVXPY's `filtersqp` uses the BQPD active-set solver for its quadratic
+  subproblems, which handles indefinite Hessians. The bundled Uno build
+  is HiGHS-only (BQPD is not bundled and is not CRAN-license
+  compatible), and HiGHS solves only *convex* quadratic subproblems, so
+  `filtersqp` fails on nonconvex DNLPs. The interior-point `ipopt`
+  preset factors the regularized KKT system with MUMPS and is robust on
+  both convex and nonconvex problems. Force the SQP path with
+  `solver = "uno_sqp"` (or `preset = "filtersqp"`); it is reliable only
+  for problems whose subproblem Hessians stay positive semidefinite.
+* Best-of-N random restarts for nonconvex DNLPs:
+  `psolve(prob, nlp = TRUE, best_of = n)` solves from `n` random initial
+  points and keeps the best result. Random initialization draws from a
+  variable's `sample_bounds(var) <- c(low, high)` (when set) or its
+  finite variable bounds. The per-run objectives are available via
+  `solver_stats(prob)@extra_stats$all_objs_from_best_of`.
+* After an NLP solve, `dual_value()` returns the constraint duals
+  recovered from the solver (a CVXR addition; the duals are not exposed
+  by CVXPY's NLP interface).
+
+## Derivative API for differentiable convex programs
+
+* New derivative API backed by the `diffcp` R package:
+  `psolve(prob, requires_grad = TRUE)` followed by `backward(prob)` or
+  `derivative(prob)`; `gradient(x)<-` and `delta(x)<-` set tangent /
+  cotangent values on leaves. The chain rule is wired through `Dgp2Dcp`
+  (log/exp) and `Complex2Real` (real/imag split).
+
+## Bounds propagation
+
+* `get_bounds()` now works on any expression, not just variables: it
+  propagates interval bounds through affine, elementwise, and
+  piecewise-linear atoms (e.g. `get_bounds(A %*% x + b)`,
+  `get_bounds(abs(x))`, `get_bounds(sum(x))`). Bounds are returned shaped
+  to the expression's dimensions.
+* Variable bounds may now be sparse `Matrix` objects or symbolic bounds
+  involving `Parameter`s. `get_bounds()` preserves sparse numeric bounds and
+  skips symbolic bounds, while solve-time attribute lowering enforces the
+  symbolic constraints. `Parameter` values containing matching `Inf` entries
+  now validate correctly.
+* Solvers that expose native variable bounds now consume dense numeric
+  bounds directly instead of adding bound constraints: HiGHS (LP/MILP and
+  QP paths), Gurobi (QP/MIQP and conic/SOCP), CPLEX (QP/MIQP), XPRESS
+  (QP/MIQP and conic/SOCP), PIQP (QP), and SCIP (conic). Sparse bounds
+  continue through constraint lowering.
+* Parametric variable bounds use bound tensors (HiGHS), so changing
+  `Parameter` bounds updates native solver bounds on DPP re-solves.
+* Bounds inferred for DCP auxiliary variables are now preserved for solvers
+  that consume native variable bounds.
+* Attribute reduction now compacts 2D symmetric, PSD, NSD, and diagonal
+  `Parameter`s before rebuilding their full expressions.
+* Variables now report `Parameter`s embedded in expression bounds and include
+  those bounds in DPP/DGP compliance checks.
+
+## Geometric and parameterized programming
+
+* Positive (DGP) variables now accept numeric *and* parametric bounds under
+  `gp = TRUE` (e.g. `Variable(pos = TRUE, bounds = list(lb, ub))` with `lb`/`ub`
+  `Parameter`s). The DGP reduction log-transforms the bounds into the log domain
+  and lowers them to constraints; parametric bounds canonicalize through the DGP
+  tree without eagerly evaluating `log(value(param))`, so DPP re-solves with
+  changed bound parameters work.
+* `is_dpp()` gains a `context` argument (`"dcp"` or `"dgp"`), matching CVXPY's
+  `is_dpp(context=...)`. In the `"dgp"` context a variable's symbolic bounds must
+  be log-log-affine (e.g. a product of positive `Parameter`s is DGP-DPP though
+  not DCP-DPP; `norm()`/`sum()` bounds are rejected).
 * New `partial_optimize()` transform.
+* CPLEX now solves LP/SOCP/MI-LP/MI-SOCP problems through the conic path by
+  translating SOC blocks to `Rcplex` quadratic constraints.
+
+## New atoms, transforms, and accessors
+
+* New `sign()` atom (DQCP, scalar input).
 * `psolve()` gains a `solver_path` argument for solver fallback chains.
 * New `set_label()` / `label<-` / `format_labeled()` for attaching
   user-supplied labels to expressions.
@@ -24,13 +137,47 @@
   `integer = c(i, j, ...)` attributes (1-based).
 * `validate_arguments()` now called on `Cummax`, `Cumprod`, and
   `MinEntries` constructors.
-* Faster expression construction via a new `.fast_new` helper for S7
-  objects.
-* Fix `Variable(c(n, n), diag = TRUE)` handling through
-  `CvxAttr2Constr`.
-* Fix `perspective()` canonicalizer on PSD, NSD, and diag matrix
-  variables.
+
+## Performance
+
+* Problem canonicalization and solving are faster than the 1.8.2 CRAN
+  release on a wide range of problems. Two changes account for most of
+  the gain: a new `.fast_new` helper for S7 expression construction
+  (roughly 40% lower wall-clock on atom-dense and PSD-heavy problems),
+  and routing S7 class-membership checks on the hot canonicalization
+  path through a cached check on the object's class vector instead of
+  `S7::S7_inherits()` (which rebuilt the class name on every call; the
+  per-node cone-detection scan benefits most). Deterministic memory
+  allocation is unchanged. These are internal changes with no
+  user-visible API difference.
+
+## Bug fixes
+
+* Bug fix (also affected 1.8.x): `problem_data()` and `get_problem_data()` now
+  take an explicit `gp` argument. Previously `gp = TRUE` passed through `...` was
+  silently ignored, compiling a geometric program as a DCP problem.
+* Bug fix (also affected 1.8.x): `psolve()` now takes explicit `enforce_dpp` and
+  `ignore_dpp` arguments, matching CVXPY's `solve()`. Previously they were
+  silently swallowed by `...`; `enforce_dpp = TRUE` now raises on a non-DPP
+  parametrized problem instead of falling back to a non-DPP compile.
+* Fixed QP-path canonicalization of `quad_over_lin(expr, constant)` so the
+  decision uses the canonicalized denominator, matching CVXPY 1.9 behavior for
+  cases such as `quad_over_lin(exp(x), 1)` that should keep `ExpCone` without
+  adding an SOC block.
+* Fix `Variable(c(n, n), diag = TRUE)` handling through `CvxAttr2Constr`.
+* Fix `perspective()` canonicalizer on PSD, NSD, and diag matrix variables.
 * Fix `project()` on sparse `Matrix`-package objects.
+
+## Notes
+
+* Complex-parameter DPP fast-path parity remains a deliberate feature gap:
+  complex parameters are evaluated before `Complex2Real` because CVXR's R
+  sparse-matrix backend cannot carry complex sparse parameter tensors. Ordinary
+  complex expression solving is still supported through `Complex2Real`.
+* CVXR's 2-D positive-dimensional model does not support zero-sized
+  expressions, constraints, or solves. Generated or data-dependent models
+  should skip vacuous constraints and use explicit zero contributions when a
+  mask or filter selects no entries.
 
 # CVXR 1.8.2
 

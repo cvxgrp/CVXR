@@ -118,9 +118,10 @@ mathematically intuitive.
 
 ## Available Solvers
 
-CVXR 1.8.2 supports 15 solvers, both open source and commercial:
+CVXR supports 15 solvers, both open source and commercial:
 Clarabel, SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS,
-ECOS_BB, CPLEX, CVXOPT, PIQP, SCIP, and XPRESS.
+ECOS_BB, CPLEX, CVXOPT, PIQP, SCIP, and XPRESS. Smooth nonlinear
+programs additionally use the IPOPT and UNO solvers.
 
 ```{r}
 installed_solvers()
@@ -132,21 +133,21 @@ You can specify a solver explicitly:
 psolve(problem, solver = "CLARABEL")
 ```
 
-## What's New in 1.8.2
+## What's New
 
-- **15 solvers**: SCIP and XPRESS added (up from 13 in 1.8.1).
-- **Element-wise matrix indexing**: Constrain specific entries of a
-  matrix variable using R's native indexing idioms:
-  ```r
-  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
-  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
-  ```
-  Also supports logical matrix indexing (`X[mask]`) and linear
-  integer indexing (`X[c(1, 5, 9)]`).
-- **CVXPY 1.8.2 parity**: All applicable bug fixes ported.
-- **Unified solver options** via `solver_opts()`.
+Recent releases add disciplined nonlinear programming
+(`psolve(prob, nlp = TRUE)`), bounds propagation through expressions
+(`get_bounds()`), a derivative / sensitivity-analysis API
+(`requires_grad = TRUE`), and new atoms such as `convolve()`. CVXR also
+supports element-wise matrix indexing using R's native idioms:
 
-See `NEWS.md` for full details.
+```{r, eval = FALSE}
+ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+```
+
+For a release-by-release summary see `vignette("whats_new")`, and
+`news(package = "CVXR")` for the full details.
 
 ## Further Reading
 

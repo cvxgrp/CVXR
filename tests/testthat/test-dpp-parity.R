@@ -254,25 +254,226 @@ test_that("DPP parity: can solve non-DPP problem", {
   expect_equal(result2, 9, tolerance = 1e-3)
 })
 
-## @cvxpy test_dpp.py::TestDcp::test_param_quad_form_not_dpp
-test_that("DPP parity: param quad_form is NOT DPP", {
-  ## CVXPY: test_param_quad_form_not_dpp
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPDetection::test_parametric_P_is_dpp_in_scope
+test_that("DPP parity: param quad_form is DPP only inside quad_form_dpp_scope", {
+  ## CVXPY: test_parametric_P_is_dpp_in_scope
+  ##   assert not y.is_dpp()
+  ##   with scopes.quad_form_dpp_scope(): assert y.is_dpp()
   x <- Variable(c(2L, 1L))
   P <- Parameter(c(2L, 2L), PSD = TRUE)
   value(P) <- diag(2)
   qf <- quad_form(x, P)
+  ## Not DPP under standard rules (P is not constant)...
+  expect_false(is_dpp(qf))
+  ## ...but DPP inside the quad_form DPP scope (P treated as param-affine).
+  expect_true(CVXR:::with_quad_form_dpp_scope(is_dpp(qf)))
+  ## Leaving the scope must not leak the relaxed result.
   expect_false(is_dpp(qf))
   expect_true(is_dcp(qf))
 })
 
-## @cvxpy test_dpp.py::TestDcp::test_const_quad_form_is_dpp
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPDetection::test_constant_P_always_dpp
 test_that("DPP parity: constant quad_form IS DPP", {
-  ## CVXPY: test_const_quad_form_is_dpp
+  ## CVXPY: test_constant_P_always_dpp
   x <- Variable(c(2L, 1L))
   P <- diag(2)
   qf <- quad_form(x, P)
   expect_true(is_dpp(qf))
   expect_true(is_dcp(qf))
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPDetection::test_invalid_cases_not_dpp
+test_that("DPP parity: invalid param quad_form cases are NOT DPP", {
+  x <- Variable(c(2L, 1L))
+  p <- Parameter(c(2L, 1L), value = c(1, 2))
+  P <- Parameter(c(2L, 2L), PSD = TRUE, value = diag(2))
+  alpha <- Parameter(nonneg = TRUE, value = 1.0)
+
+  expect_false(is_dpp(quad_form(p, diag(2))))
+  expect_false(is_dpp(quad_form(x + p, P)))
+  expect_false(is_dpp(quad_form(x, alpha * P, assume_PSD = TRUE)))
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPCompilation::test_get_problem_data_without_P_value
+## @v19-pending: compile-without-parameter-values [now]
+test_that("DPP parity: param quad_form problem_data without P value (deferred)", {
+  ## CVXR builds the numeric problem data eagerly (cone_matrix_stuffing
+  ## contracts the parameter tensors with the current values), so it requires
+  ## P to have a value -- unlike CVXPY, which can compile the param_prog
+  ## structure without values. DPP re-solve once a value is set works (see
+  ## test_resolve_with_different_P_values); only the no-value compile differs.
+  skip("@v19-pending: CVXR compiles numeric problem data eagerly; requires P.value")
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPCompilation::test_is_dpp_without_P_value
+test_that("DPP parity: param quad_form is_dpp works without P value", {
+  ## is_dpp does not need parameter values.
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), PSD = TRUE)   # no value
+  expect_true(CVXR:::with_quad_form_dpp_scope(is_dpp(quad_form(x, P))))
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPCorrectness::test_minimize_quad_form test_quad_dpp.py::TestQuadFormDPPCorrectness::test_resolve_with_different_P_values
+test_that("DPP parity: param quad_form minimizes and re-solves with new P", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), PSD = TRUE)
+  prob <- Problem(Minimize(quad_form(x, P)), list(sum_entries(x) == 1))
+
+  value(P) <- diag(c(2, 1))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(1 / 3, 2 / 3), tolerance = 1e-3)
+
+  value(P) <- diag(c(1, 2))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(2 / 3, 1 / 3), tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPCorrectness::test_maximize_with_nsd_P
+test_that("DPP parity: param quad_form maximizes with NSD P", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), NSD = TRUE, value = -diag(2))
+  prob <- Problem(Maximize(quad_form(x, P)), list(sum_entries(x) == 1))
+
+  result <- psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(0.5, 0.5), tolerance = 1e-3)
+  expect_equal(as.numeric(result), -0.5, tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPVariants::test_quad_form_plus_linear test_quad_dpp.py::TestQuadFormDPPVariants::test_quad_form_plus_constant_linear
+test_that("DPP parity: param quad_form plus linear term solves", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), PSD = TRUE, value = diag(2))
+  c_vec <- c(2, -2)
+  prob <- Problem(Minimize(quad_form(x, P) + t(c_vec) %*% x),
+                  list(sum_entries(x) == 1))
+
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(-0.5, 1.5), tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPVariants::test_quad_form_in_constraint test_quad_dpp.py::TestQuadFormDPPConstraintResolve::test_constraint_quad_form_resolve
+test_that("DPP parity: param quad_form in constraint re-solves with new P", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), PSD = TRUE)
+  prob <- Problem(Minimize(sum_entries(x)), list(quad_form(x, P) <= 1))
+
+  value(P) <- diag(2)
+  psolve(prob, solver = "CLARABEL")
+  first_solution <- as.numeric(value(x))
+  expect_equal(first_solution, rep(-1 / sqrt(2), 2), tolerance = 1e-3)
+
+  ## Tighter on x[1]: min x1+x2 s.t. 4 x1^2 + x2^2 <= 1 has KKT optimum
+  ## x = (-1/(2 sqrt(5)), -2/sqrt(5)); the solution shifts toward x[2].
+  value(P) <- diag(c(4, 1))
+  psolve(prob, solver = "CLARABEL")
+  resolved_solution <- as.numeric(value(x))
+  expect_equal(resolved_solution, c(-1 / (2 * sqrt(5)), -2 / sqrt(5)), tolerance = 1e-3)
+
+  ## Re-solve must match a fresh problem with the same P (no stale factors).
+  fresh_problem <- Problem(Minimize(sum_entries(x)), list(quad_form(x, P) <= 1))
+  psolve(fresh_problem, solver = "CLARABEL")
+  expect_false(isTRUE(all.equal(first_solution, resolved_solution, tolerance = 1e-3)))
+  expect_equal(resolved_solution, as.numeric(value(x)), tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPVariants::test_multiple_quad_forms test_quad_dpp.py::TestQuadFormDPPVariants::test_affine_combination_of_params test_quad_dpp.py::TestQuadFormDPPVariants::test_resolve_affine_combination_of_params
+test_that("DPP parity: multiple and affine-combined param quad_forms solve", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P1 <- Parameter(c(2L, 2L), PSD = TRUE)
+  P2 <- Parameter(c(2L, 2L), PSD = TRUE)
+
+  value(P1) <- diag(c(2, 1))
+  value(P2) <- diag(c(1, 2))
+  prob_multi <- Problem(Minimize(quad_form(x, P1) + quad_form(x, P2)),
+                        list(sum_entries(x) == 1))
+  psolve(prob_multi, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(0.5, 0.5), tolerance = 1e-3)
+
+  prob_sum <- Problem(Minimize(quad_form(x, P1 + P2)),
+                      list(sum_entries(x) == 1))
+  value(P1) <- diag(c(2, 0))
+  value(P2) <- diag(c(0, 1))
+  psolve(prob_sum, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(1 / 3, 2 / 3), tolerance = 1e-3)
+
+  value(P1) <- diag(c(1, 0))
+  value(P2) <- diag(c(0, 2))
+  psolve(prob_sum, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(2 / 3, 1 / 3), tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPVariants::test_resolve_scaled_param
+test_that("DPP parity: param quad_form(x, 2*P) re-solves with a new P value", {
+  require_solver("CLARABEL")
+
+  ## CVXPY x[0]/x[1] are 1-based x[1]/x[2] in R.
+  x <- Variable(2L)
+  P <- Parameter(c(2L, 2L), PSD = TRUE)
+  prob <- Problem(Minimize(quad_form(x, 2 * P) + 5 * x[1] + 3 * x[2]))
+
+  value(P) <- diag(c(2, 1))
+  psolve(prob, solver = "CLARABEL")
+  first_solution <- as.numeric(value(x))
+
+  value(P) <- diag(c(1, 5))
+  psolve(prob, solver = "CLARABEL")
+  resolved_solution <- as.numeric(value(x))
+
+  ## A fresh problem with the second P value must match the re-solve.
+  fresh_problem <- Problem(Minimize(quad_form(x, 2 * P) + 5 * x[1] + 3 * x[2]))
+  psolve(fresh_problem, solver = "CLARABEL")
+  fresh_solution <- as.numeric(value(x))
+
+  expect_false(isTRUE(all.equal(first_solution, resolved_solution, tolerance = 1e-3)))
+  expect_equal(resolved_solution, fresh_solution, tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPConstraintResolve::test_mixed_objective_and_constraint_resolve
+test_that("DPP parity: param quad_form in both objective and constraint re-solve", {
+  require_solver("CLARABEL")
+
+  x <- Variable(2L)
+  P_obj <- Parameter(c(2L, 2L), PSD = TRUE)
+  P_constr <- Parameter(c(2L, 2L), PSD = TRUE)
+  prob <- Problem(Minimize(quad_form(x, P_obj)),
+                  list(quad_form(x, P_constr) <= 4, sum_entries(x) == 1))
+
+  value(P_obj) <- diag(2)
+  value(P_constr) <- diag(2)
+  psolve(prob, solver = "CLARABEL")
+  first_solution <- as.numeric(value(x))
+
+  ## Change the constraint P only -- much tighter on x[1].
+  value(P_constr) <- diag(c(100, 1))
+  psolve(prob, solver = "CLARABEL")
+  resolved_solution <- as.numeric(value(x))
+
+  fresh_problem <- Problem(Minimize(quad_form(x, P_obj)),
+                           list(quad_form(x, P_constr) <= 4, sum_entries(x) == 1))
+  psolve(fresh_problem, solver = "CLARABEL")
+  fresh_solution <- as.numeric(value(x))
+
+  expect_false(isTRUE(all.equal(first_solution, resolved_solution, tolerance = 1e-3)))
+  expect_equal(resolved_solution, fresh_solution, tolerance = 1e-3)
+})
+
+## @cvxpy test_quad_dpp.py::test_hermitian_param_resolve
+test_that("DPP parity: complex hermitian param quad_form re-solve is a deliberate gap", {
+  ## Complex-parameter DPP fast path is a deliberate CVXR feature gap: complex
+  ## Parameters are evaluated before Complex2Real because CVXR's R Matrix backend
+  ## cannot carry complex sparse parameter tensors. Ordinary complex solving is
+  ## still supported through Complex2Real. See test-complex-dpp-parity.R.
+  skip("Complex-parameter DPP fast path is a deliberate CVXR feature gap")
 })
 
 ## @cvxpy test_dpp.py::TestDcp::test_non_dpp_powers

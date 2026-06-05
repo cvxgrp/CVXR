@@ -136,6 +136,45 @@ test_that("PIQP QP (quadratic objective, no constraints)", {
   expect_equal(as.numeric(value(x)), c(3, 4), tolerance = 1e-4)
 })
 
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds
+test_that("PIQP QP path receives native variable bounds", {
+  skip_if_not_installed("piqp")
+  x <- Variable(2, bounds = list(c(-1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_squares(x)))
+
+  data <- problem_data(prob, solver = PIQP_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+
+  val <- psolve(prob, solver = PIQP_SOLVER)
+  expect_equal(val, 4, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(0, 2), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds
+test_that("PIQP QP path updates parametric native bounds", {
+  skip_if_not_installed("piqp")
+  lo <- Parameter(value = -1)
+  hi <- Parameter(value = 2)
+  x <- Variable(bounds = list(lo, hi))
+  prob <- Problem(Minimize(sum_squares(x - 5)))
+
+  data <- problem_data(prob, solver = PIQP_SOLVER)$data
+  expect_equal(tail(data[[LOWER_BOUNDS]], 1), -1)
+  expect_equal(tail(data[[UPPER_BOUNDS]], 1), 2)
+  expect_true(is.infinite(data[[LOWER_BOUNDS]][1]) && data[[LOWER_BOUNDS]][1] < 0)
+  expect_true(is.infinite(data[[UPPER_BOUNDS]][1]) && data[[UPPER_BOUNDS]][1] > 0)
+
+  val <- psolve(prob, solver = PIQP_SOLVER, warm_start = TRUE)
+  expect_equal(val, 9, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), 2, tolerance = 1e-4)
+
+  value(hi) <- 3
+  val2 <- psolve(prob, solver = PIQP_SOLVER, warm_start = TRUE)
+  expect_equal(val2, 4, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), 3, tolerance = 1e-4)
+})
+
 # ══════════════════════════════════════════════════════════════════
 # PIQP infeasible / unbounded
 # ══════════════════════════════════════════════════════════════════

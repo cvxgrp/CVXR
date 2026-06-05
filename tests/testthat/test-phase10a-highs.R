@@ -45,6 +45,36 @@ test_that("HiGHS solves LP maximize", {
   expect_equal(bval, c(1, 1), tolerance = 1e-5)
 })
 
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("HiGHS conic path receives dense variable bounds directly", {
+  upper <- matrix(0:5, nrow = 3, ncol = 2)
+  x <- Variable(c(3, 2), bounds = list(-10, upper))
+  prob <- Problem(Minimize(sum_entries(x)), list())
+  data <- problem_data(prob, HIGHS_SOLVER)$data
+
+  expect_equal(data[[LOWER_BOUNDS]], rep(-10, 6))
+  expect_equal(data[[UPPER_BOUNDS]], as.numeric(upper))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+
+  result <- psolve(prob, solver = HIGHS_SOLVER, verbose = FALSE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(result, -60, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), rep(-10, 6), tolerance = 1e-5)
+})
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds
+test_that("HiGHS conic path receives parametric variable bounds directly", {
+  lo <- Parameter(value = -2)
+  hi <- Parameter(value = 4)
+  x <- Variable(3, bounds = list(lo, hi))
+  prob <- Problem(Minimize(sum_entries(x)), list())
+  data <- problem_data(prob, HIGHS_SOLVER)$data
+
+  expect_equal(data[[LOWER_BOUNDS]], rep(-2, 3))
+  expect_equal(data[[UPPER_BOUNDS]], rep(4, 3))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+})
+
 ## @cvxpy NONE
 test_that("HiGHS solves LP with mixed constraints", {
   x <- Variable(3)
@@ -107,6 +137,40 @@ test_that("HiGHS solves sum_squares QP", {
   expect_equal(status(prob), "optimal")
   ## x = target - lambda*1 where lambda = 1/3, value = 1/3
   expect_equal(result, 1.0 / 3.0, tolerance = 1e-4)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_highs_var_bounds
+test_that("HiGHS QP path receives dense variable bounds directly", {
+  x1 <- Variable(bounds = list(-1, 1))
+  x2 <- Variable(bounds = list(-0.5, 1))
+  x3 <- Variable()
+  objective <- (x1^2 + x2^2) / 2 + x1 + x2 + x3
+  constraints <- list(-3 <= x1 + x2, x1 + x2 <= 3,
+                      -4 <= x1 - x2, x1 - x2 <= 4, x3 >= -2)
+  prob <- Problem(Minimize(objective), constraints)
+  data <- problem_data(prob, HIGHS_SOLVER)$data
+
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, -0.5, -Inf))
+  expect_equal(data[[UPPER_BOUNDS]], c(1, 1, Inf))
+
+  psolve(prob, solver = HIGHS_SOLVER, verbose = FALSE)
+  expect_equal(as.numeric(value(x1)), -1, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x2)), -0.5, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x3)), -2, tolerance = 1e-5)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("HiGHS QP path receives parametric variable bounds directly", {
+  lo <- Parameter(value = -1)
+  hi <- Parameter(value = 2)
+  x <- Variable(bounds = list(lo, hi))
+  prob <- Problem(Minimize(sum_squares(x) + x), list())
+  data <- problem_data(prob, HIGHS_SOLVER)$data
+
+  expect_equal(data[[LOWER_BOUNDS]], -1)
+  expect_equal(data[[UPPER_BOUNDS]], 2)
+  expect_equal(psolve(prob, solver = HIGHS_SOLVER), -0.25, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), -0.5, tolerance = 1e-5)
 })
 
 # ── Infeasible / Unbounded ───────────────────────────────────────────────────

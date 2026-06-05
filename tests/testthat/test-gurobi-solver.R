@@ -59,6 +59,44 @@ test_that("Gurobi QP", {
   expect_equal(value(x), matrix(c(0.25, 0.75), ncol = 1), tolerance = 1e-3)
 })
 
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("Gurobi QP receives native variable bounds", {
+  skip_if_not_installed("gurobi")
+  x <- Variable(2, bounds = list(c(-1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_squares(x) + x[1] - 6 * x[2]))
+
+  data <- problem_data(prob, solver = GUROBI_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+
+  val <- psolve(prob, solver = GUROBI_SOLVER)
+  expect_equal(val, -9.25, tolerance = 1e-5)
+  expect_equal(value(x), matrix(c(-0.5, 3), ncol = 1), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("Gurobi QP updates parametric native bounds", {
+  skip_if_not_installed("gurobi")
+  lo <- Parameter(value = -1)
+  hi <- Parameter(value = 2)
+  x <- Variable(bounds = list(lo, hi))
+  prob <- Problem(Minimize(square(x) + x))
+
+  data <- problem_data(prob, solver = GUROBI_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], -1)
+  expect_equal(data[[UPPER_BOUNDS]], 2)
+
+  val <- psolve(prob, solver = GUROBI_SOLVER)
+  expect_equal(val, -0.25, tolerance = 1e-5)
+  expect_equal(value(x), matrix(-0.5, ncol = 1), tolerance = 1e-4)
+
+  value(lo) <- 0
+  val2 <- psolve(prob, solver = GUROBI_SOLVER)
+  expect_equal(val2, 0, tolerance = 1e-5)
+  expect_equal(value(x), matrix(0, ncol = 1), tolerance = 1e-4)
+})
+
 ## @cvxpy NONE
 test_that("Gurobi SOCP via norm2", {
   skip_if_not_installed("gurobi")
@@ -69,6 +107,24 @@ test_that("Gurobi SOCP via norm2", {
   expect_equal(val, -sqrt(2), tolerance = 1e-4)
   expect_equal(value(x), matrix(c(-1/sqrt(2), -1/sqrt(2)), ncol = 1),
                tolerance = 1e-3)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("Gurobi conic path receives native variable bounds", {
+  skip_if_not_installed("gurobi")
+  x <- Variable(3, bounds = list(1, 3))
+  prob <- Problem(Minimize(sum_entries(x)), list(cvxr_norm(x, 2) <= 10))
+
+  data <- problem_data(prob, solver = GUROBI_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]][seq_len(3)], rep(1, 3))
+  expect_equal(data[[UPPER_BOUNDS]][seq_len(3)], rep(3, 3))
+  expect_equal(tail(data[[LOWER_BOUNDS]], 1), -Inf)
+  expect_equal(tail(data[[UPPER_BOUNDS]], 1), Inf)
+  expect_true(length(data[[SD_DIMS]]@soc) > 0L)
+
+  val <- psolve(prob, solver = GUROBI_SOLVER)
+  expect_equal(val, 3, tolerance = 1e-5)
+  expect_equal(value(x), matrix(rep(1, 3), ncol = 1), tolerance = 1e-4)
 })
 
 ## @cvxpy NONE

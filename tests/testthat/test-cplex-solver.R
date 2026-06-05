@@ -1,4 +1,4 @@
-## Tests for CPLEX solver (QP path via Rcplex)
+## Tests for CPLEX solver (QP/conic paths via Rcplex)
 
 # ── Constant / infrastructure tests (no solver needed) ──────────────
 
@@ -54,6 +54,22 @@ test_that("CPLEX solves Maximize LP", {
   expect_equal(as.numeric(value(x)), c(1, 2), tolerance = 1e-5)
 })
 
+## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_lp_bound_attr
+test_that("CPLEX LP path receives native variable bounds", {
+  skip_if_not_installed("Rcplex")
+  x <- Variable(2, bounds = list(c(1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_entries(x)), list())
+
+  data <- problem_data(prob, solver = CPLEX_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+
+  val <- psolve(prob, solver = CPLEX_SOLVER)
+  expect_equal(val, 3, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(1, 2), tolerance = 1e-4)
+})
+
 # ── QP tests ────────────────────────────────────────────────────────
 
 ## @cvxpy NONE
@@ -68,6 +84,44 @@ test_that("CPLEX solves basic QP", {
   expect_equal(status(prob), OPTIMAL)
   expect_equal(val, 2.0, tolerance = 1e-5)
   expect_equal(as.numeric(value(y)), c(0.5, 0.5), tolerance = 1e-5)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("CPLEX QP receives native variable bounds", {
+  skip_if_not_installed("Rcplex")
+  x <- Variable(2, bounds = list(c(-1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_squares(x) + x[1] - 6 * x[2]))
+
+  data <- problem_data(prob, solver = CPLEX_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+
+  val <- psolve(prob, solver = CPLEX_SOLVER)
+  expect_equal(val, -9.25, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(-0.5, 3), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("CPLEX QP updates parametric native bounds", {
+  skip_if_not_installed("Rcplex")
+  lo <- Parameter(value = -1)
+  hi <- Parameter(value = 2)
+  x <- Variable(bounds = list(lo, hi))
+  prob <- Problem(Minimize(square(x) + x))
+
+  data <- problem_data(prob, solver = CPLEX_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], -1)
+  expect_equal(data[[UPPER_BOUNDS]], 2)
+
+  val <- psolve(prob, solver = CPLEX_SOLVER)
+  expect_equal(val, -0.25, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), -0.5, tolerance = 1e-4)
+
+  value(lo) <- 0
+  val2 <- psolve(prob, solver = CPLEX_SOLVER)
+  expect_equal(val2, 0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), 0, tolerance = 1e-4)
 })
 
 # ── MIP tests ───────────────────────────────────────────────────────
@@ -115,6 +169,51 @@ test_that("CPLEX solves MIQP", {
   expect_equal(status(prob), OPTIMAL)
   ## z=(1,2) or z=(2,1): obj = 1+4+3 = 8 or 4+1+3 = 8
   expect_equal(val, 8.0, tolerance = 1e-5)
+})
+
+# ── SOCP / MI-SOCP tests ────────────────────────────────────────────
+
+## @cvxpy reductions/solvers/conic_solvers/cplex_conif.py::CPLEX.add_model_soc_constr
+test_that("CPLEX solves SOCP through Rcplex QCP constraints", {
+  skip_if_not_installed("Rcplex")
+  x <- Variable(2)
+  t <- Variable()
+  prob <- Problem(Minimize(t), list(SOC(t, x), x == c(3, 4)))
+
+  val <- psolve(prob, solver = "CPLEX")
+  expect_equal(status(prob), OPTIMAL)
+  expect_equal(val, 5.0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(t)), 5.0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(3, 4), tolerance = 1e-5)
+})
+
+## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_mi_socp_1
+test_that("CPLEX solves MI-SOCP through Rcplex QCP constraints", {
+  skip_if_not_installed("Rcplex")
+  b <- Variable(2, boolean = TRUE)
+  t <- Variable()
+  prob <- Problem(Minimize(t),
+                  list(SOC(t, b), sum(b) >= 1))
+
+  val <- psolve(prob, solver = "CPLEX")
+  expect_equal(status(prob), OPTIMAL)
+  expect_equal(val, 1.0, tolerance = 1e-5)
+  expect_equal(sum(as.numeric(value(b))), 1.0, tolerance = 1e-5)
+})
+
+## @cvxpy reductions/solvers/conic_solvers/cplex_conif.py::CPLEX.solve_via_data
+test_that("CPLEX conic path omits SOC duals without Rcplex QCP dual API", {
+  skip_if_not_installed("Rcplex")
+  x <- Variable(2)
+  t <- Variable()
+  soc <- SOC(t, x)
+  prob <- Problem(Minimize(t), list(soc, x == c(3, 4)))
+
+  psolve(prob, solver = "CPLEX")
+  expect_equal(status(prob), OPTIMAL)
+  dv <- dual_value(soc)
+  expect_true(is.list(dv))
+  expect_true(all(vapply(dv, is.null, logical(1L))))
 })
 
 # ── Infeasible ──────────────────────────────────────────────────────

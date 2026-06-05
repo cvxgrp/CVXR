@@ -839,3 +839,110 @@ test_that("Scalar integer + nonpos variable optimization", {
   expect_equal(as.numeric(value(x)), 0, tolerance = 1e-4)
   expect_equal(as.numeric(value(n)), 1, tolerance = 1e-4)
 })
+
+## ---------------------------------------------------------------------
+## CVXPY 1.9.0 additions
+## ---------------------------------------------------------------------
+
+## CVXPY v1.9.0 #3180: CvxAttr2Constr.invert() must not crash when a MIP
+## solver returns no dual variables (dual_vars is None). CVXR already
+## guards this -- the integer+nonneg problem solves cleanly via HiGHS.
+## @cvxpy test_attributes.py::TestAttributes::test_cvx_attr2constr_invert_none_duals
+test_that("CvxAttr2Constr invert handles None duals (MIP)", {
+  skip_if_not_installed("highs")
+  x <- Variable(2, nonneg = TRUE, integer = TRUE)
+  prob <- Problem(Minimize(sum(x)), list(x >= 1))
+  psolve(prob, solver = "HIGHS")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), c(1, 1), tolerance = 1e-5)
+})
+
+## CVXPY v1.9.0 #3146: dimension-reducing Parameter attributes. A diag or
+## symmetric Parameter contributes only its free entries to the cone-program
+## parameter vector. CVXR implements this for diag + symmetric/PSD/NSD in
+## cvx_attr2constr.R (.cvxattr_reduced_size); the coordinate-list `sparsity`
+## branch remains deferred (see notes/cvxpy_na_tests.txt).
+
+## @cvxpy test_attributes.py::TestParameterDimReducingAttributes::test_diag_parameter
+test_that("diag Parameter is dim-reducing and DPP", {
+  skip_if_not_installed("clarabel")
+  D <- Parameter(c(3, 3), diag = TRUE)
+  x <- Variable(3)
+  prob <- Problem(Minimize(sum(x)), list(x >= diag(D)))
+
+  expect_true(CVXR:::.cvxattr_has_dim_reducing_attr(D))
+  expect_equal(CVXR:::.cvxattr_reduced_size(D), 3L)   # 3 diagonal, not 9
+  expect_true(is_dpp(prob))
+
+  value(D) <- diag(c(1, 2, 3))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), c(1, 2, 3), tolerance = 1e-5)
+
+  ## Cone-program parameter vector uses the reduced size (3, not 9).
+  ## Mirrors CVXPY's _param_size: the non-constant parameter's size.
+  ## (The compiled param id is remapped, so check values, not D@id.)
+  pp <- problem_data(prob, solver = "CLARABEL")$data[["param_prob"]]
+  p2s <- S7::prop(pp, "param_to_size")
+  expect_equal(as.numeric(unlist(p2s[names(p2s) != "-1"])), 3)
+
+  ## DPP re-solve with new parameter value.
+  value(D) <- diag(c(10, 20, 30))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), c(10, 20, 30), tolerance = 1e-5)
+})
+
+## @cvxpy test_attributes.py::TestParameterDimReducingAttributes::test_symmetric_parameter
+test_that("symmetric Parameter is dim-reducing and DPP", {
+  skip_if_not_installed("clarabel")
+  S <- Parameter(c(3, 3), symmetric = TRUE)
+  x <- Variable(c(3, 3))
+  prob <- Problem(Minimize(sum(x)), list(x >= S))
+
+  expect_true(CVXR:::.cvxattr_has_dim_reducing_attr(S))
+  expect_equal(CVXR:::.cvxattr_reduced_size(S), 6L)   # n(n+1)/2 = 6, not 9
+  expect_true(is_dpp(prob))
+
+  Sv <- matrix(c(1, 2, 3, 2, 4, 5, 3, 5, 6), nrow = 3)
+  value(S) <- Sv
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), as.numeric(Sv), tolerance = 1e-5)
+
+  ## Cone-program parameter vector uses the reduced size (6, not 9).
+  ## Mirrors CVXPY's _param_size: the non-constant parameter's size.
+  pp <- problem_data(prob, solver = "CLARABEL")$data[["param_prob"]]
+  p2s <- S7::prop(pp, "param_to_size")
+  expect_equal(as.numeric(unlist(p2s[names(p2s) != "-1"])), 6)
+
+  Sv2 <- matrix(c(10, 20, 30, 20, 40, 50, 30, 50, 60), nrow = 3)
+  value(S) <- Sv2
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), as.numeric(Sv2), tolerance = 1e-5)
+})
+
+## Regression guard for the DPP-cache staleness principle: a dim-reducing
+## Parameter's reduced object must keep stable identity across re-applications
+## of CvxAttr2Constr, so that calling problem_data() between solves does not
+## orphan the object the cached param_prog references. Without the fix, the
+## second psolve below returned the stale first-solve solution.
+## @cvxpy NONE
+test_that("problem_data() between solves does not stale a dim-reducing param", {
+  skip_if_not_installed("clarabel")
+  D <- Parameter(c(3, 3), diag = TRUE)
+  x <- Variable(3)
+  prob <- Problem(Minimize(sum(x)), list(x >= diag(D)))
+
+  value(D) <- diag(c(1, 2, 3))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(1, 2, 3), tolerance = 1e-5)
+
+  ## Decomposed-API call in the middle must not poison the DPP cache.
+  invisible(problem_data(prob, solver = "CLARABEL"))
+
+  value(D) <- diag(c(10, 20, 30))
+  psolve(prob, solver = "CLARABEL")
+  expect_equal(as.numeric(value(x)), c(10, 20, 30), tolerance = 1e-5)
+})

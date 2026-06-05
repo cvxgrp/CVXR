@@ -122,6 +122,43 @@ test_that("SCIP: socp_3 (axis 1 and 2)", {
   verify_obj(h1$prob, h1$expect_obj, 1e-2, "SCIP")
 })
 
+# ── Native variable bounds ─────────────────────────────────────────
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds test_conic_solvers.py::TestSCIP::test_scip_lp_bound_attr
+test_that("SCIP: conic path receives native variable bounds", {
+  x <- Variable(2, bounds = list(c(-1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_entries(x)))
+
+  data <- problem_data(prob, solver = SCIP_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+
+  val <- psolve(prob, solver = SCIP_SOLVER)
+  expect_equal(val, 1, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(-1, 2), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds
+test_that("SCIP: conic path updates parametric native bounds", {
+  lo <- Parameter(value = 1)
+  hi <- Parameter(value = 3)
+  x <- Variable(2, bounds = list(lo, hi))
+  prob <- Problem(Minimize(sum_entries(x)))
+
+  data <- problem_data(prob, solver = SCIP_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], rep(1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], rep(3, 2))
+
+  val <- psolve(prob, solver = SCIP_SOLVER)
+  expect_equal(val, 2, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), rep(1, 2), tolerance = 1e-4)
+
+  value(lo) <- 2
+  val2 <- psolve(prob, solver = SCIP_SOLVER)
+  expect_equal(val2, 4, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), rep(2, 2), tolerance = 1e-4)
+})
+
 # ── MI-LP tests ───────────────────────────────────────────────────
 
 ## @cvxpy test_conic_solvers.py::TestSCIP::test_scip_mi_lp_0

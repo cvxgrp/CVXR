@@ -349,7 +349,7 @@ test_that("XPRESS solver params passthrough", {
 ## DEFERRED: IIS not implemented in R XPRESS interface
 
 ## @cvxpy test_conic_solvers.py::TestXPRESS::test_xpress_lp_bound_attr
-## N/A: BOUNDED_VARIABLES is deferred in CVXR (Tier 2)
+## PARTIAL: QP-path BOUNDED_VARIABLES is covered below; conic path uses SOCP coverage.
 
 # ══════════════════════════════════════════════════════════════════
 # QP-path tests (no CVXPY counterpart — QP path is R-specific)
@@ -363,6 +363,82 @@ test_that("XPRESS QP via QP path", {
   val <- psolve(prob, solver = "XPRESS")
   expect_equal(val, 0.875, tolerance = 1e-4)
   expect_equal(value(x), matrix(c(0.25, 0.75), ncol = 1), tolerance = 1e-3)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("XPRESS QP path receives native variable bounds", {
+  x <- Variable(2, bounds = list(c(-1, 2), c(3, 4)))
+  prob <- Problem(Minimize(sum_squares(x) + x[1] - 6 * x[2]))
+
+  data <- problem_data(prob, solver = XPRESS_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], c(-1, 2))
+  expect_equal(data[[UPPER_BOUNDS]], c(3, 4))
+  expect_equal(data[[SD_DIMS]]@nonneg, 0L)
+
+  val <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val, -9.25, tolerance = 1e-5)
+  expect_equal(value(x), matrix(c(-0.5, 3), ncol = 1), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_quad_prog.py::TestParamQuadProg::test_var_bounds
+test_that("XPRESS QP path updates parametric native bounds", {
+  lo <- Parameter(value = -1)
+  hi <- Parameter(value = 2)
+  x <- Variable(bounds = list(lo, hi))
+  prob <- Problem(Minimize(square(x) + x))
+
+  data <- problem_data(prob, solver = XPRESS_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]], -1)
+  expect_equal(data[[UPPER_BOUNDS]], 2)
+
+  val <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val, -0.25, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), -0.5, tolerance = 1e-4)
+
+  value(lo) <- 0
+  val2 <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val2, 0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), 0, tolerance = 1e-4)
+})
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds test_conic_solvers.py::TestXPRESS::test_xpress_lp_bound_attr
+test_that("XPRESS conic path receives native variable bounds", {
+  x <- Variable(3, bounds = list(1, 3))
+  prob <- Problem(Minimize(sum_entries(x)), list(cvxr_norm(x, 2) <= 10))
+
+  data <- problem_data(prob, solver = XPRESS_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]][seq_len(3)], rep(1, 3))
+  expect_equal(data[[UPPER_BOUNDS]][seq_len(3)], rep(3, 3))
+  expect_true(all(is.infinite(data[[LOWER_BOUNDS]][-seq_len(3)]) &
+                    data[[LOWER_BOUNDS]][-seq_len(3)] < 0))
+  expect_true(all(is.infinite(data[[UPPER_BOUNDS]][-seq_len(3)]) &
+                    data[[UPPER_BOUNDS]][-seq_len(3)] > 0))
+  expect_true(length(data[[SD_DIMS]]@soc) > 0L)
+
+  val <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val, 3, tolerance = 1e-5)
+  expect_equal(value(x), matrix(rep(1, 3), ncol = 1), tolerance = 1e-4)
+})
+
+## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds
+test_that("XPRESS conic path updates parametric native bounds", {
+  lo <- Parameter(value = 1)
+  hi <- Parameter(value = 3)
+  x <- Variable(2, bounds = list(lo, hi))
+  prob <- Problem(Minimize(sum_entries(x)), list(cvxr_norm(x, 2) <= 10))
+
+  data <- problem_data(prob, solver = XPRESS_SOLVER)$data
+  expect_equal(data[[LOWER_BOUNDS]][seq_len(2)], rep(1, 2))
+  expect_equal(data[[UPPER_BOUNDS]][seq_len(2)], rep(3, 2))
+
+  val <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val, 2, tolerance = 1e-5)
+  expect_equal(value(x), matrix(rep(1, 2), ncol = 1), tolerance = 1e-4)
+
+  value(lo) <- 2
+  val2 <- psolve(prob, solver = XPRESS_SOLVER)
+  expect_equal(val2, 4, tolerance = 1e-5)
+  expect_equal(value(x), matrix(rep(2, 2), ncol = 1), tolerance = 1e-4)
 })
 
 ## @cvxpy NONE

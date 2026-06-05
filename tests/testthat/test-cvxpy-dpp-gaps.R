@@ -116,8 +116,11 @@ test_that("DPP gap: log_det with parameter works with ignore_dpp=TRUE", {
   expect_equal(as.numeric(value(x)), rep(0, n), tolerance = 1e-3)
   expect_equal(as.numeric(value(y)), rep(0, n), tolerance = 1e-3)
 
-  ## Verify EvalParams is in the chain
-  pd <- suppressWarnings(problem_data(problem, solver = "OSQP"))
+  ## Verify EvalParams is in the chain. CVXPY checks this with ignore_dpp=TRUE
+  ## (get_problem_data(OSQP, ignore_dpp=True)); match that exactly -- ignore_dpp
+  ## forces EvalParams, which bakes log_det(P) to a constant so OSQP (a QP-only
+  ## solver) can take the resulting true QP.
+  pd <- suppressWarnings(problem_data(problem, solver = "OSQP", ignore_dpp = TRUE))
   chain <- pd$chain
   has_eval_params <- any(vapply(chain@reductions, function(r) {
     S7::S7_inherits(r, EvalParams)

@@ -110,23 +110,25 @@ test_that("DPP medium: non-DPP problem can still be solved via EvalParams", {
 })
 
 ## -- 7. param_quad_form -----------------------------------------------
-## CVXPY: test_param_quad_form_not_dpp
-## quad_form(x, P) where P is Parameter: not DPP (P appears nonlinearly
-## in the quadratic form x^T P x).
-## @cvxpy test_dpp.py::TestDcp::test_param_quad_form_not_dpp
-test_that("DPP medium: quad_form with Parameter P is not DPP", {
+## CVXPY: test_parametric_P_is_dpp_in_scope
+## quad_form(x, P) with Parameter P is not DPP under standard rules, but IS
+## DPP inside quad_form_dpp_scope (the QP-solver relaxation, #3142).
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPDetection::test_parametric_P_is_dpp_in_scope
+test_that("DPP medium: quad_form with Parameter P is DPP only in quad_form scope", {
   x <- Variable(c(2L, 1L))
   P <- Parameter(c(2L, 2L), PSD = TRUE)
   value(P) <- diag(2)
   qf <- quad_form(x, P)
   expect_false(is_dpp(qf))
+  expect_true(CVXR:::with_quad_form_dpp_scope(is_dpp(qf)))
+  expect_false(is_dpp(qf))
   expect_true(is_dcp(qf))
 })
 
 ## -- 8. const_quad_form -----------------------------------------------
-## CVXPY: test_const_quad_form_is_dpp
+## CVXPY: test_constant_P_always_dpp
 ## quad_form(x, P) where P is constant matrix: IS DPP (P is fixed data).
-## @cvxpy test_dpp.py::TestDcp::test_const_quad_form_is_dpp
+## @cvxpy test_quad_dpp.py::TestQuadFormDPPDetection::test_constant_P_always_dpp
 test_that("DPP medium: quad_form with constant P is DPP", {
   x <- Variable(c(2L, 1L))
   P <- diag(2)

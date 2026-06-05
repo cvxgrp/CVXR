@@ -716,3 +716,47 @@ test_that("Length: gradient propagates NULL (discrete atom)", {
   expect_true(as.character(x@id) %in% names(g))
   expect_null(g[[as.character(x@id)]])
 })
+
+## ---------------------------------------------------------------------
+## CVXPY 1.9.0 TestSpecialCases (added in #3180): grad return-type
+## guarantees. CVXR already returns the correct shapes here -- these
+## pin that behavior against the 1.9.0 contract.
+## ---------------------------------------------------------------------
+
+## @cvxpy test_grad.py::TestSpecialCases::test_ceil_floor_grad
+test_that("ceil/floor grad returns a dict with a zero sparse Jacobian", {
+  ## CVXPY v1.9.0 #3180: ceil._grad()/floor._grad() must return a list
+  ## holding a properly-shaped zero sparse matrix (not a bare array).
+  ## The walker then keys it by the variable id with all-zero entries.
+  x <- .set_value(Variable(3), c(1.5, 2.3, -0.7))
+  for (atom in list(ceil_expr(x), floor_expr(x))) {
+    g <- grad(atom)
+    expect_type(g, "list")
+    key <- as.character(x@id)
+    expect_true(key %in% names(g))
+    expect_equal(dim(g[[key]]), c(3L, 3L))
+    expect_equal(as.numeric(as.matrix(g[[key]])), rep(0, 9), tolerance = 1e-10)
+  }
+})
+
+## @cvxpy test_grad.py::TestSpecialCases::test_grad_undefined_atoms
+test_that("undefined-gradient atoms return NULL per variable, not a crash", {
+  ## CVXPY v1.9.0 #3180: sign, length, pf_eigenvalue _grad() return [None]
+  ## (list(NULL) here); the walker yields a dict with the variable mapped
+  ## to NULL rather than erroring.
+  x <- .set_value(Variable(3), c(1.0, -2.0, 3.0))
+  gs <- grad(sign(x))
+  expect_type(gs, "list")
+  expect_null(gs[[as.character(x@id)]])
+
+  v <- .set_value(Variable(4), c(1.0, 2.0, 0.0, 0.0))
+  gl <- grad(length_expr(v))
+  expect_type(gl, "list")
+  expect_null(gl[[as.character(v@id)]])
+
+  M <- Variable(c(2, 2))
+  value(M) <- matrix(c(0.5, 0.2, 0.1, 0.3), nrow = 2L, ncol = 2L)
+  gp <- grad(pf_eigenvalue(M))
+  expect_type(gp, "list")
+  expect_null(gp[[as.character(M@id)]])
+})

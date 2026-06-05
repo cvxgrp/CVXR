@@ -47,7 +47,7 @@ short_class_name <- function(x) {
 #' @return logical(1)
 #' @noRd
 .inherits_any <- function(x, classes) {
-  for (cls in classes) if (S7_inherits(x, cls)) return(TRUE)
+  for (cls in classes) if (.s7_is(x, cls)) return(TRUE)
   FALSE
 }
 

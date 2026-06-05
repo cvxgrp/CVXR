@@ -354,6 +354,63 @@ method(print, SolvingChain) <- function(x, ...) {
   list(ok = !any(missing), unsupported = required_cones[missing])
 }
 
+# -- .pick_default_conic_solver() ----------------------------------
+## CVXPY SOURCE: cvxpy/problems/problem_form.py::pick_default_solver (CVXPY 1.9
+## ProblemForm refactor). CVXR keeps its solver resolution inline in
+## solving_chain.R (ADR D_19.1), so this implements CVXPY 1.9's *structured*
+## default-solver policy for the conic path. It is consulted only when the user
+## did not name a solver; it returns a conic solver name, or NULL to fall back
+## to the preference-order scan. (CVXR robustness extension: where CVXPY returns
+## None and the caller errors, CVXR falls through to any cone-capable solver.)
+##   1. commercial first; 2. MI-LP -> HIGHS, MI-other -> SCIP;
+##   3. SDP (PSD) -> SCS; 4. LP / SOCP / Exp / Pow -> CLARABEL.
+## QP -> OSQP is handled by the QP path (qp_solvers[1]); LP routes to the conic
+## path and lands on CLARABEL via rule 4, matching CVXPY.
+.COMMERCIAL_CONIC_SOLVERS <- c(MOSEK_SOLVER, GUROBI_SOLVER, CPLEX_SOLVER,
+                               XPRESS_SOLVER)
+
+.pick_default_conic_solver <- function(problem, conic_candidates, required_cones) {
+  .ok <- function(name) {
+    name %in% conic_candidates &&
+      .solver_supports_cones(SOLVER_MAP_CONIC[[name]], required_cones)$ok
+  }
+  ## 1. Commercial solvers first.
+  for (name in .COMMERCIAL_CONIC_SOLVERS) if (.ok(name)) return(name)
+  ## 2. Mixed-integer: LP -> HIGHS, otherwise -> SCIP.
+  if (is_mixed_integer(problem)) {
+    if (.is_lp(problem) && .ok(HIGHS_SOLVER)) return(HIGHS_SOLVER)
+    if (.ok(SCIP_SOLVER)) return(SCIP_SOLVER)
+    return(NULL)
+  }
+  ## 3. SDP (PSD cone) -> SCS.
+  if (any(vapply(required_cones, identical, logical(1L), PSD)) &&
+      .ok(SCS_SOLVER)) {
+    return(SCS_SOLVER)
+  }
+  ## 4. LP / SOCP / Exp / Pow -> CLARABEL.
+  if (.ok(CLARABEL_SOLVER)) return(CLARABEL_SOLVER)
+  NULL
+}
+
+# -- .select_conic_solver_name() -----------------------------------
+## Single source of truth for which conic solver is chosen: the CVXPY 1.9
+## structured default policy when no solver was named, otherwise (and as a
+## fallback) the first cone-capable solver in preference order. Returns a name
+## or NULL when nothing fits.
+.select_conic_solver_name <- function(problem, conic_candidates, required_cones,
+                                      solver) {
+  if (is.null(solver)) {
+    pick <- .pick_default_conic_solver(problem, conic_candidates, required_cones)
+    if (!is.null(pick)) return(pick)
+  }
+  for (s in conic_candidates) {
+    if (.solver_supports_cones(SOLVER_MAP_CONIC[[s]], required_cones)$ok) {
+      return(s)
+    }
+  }
+  NULL
+}
+
 # -- construct_solving_chain --------------------------------------
 ## CVXPY SOURCE: solving_chain.py construct() (simplified)
 ## Builds the reduction chain for a given problem and solver.
@@ -384,16 +441,12 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE,
     TRUE  # QP-path solvers handle quadratic objectives directly
   } else {
     ## Conic path: would the conic solver that gets selected support quad obj?
-    cap <- FALSE
+    ## Use the SAME selection the routing section uses so this probe matches the
+    ## solver actually chosen (CVXPY 1.9 structured default policy).
     req_cones <- .required_cone_types(problem)
-    for (s in candidates$conic_solvers) {
-      inst <- SOLVER_MAP_CONIC[[s]]
-      if (.solver_supports_cones(inst, req_cones)$ok) {
-        cap <- supports_quad_obj(inst)
-        break
-      }
-    }
-    cap
+    sel <- .select_conic_solver_name(problem, candidates$conic_solvers,
+                                     req_cones, solver)
+    if (is.null(sel)) FALSE else supports_quad_obj(SOLVER_MAP_CONIC[[sel]])
   }
   ## "qp" relaxation applies only to a quadratic objective that a quad-obj
   ## solver will take directly (so parametric P in the OBJECTIVE is DPP;
@@ -574,21 +627,14 @@ construct_solving_chain <- function(problem, solver = NULL, gp = FALSE,
       solver_inst
     ))
   } else {
-    ## Conic path -- find a solver that accepts the problem's cones
-    solver_name_sel <- NULL
-    solver_inst <- NULL
+    ## Conic path -- choose a solver that accepts the problem's cones.
+    ## CVXPY 1.9 structured default policy when no solver was named
+    ## (.pick_default_conic_solver), else first cone-capable in preference order.
     required_cones <- .required_cone_types(problem)
-
-    ## Try each conic solver in preference order
-    for (s in candidates$conic_solvers) {
-      inst <- SOLVER_MAP_CONIC[[s]]
-      check <- .solver_supports_cones(inst, required_cones)
-      if (check$ok) {
-        solver_name_sel <- s
-        solver_inst <- inst
-        break
-      }
-    }
+    solver_name_sel <- .select_conic_solver_name(problem, candidates$conic_solvers,
+                                                 required_cones, solver)
+    solver_inst <- if (is.null(solver_name_sel)) NULL else
+      SOLVER_MAP_CONIC[[solver_name_sel]]
 
     if (is.null(solver_inst)) {
       ## Build informative error message

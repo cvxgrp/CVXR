@@ -57,7 +57,7 @@ library(CVXR)
 #> Attaching package: 'CVXR'
 #> The following objects are masked from 'package:stats':
 #> 
-#>     power, sd, var
+#>     convolve, power, sd, var
 #> The following objects are masked from 'package:base':
 #> 
 #>     diag, norm, outer
@@ -130,7 +130,7 @@ constraint2 <- B %*% betaHat >= 0
 
 problem <- Problem(objective, constraints = list(constraint1, constraint2))
 result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE for details
-#> ───────────────────────────────── CVXR v1.8.2.1 ────────────────────────────────
+#> ────────────────────────────────── CVXR v1.9.1 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
 #> ℹ Compile time: 0.013s
@@ -161,9 +161,10 @@ mathematically intuitive.
 
 ## Available Solvers
 
-CVXR 1.8.2 supports 15 solvers, both open source and commercial:
-Clarabel, SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB,
-CPLEX, CVXOPT, PIQP, SCIP, and XPRESS.
+CVXR supports 15 solvers, both open source and commercial: Clarabel,
+SCS, OSQP, HiGHS, MOSEK, Gurobi, GLPK, GLPK_MI, ECOS, ECOS_BB, CPLEX,
+CVXOPT, PIQP, SCIP, and XPRESS. Smooth nonlinear programs additionally
+use the IPOPT and UNO solvers.
 
 ``` r
 
@@ -180,28 +181,25 @@ You can specify a solver explicitly:
 psolve(problem, solver = "CLARABEL")
 ```
 
-## What’s New in 1.8.2
+## What’s New
 
-- **15 solvers**: SCIP and XPRESS added (up from 13 in 1.8.1).
+Recent releases add disciplined nonlinear programming
+(`psolve(prob, nlp = TRUE)`), bounds propagation through expressions
+([`get_bounds()`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)),
+a derivative / sensitivity-analysis API (`requires_grad = TRUE`), and
+new atoms such as
+[`convolve()`](https://www.cvxgrp.org/CVXR/reference/convolve.md). CVXR
+also supports element-wise matrix indexing using R’s native idioms:
 
-- **Element-wise matrix indexing**: Constrain specific entries of a
-  matrix variable using R’s native indexing idioms:
+``` r
 
-  ``` r
+ind <- which(!is.na(Rmiss), arr.ind = TRUE)
+prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
+```
 
-  ind <- which(!is.na(Rmiss), arr.ind = TRUE)
-  prob <- Problem(Minimize(obj), list(X[ind] == Rmiss[ind]))
-  ```
-
-  Also supports logical matrix indexing (`X[mask]`) and linear integer
-  indexing (`X[c(1, 5, 9)]`).
-
-- **CVXPY 1.8.2 parity**: All applicable bug fixes ported.
-
-- **Unified solver options** via
-  [`solver_opts()`](https://www.cvxgrp.org/CVXR/reference/solver_opts.md).
-
-See `NEWS.md` for full details.
+For a release-by-release summary see
+[`vignette("whats_new")`](https://www.cvxgrp.org/CVXR/articles/whats_new.md),
+and `news(package = "CVXR")` for the full details.
 
 ## Further Reading
 
@@ -220,7 +218,7 @@ See `NEWS.md` for full details.
 sessionInfo()
 #> R version 4.6.0 (2026-04-24)
 #> Platform: aarch64-apple-darwin23
-#> Running under: macOS Tahoe 26.4.1
+#> Running under: macOS Tahoe 26.5.1
 #> 
 #> Matrix products: default
 #> BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
@@ -236,20 +234,20 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] CVXR_1.8.2-1
+#> [1] CVXR_1.9.1
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] piqp_0.6.2        Matrix_1.7-5      jsonlite_2.0.0    compiler_4.6.0   
+#>  [1] Matrix_1.7-5      piqp_0.6.2        jsonlite_2.0.0    compiler_4.6.0   
 #>  [5] highs_1.12.0-3    Rcpp_1.1.1-1.1    slam_0.1-55       cccp_0.3-3       
 #>  [9] jquerylib_0.1.4   systemfonts_1.3.2 textshaping_1.0.5 yaml_2.3.12      
 #> [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         
 #> [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  
 #> [21] Rcplex_0.3-8      checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3       
-#> [25] osqp_1.0.0        bslib_0.10.0      rlang_1.2.0       cachem_1.1.0     
+#> [25] osqp_1.0.0        bslib_0.11.0      rlang_1.2.0       cachem_1.1.0     
 #> [29] xfun_0.57         fs_2.1.0          sass_0.4.10       S7_0.2.2         
 #> [33] otel_0.2.0        cli_3.6.6         pkgdown_2.2.0     Rglpk_0.6-5.1    
 #> [37] digest_0.6.39     grid_4.6.0        xpress_9.8.2      gmp_0.7-5.1      
-#> [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         diffcp_0.1.0     
-#> [45] evaluate_1.0.5    codetools_0.2-20  Rmosek_11.1.2     ragg_1.5.2       
-#> [49] rmarkdown_2.31    tools_4.6.0       htmltools_0.5.9
+#> [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         evaluate_1.0.5   
+#> [45] codetools_0.2-20  Rmosek_11.1.2     ragg_1.5.2        rmarkdown_2.31   
+#> [49] tools_4.6.0       htmltools_0.5.9
 ```

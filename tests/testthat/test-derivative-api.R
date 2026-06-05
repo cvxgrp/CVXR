@@ -251,7 +251,7 @@ test_that("parameters() finds Parameter M in Huber", {
   expect_equal(ps[[1L]]@id, m@id)
 })
 
-## @cvxpy test_derivative.py::TestBackward::test_param_used_in_exponent_and_elsewhere
+## @cvxpy test_derivative.py::TestBackwardDgp::test_param_used_in_exponent_and_elsewhere
 test_that("parameter used in exponent and elsewhere: backward + derivative", {
   ## Constructed so the optimal x is analytic:
   ##   x*(alpha) = 1 - base^alpha - alpha^2
@@ -285,4 +285,19 @@ test_that("parameter used in exponent and elsewhere: backward + derivative", {
                -log(base) * base^(0.5) - 2 * 0.5, tolerance = 1e-5)
   expect_equal(as.numeric(delta(x)),
                as.numeric(gradient(alpha)) * 1e-5, tolerance = 1e-3)
+})
+
+## @cvxpy test_derivative.py::TestDgp2DcpReduction::test_param_backward_absent_log_param
+## CVXPY calls dgp.param_backward({}) and expects {} when the log-param id is
+## absent. CVXR's param_backward is now dict-in/dict-out (#3147 part A): an empty
+## dparams passes straight through to an empty list (each log id is guarded by
+## `if (is.null(dparams[[log_pid]])) next`), instead of erroring.
+test_that("Dgp2Dcp param_backward passes through when the log-param id is absent", {
+  p <- Parameter(pos = TRUE, value = 2.0)
+  x <- Variable(pos = TRUE)
+  prob <- Problem(Minimize(p * x), list(x >= 1))
+  dgp <- Dgp2Dcp()
+  reduction_apply(dgp, prob)
+  ## Empty dparams: the log-parameter id is absent -> empty dict out, no error.
+  expect_equal(param_backward(dgp, list()), list())
 })

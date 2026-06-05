@@ -862,7 +862,6 @@ test_that("CPLEX: lp_5 (redundant equalities)", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_socp_0
 test_that("CPLEX: socp_0", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_socp_0()
   verify_obj(h$prob, h$expect_obj, 1e-5, "CPLEX")
 })
@@ -870,7 +869,6 @@ test_that("CPLEX: socp_0", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_socp_1
 test_that("CPLEX: socp_1", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_socp_1()
   verify_obj(h$prob, h$expect_obj, 1e-5, "CPLEX")
   x_var <- variables(h$prob)[[1]]
@@ -880,7 +878,6 @@ test_that("CPLEX: socp_1", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_socp_2
 test_that("CPLEX: socp_2", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_socp_2()
   verify_obj(h$prob, h$expect_obj, 1e-5, "CPLEX")
   x_var <- variables(h$prob)[[1]]
@@ -890,7 +887,6 @@ test_that("CPLEX: socp_2", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_socp_3
 test_that("CPLEX: socp_3 axis=0", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_socp_3_ax0()
   verify_obj(h$prob, h$expect_obj, 1e-5, "CPLEX")
   x_var <- variables(h$prob)[[1]]
@@ -936,7 +932,6 @@ test_that("CPLEX: mi_lp_5", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_mi_socp_1
 test_that("CPLEX: mi_socp_1", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_mi_socp_1()
   verify_obj(h$prob, h$expect_obj, 1e-4, "CPLEX")
 })
@@ -944,7 +939,6 @@ test_that("CPLEX: mi_socp_1", {
 ## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_mi_socp_2
 test_that("CPLEX: mi_socp_2", {
   skip_if_not_installed("Rcplex")
-  skip("CPLEX conic (SOC) path deferred in CVXR — only QP path implemented")
   h <- sth_mi_socp_2()
   verify_obj(h$prob, h$expect_obj, 1e-5, "CPLEX")
 })

@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 CVXR provides an object-oriented modeling language for convex
 optimization, similar to [CVXPY](https://www.cvxpy.org/),
-[CVX](http://cvxr.com/cvx/), [YALMIP](https://yalmip.github.io/), and
+[CVX](https://cvxr.com/cvx/), [YALMIP](https://yalmip.github.io/), and
 [Convex.jl](https://jump.dev/Convex.jl/stable/). It allows you to
 formulate convex optimization problems in natural mathematical syntax
 rather than the restrictive standard form required by most solvers. You
@@ -37,9 +37,11 @@ into standard conic form and passed to an appropriate backend solver.
 
 This version is a ground-up rewrite built on the
 [S7](https://rconsortium.github.io/S7/) object system, designed to
-mirror CVXPY 1.8 closely. It is **~4--5x faster** than the previous
-S4-based release, ships with 13 solvers (4 built-in), and supports DCP,
-DGP, DQCP, complex variables, mixed-integer programming, and warm-starting.
+mirror CVXPY 1.9.1 closely. It is **~4--5x faster** than the previous
+S4-based release, ships with 15 solvers (4 built-in), and supports DCP,
+DGP, DQCP, disciplined nonlinear programming (DNLP), complex variables,
+mixed-integer programming, warm-starting, and a derivative /
+sensitivity-analysis API.
 
 For tutorials, worked examples, and the full story, visit the [CVXR
 website](https://cvxr.rbind.io).

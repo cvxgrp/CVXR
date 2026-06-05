@@ -18,3 +18,4 @@
 ^inst/copy_r_source\.R$
 ^inst/all_files\.csv$
 ^inst/cran_tests\.csv$
+^revdep$

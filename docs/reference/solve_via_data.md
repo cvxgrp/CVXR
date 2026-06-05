@@ -42,8 +42,8 @@ solve_via_data(
 
 - ...:
 
-  Additional arguments (e.g., `problem` for `SolvingChain` dispatch,
-  `solver_cache` for `Solver` dispatch).
+  Additional arguments forwarded to the method (e.g. `problem` for the
+  `SolvingChain` method, `solver_cache` for the `Solver` method).
 
 ## Value
 

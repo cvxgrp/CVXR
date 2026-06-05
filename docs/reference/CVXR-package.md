@@ -26,6 +26,8 @@ Useful links:
 
 Authors:
 
+- Anqi Fu <anqif@alumni.stanford.edu>
+
 - Balasubramanian Narasimhan <naras@stat.stanford.edu>
 
 - Steven Diamond

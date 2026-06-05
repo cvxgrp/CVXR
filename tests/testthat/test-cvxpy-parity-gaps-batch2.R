@@ -1231,14 +1231,16 @@ test_that("solve_solver_path: fallback chain (CVXPY parity)", {
   prob <- Problem(obj)
 
   ## (a) mixed list with per-entry opts + bare string.
-  ## CVXPY's test only checks the call returns a number; OSQP+max_iter=1
-  ## technically "succeeds" with status="user_limit", which short-circuits
-  ## the fallback (the loop only continues on errors, not poor status).
+  ## CVXPY v1.9.0 fix: #3324 -- OSQP with max_iter=1 returns a NON-OPTIMAL
+  ## status (user_limit), which now falls through to CLARABEL; the final
+  ## problem status is OPTIMAL (the loop continues on any non-OPTIMAL status,
+  ## not only on a thrown error).
   res <- psolve(prob, solver_path = list(
     list("OSQP", list(max_iter = 1L)),
     "CLARABEL"
   ))
   expect_true(is.numeric(res))
+  expect_equal(status(prob), "optimal")
 
   ## (b) all entries as length-2 lists, one with empty opts
   res <- psolve(prob, solver_path = list(
@@ -1246,6 +1248,7 @@ test_that("solve_solver_path: fallback chain (CVXPY parity)", {
     list("CLARABEL", list())
   ))
   expect_true(is.numeric(res))
+  expect_equal(status(prob), "optimal")
 
   ## (c) case-insensitive names (CVXPY parity)
   res <- psolve(prob, solver_path = list(
@@ -1253,6 +1256,7 @@ test_that("solve_solver_path: fallback chain (CVXPY parity)", {
     "Clarabel"
   ))
   expect_true(is.numeric(res))
+  expect_equal(status(prob), "optimal")
 
   ## (d) bare character vector
   res <- psolve(prob, solver_path = c("OSQP", "CLARABEL"))
@@ -1303,7 +1307,7 @@ test_that("cp_node_count_warn: skipped (no node count warning in CVXR)", {
   ## suggesting vectorization. This is Python-specific.
 })
 
-## @cvxpy test_problem.py::TestProblem::test_ecos_warning
+## @cvxpy NONE -- CVXPY 1.9 removed test_ecos_warning; ECOS deprecation is Python/CVXPY-specific.
 test_that("ecos_warning: skipped (ECOS deprecation N/A in CVXR)", {
   skip("ECOS deprecation warning is Python/CVXPY specific")
   ## CVXPY warns when ECOS is selected by default.

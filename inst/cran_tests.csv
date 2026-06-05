@@ -3,3 +3,8 @@ helper-solver-test-problems.R
 helper-solvers.R
 test-cran-solver-matrix.R
 test-phase2h-index-transpose.R
+test-cvxpy-atoms-parity.R
+test-cvxpy-3180-parity-v19.R
+test-dpp-parity.R
+test-complex-parity.R
+test-dgp-parity.R

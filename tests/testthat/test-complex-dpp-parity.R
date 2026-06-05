@@ -2,13 +2,23 @@
 ## Parity tests for TestComplexDPP class.
 ## One test_that() per CVXPY test method; ## @cvxpy annotation on line before each.
 ## Expected values verified against CVXPY 1.8.1 (branch claude, commit 3b964472b).
+##
+## Deliberate feature gap: CVXR supports ordinary complex solves through
+## Complex2Real, but complex Parameters are evaluated before Complex2Real rather
+## than kept in DPP parameter tensors. The R Matrix backend does not provide the
+## complex sparse parameter representation needed for CVXPY's complex-DPP fast
+## path, so these tests remain mapped and skipped.
 
 library(testthat)
 library(CVXR)
 
+.skip_complex_dpp_gap <- function() {
+  skip("Complex-parameter DPP fast path is a deliberate CVXR feature gap")
+}
+
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_dpp_recognition_and_chain
 test_that("test_dpp_recognition_and_chain: complex param problem is DPP, uses Complex2Real not EvalParams", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   ## CVXPY: p=Parameter(complex=True), x=Variable()
   ## prob = Problem(Minimize(abs(x - real(p)))) -> is_dpp() True
   ## chain: EvalParams NOT in reductions, Complex2Real IS
@@ -27,7 +37,7 @@ test_that("test_dpp_recognition_and_chain: complex param problem is DPP, uses Co
   expect_false("EvalParams" %in% red_names)
 
   ## After setting value and solving: still no EvalParams
-  p@value <- matrix(1 + 2i, 1, 1)
+  value(p) <- matrix(1 + 2i, 1, 1)
   result <- psolve(prob, solver = "CLARABEL")
   expect_equal(status(prob), "optimal")
   expect_equal(as.numeric(value(x)), 1.0, tolerance = 1e-3)
@@ -35,19 +45,19 @@ test_that("test_dpp_recognition_and_chain: complex param problem is DPP, uses Co
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_shapes
 test_that("test_shapes: DPP with scalar, vector, matrix complex parameters", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   ## Scalar
   p_sc <- Parameter(1, complex = TRUE)
   x_sc <- Variable(1)
   prob_sc <- Problem(Minimize(sum_entries(x_sc)), list(x_sc >= Re(p_sc)))
-  p_sc@value <- matrix(3 + 4i, 1, 1)
+  value(p_sc) <- matrix(3 + 4i, 1, 1)
   psolve(prob_sc, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_sc)), 3.0, tolerance = 1e-3)
 
   ## Fast path re-solve (scalar)
-  p_sc@value <- matrix(6 + 8i, 1, 1)
+  value(p_sc) <- matrix(6 + 8i, 1, 1)
   psolve(prob_sc, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_sc)), 6.0, tolerance = 1e-3)
 
@@ -55,12 +65,12 @@ test_that("test_shapes: DPP with scalar, vector, matrix complex parameters", {
   p_v <- Parameter(3, complex = TRUE)
   x_v <- Variable(3)
   prob_v <- Problem(Minimize(sum_entries(x_v)), list(x_v >= Re(p_v)))
-  p_v@value <- matrix(c(1+1i, 2+2i, 3+3i), 3, 1)
+  value(p_v) <- matrix(c(1+1i, 2+2i, 3+3i), 3, 1)
   psolve(prob_v, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_v)), c(1, 2, 3), tolerance = 1e-3)
 
   ## Fast path re-solve (vector)
-  p_v@value <- 2 * matrix(c(1+1i, 2+2i, 3+3i), 3, 1)
+  value(p_v) <- 2 * matrix(c(1+1i, 2+2i, 3+3i), 3, 1)
   psolve(prob_v, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_v)), c(2, 4, 6), tolerance = 1e-3)
 
@@ -68,26 +78,26 @@ test_that("test_shapes: DPP with scalar, vector, matrix complex parameters", {
   p_m <- Parameter(c(2L, 2L), complex = TRUE)
   x_m <- Variable(c(2L, 2L))
   prob_m <- Problem(Minimize(sum_entries(x_m)), list(x_m >= Re(p_m)))
-  p_m@value <- matrix(c(1+1i, 2+2i, 3+3i, 4+4i), 2, 2)
+  value(p_m) <- matrix(c(1+1i, 2+2i, 3+3i, 4+4i), 2, 2)
   psolve(prob_m, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_m)), c(1, 2, 3, 4), tolerance = 1e-3)
 
   ## Fast path re-solve (matrix)
-  p_m@value <- 2 * matrix(c(1+1i, 2+2i, 3+3i, 4+4i), 2, 2)
+  value(p_m) <- 2 * matrix(c(1+1i, 2+2i, 3+3i, 4+4i), 2, 2)
   psolve(prob_m, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_m)), c(2, 4, 6, 8), tolerance = 1e-3)
 })
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_param_types
 test_that("test_param_types: DPP with imag and complex parameter types", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   ## imag parameter: min x s.t. x >= Im(p)
   p_im <- Parameter(1, imag = TRUE)
   x_im <- Variable(1)
   prob_im <- Problem(Minimize(x_im), list(x_im >= Im(p_im)))
-  p_im@value <- matrix(3i, 1, 1)
+  value(p_im) <- matrix(3i, 1, 1)
   psolve(prob_im, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_im)), 3.0, tolerance = 1e-3)
 
@@ -95,14 +105,14 @@ test_that("test_param_types: DPP with imag and complex parameter types", {
   p_cx <- Parameter(1, complex = TRUE)
   x_cx <- Variable(1)
   prob_cx <- Problem(Minimize(x_cx), list(x_cx >= Re(p_cx)))
-  p_cx@value <- matrix(3 + 4i, 1, 1)
+  value(p_cx) <- matrix(3 + 4i, 1, 1)
   psolve(prob_cx, solver = "CLARABEL")
   expect_equal(as.numeric(value(x_cx)), 3.0, tolerance = 1e-3)
 })
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_mixed_real_and_complex_params
 test_that("test_mixed_real_and_complex_params: DPP with real and complex parameters", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   p_real <- Parameter(1)
@@ -110,21 +120,21 @@ test_that("test_mixed_real_and_complex_params: DPP with real and complex paramet
   x <- Variable(1)
   prob <- Problem(Minimize(x), list(x >= p_real + Re(p_complex)))
 
-  p_real@value <- matrix(2.0, 1, 1)
-  p_complex@value <- matrix(3 + 4i, 1, 1)
+  value(p_real) <- matrix(2.0, 1, 1)
+  value(p_complex) <- matrix(3 + 4i, 1, 1)
   psolve(prob, solver = "CLARABEL")
   expect_equal(as.numeric(value(x)), 5.0, tolerance = 1e-3)
 
   ## Fast path re-solve
-  p_real@value <- matrix(1.0, 1, 1)
-  p_complex@value <- matrix(1 + 1i, 1, 1)
+  value(p_real) <- matrix(1.0, 1, 1)
+  value(p_complex) <- matrix(1 + 1i, 1, 1)
   psolve(prob, solver = "CLARABEL")
   expect_equal(as.numeric(value(x)), 2.0, tolerance = 1e-3)
 })
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_complex_param_with_abs
 test_that("test_complex_param_with_abs: abs(x - complex_param) is DPP", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   p <- Parameter(1, complex = TRUE)
@@ -134,7 +144,7 @@ test_that("test_complex_param_with_abs: abs(x - complex_param) is DPP", {
   expect_true(is_dpp(prob))
 
   ## p = 3 + 4j: optimal x = Re(p) = 3, objective |3 - (3+4j)| = 4
-  p@value <- matrix(3 + 4i, 1, 1)
+  value(p) <- matrix(3 + 4i, 1, 1)
   psolve(prob, solver = "CLARABEL")
   expect_equal(as.numeric(value(x)), 3.0, tolerance = 1e-3)
   expect_equal(as.numeric(prob@value), 4.0, tolerance = 1e-3)
@@ -142,13 +152,13 @@ test_that("test_complex_param_with_abs: abs(x - complex_param) is DPP", {
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_dpp_flags
 test_that("test_dpp_flags: enforce_dpp succeeds; ignore_dpp uses EvalParams", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   p <- Parameter(1, complex = TRUE)
   x <- Variable(1)
   prob <- Problem(Minimize(x), list(x >= Re(p)))
-  p@value <- matrix(1 + 2i, 1, 1)
+  value(p) <- matrix(1 + 2i, 1, 1)
 
   ## enforce_dpp=TRUE: should succeed and not use EvalParams
   psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
@@ -176,7 +186,7 @@ test_that("test_dpp_flags: enforce_dpp succeeds; ignore_dpp uses EvalParams", {
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_hermitian_param_dpp
 test_that("test_hermitian_param_dpp: DPP with Hermitian parameter, fast path re-solve", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   for (n in 1:3) {
@@ -192,7 +202,7 @@ test_that("test_hermitian_param_dpp: DPP with Hermitian parameter, fast path re-
     set.seed(n)
     A <- matrix(rnorm(n * n) + 1i * rnorm(n * n), n, n)
     P_val1 <- (A + Conj(t(A))) / 2
-    P@value <- P_val1
+    value(P) <- P_val1
 
     psolve(prob, solver = "CLARABEL")
     lmax1 <- max(Re(eigen(P_val1, symmetric = FALSE, only.values = TRUE)$values))
@@ -200,7 +210,7 @@ test_that("test_hermitian_param_dpp: DPP with Hermitian parameter, fast path re-
 
     ## Fast path re-solve
     P_val2 <- P_val1 + diag(n)
-    P@value <- P_val2
+    value(P) <- P_val2
     psolve(prob, solver = "CLARABEL")
     lmax2 <- max(Re(eigen(P_val2, symmetric = FALSE, only.values = TRUE)$values))
     expect_equal(as.numeric(value(x)), lmax2, tolerance = 1e-3)
@@ -209,7 +219,7 @@ test_that("test_hermitian_param_dpp: DPP with Hermitian parameter, fast path re-
 
 ## @cvxpy test_complex_dpp.py::TestComplexDPP::test_hermitian_param_efficient_representation
 test_that("test_hermitian_param_efficient_representation: compact Hermitian param representation", {
-  skip("Complex atom not yet fully implemented")
+  .skip_complex_dpp_gap()
   skip_if_not_installed("clarabel")
 
   n <- 3L
@@ -217,7 +227,7 @@ test_that("test_hermitian_param_efficient_representation: compact Hermitian para
   X <- Variable(c(n, n), hermitian = TRUE)
   prob <- Problem(Minimize(Trace(Re(X))), list(X %>>% P))
 
-  P@value <- matrix(c(1+0i, -1i, 0, 1i, 1+0i, 1i, 0, -1i, 1+0i), n, n)
+  value(P) <- matrix(c(1+0i, -1i, 0, 1i, 1+0i, 1i, 0, -1i, 1+0i), n, n)
   psolve(prob, solver = "CLARABEL")
 
   ## Verify chain contains Complex2Real

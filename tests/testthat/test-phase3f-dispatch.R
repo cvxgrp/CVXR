@@ -100,10 +100,13 @@ test_that("log1p(x) works via Math dispatch", {
 
 ## @cvxpy NONE
 test_that("Unsupported Math functions give clear error", {
+  ## NOTE: sin/cos/tan (and sinh/tanh/asinh/atanh) became supported DNLP atoms
+  ## in CVXPY 1.9.0 (see test-dnlp-atoms.R).  These remain unsupported: cosh has
+  ## no atom upstream, and the inverse-trig / gamma functions are not modeled.
   x <- Variable(3)
-  expect_error(cos(x), "not supported")
-  expect_error(sin(x), "not supported")
-  expect_error(tan(x), "not supported")
+  expect_error(cosh(x), "not supported")
+  expect_error(acos(x), "not supported")
+  expect_error(gamma(x), "not supported")
 })
 
 ## @cvxpy NONE

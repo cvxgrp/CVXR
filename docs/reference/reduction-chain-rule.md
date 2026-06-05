@@ -1,17 +1,20 @@
-# Reduction chain-rule hooks (backward / forward, parameter / variable)
+# Reduction chain-rule hooks (dict-in / dict-out)
 
-Reduction chain-rule hooks (backward / forward, parameter / variable)
+Walk the solving chain during `Problem$backward()` /
+`Problem$derivative()`. Each hook takes and returns a named list keyed
+by `as.character(leaf@id)` whose values are shaped arrays (the leaf's
+`dim`). The base `Reduction` methods are identity pass-throughs.
 
 ## Usage
 
 ``` r
-param_backward(x, param, dparams)
+var_backward(x, del_vars)
 
-param_forward(x, param, delta)
+var_forward(x, dvars)
 
-var_backward(x, var, value)
+param_backward(x, dparams)
 
-var_forward(x, var, value)
+param_forward(x, param_deltas)
 ```
 
 ## Arguments
@@ -20,31 +23,30 @@ var_forward(x, var, value)
 
   A `Reduction`.
 
-- param:
+- del_vars:
 
-  A `Parameter` from the original problem.
+  Named list `var-id -> gradient array` (outer representation).
+
+- dvars:
+
+  Named list `var-id -> delta array` (inner representation).
 
 - dparams:
 
-  Named list of param-id -\> gradient arrays for the reduced
-  (transformed) parameters.
+  Named list `param-id -> gradient array` (inner representation).
 
-- delta:
+- param_deltas:
 
-  Numeric array of perturbations to the original `param`.
-
-- var:
-
-  A `Variable` from the original problem.
-
-- value:
-
-  Numeric array (gradient or delta) attached to `var`.
+  Named list `param-id -> delta array` (outer representation).
 
 ## Value
 
-A gradient array for `param`, or `NULL` if this reduction does not touch
-`param`.
+For `var_backward`: the same map in the inner (reduced) representation.
 
-Named list of transformed-param-id -\> delta arrays, or `NULL` if this
-reduction does not touch `param`.
+For `var_forward`: the same map in the outer (original) representation.
+
+For `param_backward`: the same map in the outer (original)
+representation.
+
+For `param_forward`: the same map in the inner (transformed)
+representation.

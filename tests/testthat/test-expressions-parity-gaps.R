@@ -1340,6 +1340,10 @@ test_that("expressions: sum_squares with axis and keepdims", {
   e1 <- sum_squares(X2, axis = 1)
   expect_equal(as.numeric(value(e1)), rowSums(X_val^2), tolerance = 1e-6)
 
+})
+
+## @cvxpy test_expressions.py::test_sum_squares_with_axis
+test_that("expressions: sum_squares with axis optimization", {
   ## Optimization test: minimize sum(sum_squares(X - Y, axis=2))
   set.seed(42)
   Y <- matrix(rnorm(12), 3, 4)
@@ -1349,6 +1353,20 @@ test_that("expressions: sum_squares with axis and keepdims", {
   psolve(prob, solver = "CLARABEL")
   expect_equal(status(prob), OPTIMAL)
   expect_true(all(abs(value(X3) - Y) < 1e-3))
+
+  X4 <- Variable(c(3, 4))
+  obj_rows <- sum_entries(sum_squares(X4 - Y, axis = 1))
+  prob_rows <- Problem(Minimize(obj_rows))
+  psolve(prob_rows, solver = "CLARABEL")
+  expect_equal(status(prob_rows), OPTIMAL)
+  expect_true(all(abs(value(X4) - Y) < 1e-3))
+
+  X5 <- Variable(c(3, 4))
+  prob_constr <- Problem(Minimize(sum_entries(X5)),
+                         list(sum_squares(X5, axis = 2) <= 1))
+  psolve(prob_constr, solver = "CLARABEL")
+  expect_equal(status(prob_constr), OPTIMAL)
+  expect_true(max(colSums(value(X5)^2)) <= 1 + 1e-5)
 })
 
 # =========================================================================

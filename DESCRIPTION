@@ -39,7 +39,7 @@ Imports:
     clarabel (>= 0.11),
     cli (>= 3.6),
     gmp (>= 0.7),
-    highs (>= 1.12),
+    highs (>= 1.14),
     osqp (>= 1.0),
     scs (>= 3.2),
     slam (>= 0.1)

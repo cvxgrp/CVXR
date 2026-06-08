@@ -1426,20 +1426,51 @@ test_that("HiGHS: options (CVXPY parity)", {
 
 ## @cvxpy test_conic_solvers.py::TestHIGHS::test_highs_validate_column_name
 test_that("HiGHS: validate_column_name", {
-  skip_if_not_installed("highs")
-  skip("HiGHS column name validation not exposed in R highs package")
+  ## validate_column_name is a pure LP-format name check (no highs dependency).
+  keywords <- c("st", "bounds", "min", "max", "bin", "binary", "gen", "semi", "end")
+  must_not_begin_with <- strsplit("0123456789eE.=()<>[]", "")[[1]]
+
+  ## Happy path: valid names raise nothing.
+  valid_names <- c(
+    strrep("a", 255L),            # max length (255 chars)
+    "a", "A", "z", "_x", "x_1",   # allowed start chars + alnum/underscore body
+    "sts",                        # keyword + suffix is fine (not the keyword)
+    "x[0]", "var_2_by_2[0,0]"     # array-index style names
+  )
+  for (nm in valid_names) expect_silent(validate_column_name(nm))
+
+  ## Unhappy path: invalid names raise an error.
+  invalid_names <- c(
+    strrep("a", 256L),                    # too long (> 255)
+    keywords,                             # reserved keywords
+    paste0(must_not_begin_with, "_tail"), # forbidden leading character
+    "a b", "a\tb", "a-b", "a:b"           # disallowed interior characters
+  )
+  for (nm in invalid_names) expect_error(validate_column_name(nm))
 })
 
 ## @cvxpy test_conic_solvers.py::TestHIGHS::test_highs_warm_start
 test_that("HiGHS: warm_start", {
-  skip_if_not_installed("highs")
-  skip("HiGHS warm-start blocked: R highs package lacks setSolution()")
+  ## Warm-start needs the persistent-solver API (hi_solver_set_solution),
+  ## exposed in R highs >= 1.14.  Full coverage in test-highs-warm-start.R.
+  skip_if_not_installed("highs", minimum_version = "1.14")
+  h <- sth_qp_0()
+  ## Solve twice — second call exercises warm start
+  val1 <- psolve(h$prob, solver = "HIGHS", warm_start = TRUE)
+  val2 <- psolve(h$prob, solver = "HIGHS", warm_start = TRUE)
+  expect_equal(val1, h$expect_obj, tolerance = 1e-5)
+  expect_equal(val2, h$expect_obj, tolerance = 1e-5)
 })
 
 ## @cvxpy test_conic_solvers.py::TestHIGHS::test_highs_written_model_contains_variable_names
 test_that("HiGHS: written_model_contains_variable_names", {
-  skip_if_not_installed("highs")
-  skip("HiGHS model export not exposed in R highs package")
+  skip_if_not_installed("highs", minimum_version = "1.14")
+  ## highs >= 1.14 exposes hi_solver_write_model (the model CAN be written),
+  ## but the R highs package exposes no column-name setter (no lp.col_names_
+  ## equivalent), so a written model uses generic names (c0, c1, ...) and
+  ## cannot contain the CVXPY variable names this test checks for.  Blocked
+  ## upstream in the highs R package, like setSolution() was before 1.14.
+  skip("HiGHS model variable-name export blocked: R highs package exposes no column-name setter")
 })
 
 # ══════════════════════════════════════════════════════════════════
@@ -1468,7 +1499,11 @@ test_that("MOSEK: accept_unknown solver status", {
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_iis
 test_that("MOSEK: IIS (Irreducible Infeasible Subsystem)", {
   skip_if_not_installed("Rmosek")
-  skip("MOSEK IIS (Irreducible Infeasible Subsystem) not exposed via CVXR")
+  ## Genuine feature gap: CVXPY recovers the IIS via dualization in the
+  ## dual_infeas branch (Dualize.invert -> extra_stats[["IIS"]]); CVXR's
+  ## mosek_conif.R only sets the status there (see comment near the
+  ## DUAL_INFEASIBLE branch).  Needs the dualization-based certificate.
+  skip("MOSEK IIS recovery not implemented in CVXR (dualization-based certificate pending)")
 })
 
 ## @cvxpy test_conic_solvers.py::TestMosek::test_mosek_lp_bound_attr

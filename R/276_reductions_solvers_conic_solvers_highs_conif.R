@@ -12,6 +12,40 @@
 ## QP problems are handled by HiGHS_QP_Solver (qp_solvers/highs_qp_solver.R).
 
 
+# -- LP-format column-name validation ----------------------------------------
+## CVXPY SOURCE: highs_conif.py lines 31-48
+## Validates a variable/column name against HiGHS LP-file format rules; used
+## when writing a model to an .lp file.  A pure string check -- no dependency
+## on the highs package.  Pattern is byte-identical to CVXPY's
+## VALID_COLUMN_NAME_PATTERN (Python's `{,254}` written as PCRE `{0,254}`).
+
+VALID_COLUMN_NAME_PATTERN <- paste0(
+  "^(?!st$|bounds$|min$|max$|bin$|binary$|gen$|semi$|end$)",
+  "[a-df-zA-DF-Z\"!#$%&/}{,;?@_\u2018\u2019'`|~]{1}",
+  "[a-zA-Z0-9\"!#$%&/}{,;?@_\u2018\u2019'`|~.=()<>[\\]]{0,254}$"
+)
+
+INVALID_COLUMN_NAME_MESSAGE_TEMPLATE <- paste0(
+  "Invalid column name: {name}",
+  "\nA column name must:",
+  "\n- not be equal to one of the keywords: st, bounds, min, max, bin, binary, gen, semi or end",
+  "\n- not begin with a number, the letter e or E or any of the following characters: .=()<>[]",
+  "\n- be alphanumeric (a-z, A-Z, 0-9) or one of these symbols: \"!#$%&/}{,;?@_\u2018\u2019'`|~.=()<>[]",
+  "\n- be no longer than 255 characters."
+)
+
+validate_column_name <- function(name) {
+  ## CVXPY SOURCE: highs_conif.py validate_column_name (lines 45-48)
+  if (!grepl(VALID_COLUMN_NAME_PATTERN, name, perl = TRUE)) {
+    msg <- gsub("{name}", name, INVALID_COLUMN_NAME_MESSAGE_TEMPLATE, fixed = TRUE)
+    ## Escape literal braces so cli/glue renders them verbatim.
+    msg <- gsub("}", "}}", gsub("{", "{{", msg, fixed = TRUE), fixed = TRUE)
+    cli::cli_abort(msg)
+  }
+  invisible(NULL)
+}
+
+
 # -- HiGHS status map (shared with HiGHS_QP_Solver) --------------------------
 ## CVXPY SOURCE: highs_conif.py lines 57-69
 ## R highs returns integer status codes (unlike Python highspy enum names).
@@ -99,6 +133,10 @@ method(solve_via_data, HiGHS_Conic_Solver) <- function(x, data, warm_start = FAL
                                                           solver_opts = list(), ...) {
   .require_solver_package(HIGHS_SOLVER)
 
+  ## CVXPY SOURCE: highs_conif.py:201 (warm_start, solver_cache plumbed via ...).
+  dots <- list(...)
+  solver_cache <- dots[["solver_cache"]]
+
   c_vec <- data[[SD_C]]
   nvars <- length(c_vec)
   dims <- data[[SD_DIMS]]
@@ -182,13 +220,25 @@ method(solve_via_data, HiGHS_Conic_Solver) <- function(x, data, warm_start = FAL
   ## Build HiGHS control
   ctrl <- highs::highs_control()
   ctrl$log_to_console <- verbose
+  ## CVXPY SOURCE: highs_conif.py:296 sets only log_to_console. R-SPECIFIC: the
+  ## R `highs` 1.14 persistent-solver API installs a log callback whose console
+  ## output is gated by `output_flag` (master switch, default TRUE), so
+  ## log_to_console alone no longer silences HiGHS. Mirror CVXPY's intent
+  ## (quiet unless verbose) by also setting output_flag.
+  ctrl$output_flag <- verbose
 
   for (opt_name in names(solver_opts)) {
     ctrl[[opt_name]] <- solver_opts[[opt_name]]
   }
 
-  ## Call HiGHS
-  result <- highs::highs_solve(
+  ## CVXPY SOURCE: highs_conif.py:250-338.
+  ## Persistent-solver flow (highs_model -> hi_new_solver -> optional
+  ## hi_solver_set_solution -> hi_solver_run -> getter calls) replaces
+  ## the one-shot highs::highs_solve() call.  Necessary so that warm-start
+  ## can feed the prior solution into the new solver instance via
+  ## hi_solver_set_solution(), mirroring CVXPY's `solver.setSolution()` at
+  ## highs_conif.py:320.  Requires highs >= 1.14 (persistent-solver API).
+  model <- highs::highs_model(
     Q       = Q,
     L       = c_vec,
     lower   = lower,
@@ -198,9 +248,59 @@ method(solve_via_data, HiGHS_Conic_Solver) <- function(x, data, warm_start = FAL
     rhs     = rhs,
     types   = types,
     maximum = FALSE,
-    offset  = 0,
-    control = ctrl
+    offset  = 0
   )
+  solver <- highs::hi_new_solver(model)
+  highs::hi_solver_set_options(solver, ctrl)
+
+  ## CVXPY SOURCE: highs_conif.py:316-320 (warm-start primal/dual feed-in).
+  ## If we have a cached solution from a prior solve and its status was
+  ## SOLUTION_PRESENT and the dimensions match, hand it to HiGHS as the
+  ## starting point.  Any failure falls through to a cold solve.
+  cache_key <- HIGHS_SOLVER
+  if (warm_start && !is.null(solver_cache) &&
+      exists(cache_key, envir = solver_cache)) {
+    cached <- get(cache_key, envir = solver_cache)
+    old_status <- HIGHS_STATUS_MAP[[as.character(cached$result$status)]]
+    if (!is.null(old_status) && old_status %in% SOLUTION_PRESENT &&
+        length(cached$result$solver_msg$col_value) == nvars &&
+        length(cached$result$solver_msg$row_value) == nrow(A_highs)) {
+      tryCatch({
+        prior <- cached$result$solver_msg
+        highs::hi_solver_set_solution(
+          solver,
+          col_value   = prior$col_value,
+          row_value   = prior$row_value,
+          col_dual    = prior$col_dual,
+          row_dual    = prior$row_dual,
+          value_valid = isTRUE(prior$value_valid),
+          dual_valid  = isTRUE(prior$dual_valid)
+        )
+      }, error = function(e) NULL)
+    }
+  }
+
+  ## CVXPY SOURCE: highs_conif.py:323-331 (run + collect result fields).
+  ## Result shape matches the prior highs::highs_solve() return so that
+  ## reduction_invert() below is unchanged.
+  highs::hi_solver_run(solver)
+  solution <- highs::hi_solver_get_solution(solver)
+  info <- highs::hi_solver_info(solver)
+  result <- list(
+    primal_solution = solution[["col_value"]],
+    objective_value = info[["objective_function_value"]],
+    status          = highs::hi_solver_status(solver),
+    status_message  = highs::hi_solver_status_message(solver),
+    solver_msg      = solution,
+    info            = info
+  )
+
+  ## CVXPY SOURCE: highs_conif.py:335-336 (cache for next warm-start).
+  if (!is.null(solver_cache)) {
+    assign(cache_key,
+           list(solver = solver, result = result),
+           envir = solver_cache)
+  }
 
   result
 }

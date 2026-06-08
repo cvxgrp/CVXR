@@ -48,6 +48,10 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
                                                        solver_opts = list(), ...) {
   .require_solver_package(HIGHS_SOLVER)
 
+  ## CVXPY SOURCE: highs_qpif.py:123 (warm_start, solver_cache plumbed via ...).
+  dots <- list(...)
+  solver_cache <- dots[["solver_cache"]]
+
   L_vec <- data[["q"]]
   nvars <- length(L_vec)
 
@@ -126,14 +130,25 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
   ## Build HiGHS control
   ctrl <- highs::highs_control()
   ctrl$log_to_console <- verbose
+  ## CVXPY SOURCE: highs_qpif.py:208 sets only log_to_console. R-SPECIFIC: the
+  ## R `highs` 1.14 persistent-solver API installs a log callback whose console
+  ## output is gated by `output_flag` (master switch, default TRUE), so
+  ## log_to_console alone no longer silences HiGHS. Mirror CVXPY's intent
+  ## (quiet unless verbose) by also setting output_flag.
+  ctrl$output_flag <- verbose
 
   ## Apply user-specified solver options
   for (opt_name in names(solver_opts)) {
     ctrl[[opt_name]] <- solver_opts[[opt_name]]
   }
 
-  ## Call HiGHS
-  result <- highs::highs_solve(
+  ## CVXPY SOURCE: highs_qpif.py:175-248.
+  ## Persistent-solver flow (highs_model -> hi_new_solver -> optional
+  ## hi_solver_set_solution -> hi_solver_run -> getter calls) replaces
+  ## the one-shot highs::highs_solve() call so that warm-start can feed
+  ## the prior solution via hi_solver_set_solution(), mirroring CVXPY's
+  ## `solver.setSolution()` at highs_qpif.py:232.  Requires highs >= 1.14.
+  model <- highs::highs_model(
     Q       = Q,
     L       = L_vec,
     lower   = lower,
@@ -143,11 +158,57 @@ method(solve_via_data, HiGHS_QP_Solver) <- function(x, data, warm_start = FALSE,
     rhs     = rhs,
     types   = types,
     maximum = FALSE,
-    offset  = 0,
-    control = ctrl
+    offset  = 0
+  )
+  solver <- highs::hi_new_solver(model)
+  highs::hi_solver_set_options(solver, ctrl)
+
+  ## CVXPY SOURCE: highs_qpif.py:228-232 (warm-start primal/dual feed-in).
+  cache_key <- HIGHS_SOLVER
+  if (warm_start && !is.null(solver_cache) &&
+      exists(cache_key, envir = solver_cache)) {
+    cached <- get(cache_key, envir = solver_cache)
+    old_status <- HIGHS_STATUS_MAP[[as.character(cached$result$status)]]
+    nrow_A <- if (is.null(A)) 0L else nrow(A)
+    if (!is.null(old_status) && old_status %in% SOLUTION_PRESENT &&
+        length(cached$result$solver_msg$col_value) == nvars &&
+        length(cached$result$solver_msg$row_value) == nrow_A) {
+      tryCatch({
+        prior <- cached$result$solver_msg
+        highs::hi_solver_set_solution(
+          solver,
+          col_value   = prior$col_value,
+          row_value   = prior$row_value,
+          col_dual    = prior$col_dual,
+          row_dual    = prior$row_dual,
+          value_valid = isTRUE(prior$value_valid),
+          dual_valid  = isTRUE(prior$dual_valid)
+        )
+      }, error = function(e) NULL)
+    }
+  }
+
+  ## CVXPY SOURCE: highs_qpif.py:235-243 (run + collect result fields).
+  highs::hi_solver_run(solver)
+  solution <- highs::hi_solver_get_solution(solver)
+  info <- highs::hi_solver_info(solver)
+  result <- list(
+    primal_solution = solution[["col_value"]],
+    objective_value = info[["objective_function_value"]],
+    status          = highs::hi_solver_status(solver),
+    status_message  = highs::hi_solver_status_message(solver),
+    solver_msg      = solution,
+    info            = info
   )
 
-  ## Store len_eq for dual splitting
+  ## CVXPY SOURCE: highs_qpif.py:247-248 (cache for next warm-start).
+  if (!is.null(solver_cache)) {
+    assign(cache_key,
+           list(solver = solver, result = result),
+           envir = solver_cache)
+  }
+
+  ## Store len_eq for dual splitting (used by reduction_invert).
   result$.len_eq <- len_eq
   result
 }

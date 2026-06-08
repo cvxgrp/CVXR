@@ -127,6 +127,22 @@ support.
 - Variables now report `Parameter`s embedded in expression bounds and
   include those bounds in DPP/DGP compliance checks.
 
+### HiGHS warm-start and column-name validation
+
+- HiGHS warm-start is now enabled.
+  `psolve(prob, solver = "HIGHS", warm_start = TRUE)` reuses the
+  previous solution via the persistent-solver API
+  (`hi_solver_set_solution`) across LP, MILP, and QP paths. This
+  requires `highs (>= 1.14)`, now available on CRAN; on older `highs`
+  the warm-start tests skip and solves fall back to cold starts.
+- `validate_column_name()` checks a name against the HiGHS LP-file
+  column-name rules, mirroring CVXPY’s
+  `highs_conif.validate_column_name`.
+- Known limitation: writing a model to a file with the original variable
+  names is not yet supported — the R `highs` package exposes no
+  column-name setter, so a written model would carry generic names
+  (`c0`, `c1`, …).
+
 ### Geometric and parameterized programming
 
 - Positive (DGP) variables now accept numeric *and* parametric bounds

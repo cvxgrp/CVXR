@@ -72,6 +72,13 @@
 <li>Variables now report <code>Parameter</code>s embedded in expression bounds and include those bounds in DPP/DGP compliance checks.</li>
 </ul></div>
 <div class="section level3">
+<h3 id="highs-warm-start-and-column-name-validation-1-9-1">HiGHS warm-start and column-name validation<a class="anchor" aria-label="anchor" href="#highs-warm-start-and-column-name-validation-1-9-1"></a></h3>
+<ul><li>HiGHS warm-start is now enabled. <code>psolve(prob, solver = "HIGHS", warm_start = TRUE)</code> reuses the previous solution via the persistent-solver API (<code>hi_solver_set_solution</code>) across LP, MILP, and QP paths. This requires <code>highs (&gt;= 1.14)</code>, now available on CRAN; on older <code>highs</code> the warm-start tests skip and solves fall back to cold starts.</li>
+<li>
+<code>validate_column_name()</code> checks a name against the HiGHS LP-file column-name rules, mirroring CVXPY’s <code>highs_conif.validate_column_name</code>.</li>
+<li>Known limitation: writing a model to a file with the original variable names is not yet supported — the R <code>highs</code> package exposes no column-name setter, so a written model would carry generic names (<code>c0</code>, <code>c1</code>, …).</li>
+</ul></div>
+<div class="section level3">
 <h3 id="geometric-and-parameterized-programming-1-9-1">Geometric and parameterized programming<a class="anchor" aria-label="anchor" href="#geometric-and-parameterized-programming-1-9-1"></a></h3>
 <ul><li>Positive (DGP) variables now accept numeric <em>and</em> parametric bounds under <code>gp = TRUE</code> (e.g. <code>Variable(pos = TRUE, bounds = list(lb, ub))</code> with <code>lb</code>/<code>ub</code> <code>Parameter</code>s). The DGP reduction log-transforms the bounds into the log domain and lowers them to constraints; parametric bounds canonicalize through the DGP tree without eagerly evaluating <code>log(value(param))</code>, so DPP re-solves with changed bound parameters work.</li>
 <li>

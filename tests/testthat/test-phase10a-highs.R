@@ -419,6 +419,9 @@ test_that("HIGHS_SOLVER constant is exported and correct", {
 
 ## @cvxpy NONE
 test_that("HiGHS warm start does not crash", {
+  ## warm_start = TRUE drives the persistent-solver path (hi_solver_set_solution),
+  ## available in R highs >= 1.14.
+  skip_if_not_installed("highs", minimum_version = "1.14")
   x <- Variable(2)
   prob <- Problem(Minimize(sum_squares(x - c(1, 2))),
                   list(x >= 0))

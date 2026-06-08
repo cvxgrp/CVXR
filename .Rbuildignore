@@ -13,6 +13,7 @@
 ^\.github$
 ^_pkgdown\.yml$
 ^README\.Rmd$
+^README\.html$
 ^docs$
 ^pkgdown$
 ^inst/copy_r_source\.R$

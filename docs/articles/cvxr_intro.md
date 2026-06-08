@@ -133,13 +133,13 @@ result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE
 #> ────────────────────────────────── CVXR v1.9.1 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
-#> ℹ Compile time: 0.013s
+#> ℹ Compile time: 0.022s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.013s
-#> ℹ Solver time: 0.011s
+#> ℹ Compile time: 0.022s
+#> ℹ Solver time: 0.017s
 round(value(betaHat), 3)
 #>         [,1]
 #>  [1,]  0.000
@@ -238,7 +238,7 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] Matrix_1.7-5      piqp_0.6.2        jsonlite_2.0.0    compiler_4.6.0   
-#>  [5] highs_1.12.0-3    Rcpp_1.1.1-1.1    slam_0.1-55       cccp_0.3-3       
+#>  [5] highs_1.14.0-2    Rcpp_1.1.1-1.1    slam_0.1-55       cccp_0.3-3       
 #>  [9] jquerylib_0.1.4   systemfonts_1.3.2 textshaping_1.0.5 yaml_2.3.12      
 #> [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         
 #> [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  

@@ -402,16 +402,32 @@ test_that("HiGHS CVaR constraint optimization", {
 })
 
 # ── TestQp::test_highs_warmstart ──────────────────────────────────────────────
-# CVXPY: HiGHS warm-start test. Blocked in R because the R highs package
-# lacks setSolution() support needed for warm-starting.
+# CVXPY: HiGHS warm-start test. Requires R highs >= 1.14 (persistent-solver
+# API exposing hi_solver_set_solution); on CRAN as of highs 1.14.0-2.
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_highs_warmstart
-test_that("HiGHS warm-start (blocked: R highs pkg lacks setSolution)", {
-  skip_if_not_installed("highs")
-  skip("HiGHS warm-start blocked: R highs package lacks setSolution() support")
-  ## CVXPY pattern: parametric least-squares, cold then warm, then new param
-  ## warm then cold. Verify both give same results. When R highs package adds
-  ## setSolution(), implement following CVXPY test_qp_solvers.py lines 635-656.
+test_that("HiGHS warm-start: cold and warm produce same solution", {
+  skip_if_not_installed("highs", minimum_version = "1.14")
+  m <- 200L
+  n <- 100L
+  set.seed(1L)
+  A_mat <- matrix(rnorm(m * n), nrow = m, ncol = n)
+  b <- Parameter(m)
+
+  x <- Variable(n)
+  prob <- Problem(Minimize(sum_squares(A_mat %*% x - b)))
+
+  ## Cycle 1: same b — cold then warm should match
+  value(b) <- rnorm(m)
+  result1 <- psolve(prob, solver = "HIGHS", warm_start = FALSE)
+  result2 <- psolve(prob, solver = "HIGHS", warm_start = TRUE)
+  expect_equal(result1, result2, tolerance = 1e-3)
+
+  ## Cycle 2: new b — warm then cold should match
+  value(b) <- rnorm(m)
+  result3 <- psolve(prob, solver = "HIGHS", warm_start = TRUE)
+  result4 <- psolve(prob, solver = "HIGHS", warm_start = FALSE)
+  expect_equal(result3, result4, tolerance = 1e-3)
 })
 
 # ── TestQp::test_piqp_warmstart ──────────────────────────────────────────────

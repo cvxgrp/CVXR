@@ -1,4 +1,0 @@
-# License
-
-    YEAR: 2024-2026
-    COPYRIGHT HOLDER: Anqi Fu, Balasubramanian Narasimhan, David W Kang, Steven Diamond, John Miller

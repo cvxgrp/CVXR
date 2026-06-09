@@ -133,13 +133,13 @@ result <- psolve(problem, solver = "CLARABEL", verbose = TRUE) ## verbose = TRUE
 #> ────────────────────────────────── CVXR v1.9.1 ─────────────────────────────────
 #> ℹ Problem: 1 variable, 2 constraints (QP)
 #> ℹ Compilation: "CLARABEL" via CVXR::Dcp2Cone -> CVXR::CvxAttr2Constr -> CVXR::ConeMatrixStuffing -> CVXR::Clarabel_Solver
-#> ℹ Compile time: 0.022s
+#> ℹ Compile time: 0.013s
 #> ─────────────────────────────── Numerical solver ───────────────────────────────
 #> ──────────────────────────────────── Summary ───────────────────────────────────
 #> ✔ Status: optimal
 #> ✔ Optimal value: 1287.63
-#> ℹ Compile time: 0.022s
-#> ℹ Solver time: 0.017s
+#> ℹ Compile time: 0.013s
+#> ℹ Solver time: 0.011s
 round(value(betaHat), 3)
 #>         [,1]
 #>  [1,]  0.000
@@ -244,7 +244,7 @@ sessionInfo()
 #> [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  
 #> [21] Rcplex_0.3-8      checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3       
 #> [25] osqp_1.0.0        bslib_0.11.0      rlang_1.2.0       cachem_1.1.0     
-#> [29] xfun_0.57         fs_2.1.0          sass_0.4.10       S7_0.2.2         
+#> [29] xfun_0.58         fs_2.1.0          sass_0.4.10       S7_0.2.2         
 #> [33] otel_0.2.0        cli_3.6.6         pkgdown_2.2.0     Rglpk_0.6-5.1    
 #> [37] digest_0.6.39     grid_4.6.0        xpress_9.8.2      gmp_0.7-5.1      
 #> [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         evaluate_1.0.5   

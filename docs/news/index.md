@@ -2,6 +2,8 @@
 
 ## CVXR 1.9.1
 
+CRAN release: 2026-06-09
+
 This is the first CRAN release since 1.8.2 and is a large one: it tracks
 CVXPY 1.9.1 and folds in the changes from the internal 1.8.2-1 and 1.9.0
 development cycles. The headline additions are a derivative API for

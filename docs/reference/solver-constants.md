@@ -1,0 +1,51 @@
+# Solver Name Constants
+
+Character string constants identifying the available solvers.
+
+## Usage
+
+``` r
+SCS_SOLVER
+
+OSQP_SOLVER
+
+CLARABEL_SOLVER
+
+DIFFCP_SOLVER
+
+HIGHS_SOLVER
+
+MOSEK_SOLVER
+
+GUROBI_SOLVER
+
+GLPK_SOLVER
+
+GLPK_MI_SOLVER
+
+ECOS_SOLVER
+
+ECOS_BB_SOLVER
+
+CPLEX_SOLVER
+
+CVXOPT_SOLVER
+
+PIQP_SOLVER
+
+SCIP_SOLVER
+
+XPRESS_SOLVER
+
+IPOPT_SOLVER
+
+KNITRO_SOLVER
+
+UNO_SOLVER
+
+COPT_SOLVER
+```
+
+## Value
+
+A character string.

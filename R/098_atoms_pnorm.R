@@ -17,8 +17,8 @@ Pnorm <- new_class("Pnorm", parent = AxisAtom, package = "CVXR",
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
     p <- as.numeric(p)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(Pnorm, S7_object(),
       id        = as.integer(id),
@@ -62,16 +62,16 @@ method(is_atom_concave, Pnorm) <- function(x) x@p < 1
 
 # -- monotonicity -------------------------------------------------
 method(is_incr, Pnorm) <- function(x, idx, ...) {
-  x@p < 1 || (x@p >= 1 && is_nonneg(x@args[[1L]]))
+  x@p < 1 || (x@p >= 1 && is_nonneg(.args(x)[[1L]]))
 }
 method(is_decr, Pnorm) <- function(x, idx, ...) {
-  x@p >= 1 && is_nonpos(x@args[[1L]])
+  x@p >= 1 && is_nonpos(.args(x)[[1L]])
 }
 
 # -- domain -------------------------------------------------------
 method(atom_domain, Pnorm) <- function(x) {
   if (x@p < 1 && x@p != 0) {
-    list(x@args[[1L]] >= 0)
+    list(.args(x)[[1L]] >= 0)
   } else {
     list()
   }
@@ -160,8 +160,8 @@ PnormApprox <- new_class("PnormApprox", parent = Pnorm, package = "CVXR",
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
     p_orig <- as.numeric(p)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     ## Rational approximation -- override p (convert to numeric for property)
     p_used <- p_orig

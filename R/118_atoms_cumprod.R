@@ -14,7 +14,7 @@ Cumprod <- new_class("Cumprod", parent = AxisAtom, package = "CVXR",
     x <- as_expr(x)
     axis <- as.integer(axis)
     ## Cumprod preserves shape (like cumsum)
-    shape <- x@shape
+    shape <- .shape(x)
 
     obj <- .fast_new(Cumprod, S7_object(),
       id       = as.integer(id),
@@ -32,7 +32,7 @@ Cumprod <- new_class("Cumprod", parent = AxisAtom, package = "CVXR",
 )
 
 # -- shape: same as input ------------------------------------------
-method(shape_from_args, Cumprod) <- function(x) x@args[[1L]]@shape
+method(shape_from_args, Cumprod) <- function(x) .arg_shape(x)
 
 # -- curvature: neither convex nor concave --------------------------
 method(is_atom_convex, Cumprod) <- function(x) FALSE

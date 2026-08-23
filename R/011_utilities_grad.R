@@ -23,7 +23,7 @@
   result <- list()
   for (v in vars) {
     var_sz <- expr_size(v)
-    key <- as.character(v@id)
+    key <- as.character(.id(v))
     if (var_sz == 1L && expr_sz == 1L) {
       result[[key]] <- 0
     } else {

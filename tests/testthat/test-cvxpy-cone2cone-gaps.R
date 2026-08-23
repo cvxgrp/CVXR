@@ -379,3 +379,161 @@ test_that("cone2cone gap: PowND pcp_4b (Fisher market non-CEEI)", {
 
   expect_equal(value(pow_prob), exp(log_opt), tolerance = 1e-2)
 })
+
+# ======================================================================
+# TestPSDUtils — round-trip of the shared svec packer/unpacker
+# (utilities/psd_utils.R; ported at 1.9.2 under ADR D_19.6)
+# ======================================================================
+
+.random_psd <- function(n, seed) {
+  set.seed(seed)
+  A <- matrix(rnorm(n * n), n, n)
+  A %*% t(A)
+}
+
+## @cvxpy test_cone2cone.py::TestPSDUtils::test_tri_to_full_round_trip
+test_that("psd_utils: psd_format_mat -> tri_to_full recovers the symmetrized matrix", {
+  n <- 4L
+  X <- Variable(c(n, n), symmetric = TRUE)
+  con <- PSD(X)
+  M_val <- .random_psd(n, 42L)
+
+  for (tri_kind in c(TriangleKind$LOWER, TriangleKind$UPPER)) {
+    for (sqrt2 in c(TRUE, FALSE)) {
+      M <- psd_format_mat(con, tri_kind, sqrt2)
+      svec <- as.vector(M %*% as.vector(M_val))   # as.vector() is F-order in R
+      recovered <- tri_to_full(svec, n, tri_kind, sqrt2)
+      expect_equal(recovered, M_val, tolerance = 1e-12)
+    }
+  }
+})
+
+## @cvxpy test_cone2cone.py::TestPSDUtils::test_tri_to_full_n1
+test_that("psd_utils: 1x1 matrix round-trips (edge case: no off-diagonals)", {
+  X <- Variable(c(1L, 1L), symmetric = TRUE)
+  con <- PSD(X)
+  M_val <- matrix(5.0, 1L, 1L)
+
+  for (tri_kind in c(TriangleKind$LOWER, TriangleKind$UPPER)) {
+    for (sqrt2 in c(TRUE, FALSE)) {
+      M <- psd_format_mat(con, tri_kind, sqrt2)
+      svec <- as.vector(M %*% as.vector(M_val))
+      recovered <- tri_to_full(svec, 1L, tri_kind, sqrt2)
+      expect_equal(recovered, M_val, tolerance = 1e-12)
+    }
+  }
+})
+
+## Guards the CRAN 1.9.1 bug class (PSD duals scrambled for n >= 3, 893ca4b):
+## the triangle kinds are NOT interchangeable.  The upstream round-trip tests
+## above cannot catch this on their own -- pack and unpack with the SAME kind
+## and any consistent mis-enumeration cancels out.  So pack the lower triangle
+## and unpack it as the upper one: the entries must land in different places.
+## (Not a transpose of the recovered matrix: `right` is symmetric, so the wrong
+## kind permutes the off-diagonals rather than transposing the result.)
+## @cvxpy NONE
+test_that("psd_utils: the two triangle kinds are not interchangeable for n >= 3", {
+  n <- 3L
+  X <- Variable(c(n, n), symmetric = TRUE)
+  con <- PSD(X)
+  M_val <- .random_psd(n, 11L)
+
+  M_lower <- psd_format_mat(con, TriangleKind$LOWER, TRUE)
+  svec <- as.vector(M_lower %*% as.vector(M_val))
+
+  right <- tri_to_full(svec, n, TriangleKind$LOWER, TRUE)
+  wrong <- tri_to_full(svec, n, TriangleKind$UPPER, TRUE)
+  expect_equal(right, M_val, tolerance = 1e-12)
+  expect_false(isTRUE(all.equal(wrong, M_val)))
+})
+
+# ======================================================================
+# ExactCone2Cone / PSD -> SvecPSD  (ADR D_19.6 step B)
+# ======================================================================
+
+## @cvxpy test_cone2cone.py::TestExactApproxCone2Cone::test_exact_cone_conversions_map
+test_that("EXACT_CONE_CONVERSIONS maps PSD to SvecPSD", {
+  srcs <- lapply(EXACT_CONE_CONVERSIONS, `[[`, "source")
+  expect_true(any(vapply(srcs, identical, logical(1L), PSD)))
+  entry <- Filter(function(e) identical(e$source, PSD), EXACT_CONE_CONVERSIONS)[[1L]]
+  expect_true(any(vapply(entry$targets, identical, logical(1L), SvecPSD)))
+  ## PowCone3D is not a conversion source (it is a target of PowConeND upstream).
+  expect_false(any(vapply(srcs, identical, logical(1L), PowCone3D)))
+})
+
+## @cvxpy test_cone2cone.py::TestExactApproxCone2Cone::test_exact_cone_conversions_is_dag
+test_that("EXACT_CONE_CONVERSIONS is a DAG (no cone reaches itself)", {
+  reach <- lapply(EXACT_CONE_CONVERSIONS, function(e) e$targets)
+  srcs  <- lapply(EXACT_CONE_CONVERSIONS, `[[`, "source")
+  repeat {
+    changed <- FALSE
+    for (i in seq_along(srcs)) {
+      for (t in reach[[i]]) {
+        j <- which(vapply(srcs, identical, logical(1L), t))
+        if (length(j) == 0L) next
+        for (tt in reach[[j]]) {
+          if (!any(vapply(reach[[i]], identical, logical(1L), tt))) {
+            reach[[i]] <- c(reach[[i]], list(tt))
+            changed <- TRUE
+          }
+        }
+      }
+    }
+    if (!changed) break
+  }
+  for (i in seq_along(srcs)) {
+    expect_false(any(vapply(reach[[i]], identical, logical(1L), srcs[[i]])),
+                 info = "cycle detected in EXACT_CONE_CONVERSIONS")
+  }
+})
+
+## @cvxpy test_cone2cone.py::TestExactApproxCone2Cone::test_exact_cone2cone_target_cones_filtering
+test_that("ExactCone2Cone(target_cones=) converts only the cones asked for", {
+  X <- Variable(c(3L, 3L), symmetric = TRUE)
+  con <- PSD(X)
+  ctx <- SolverInfo(solver_name = "CLARABEL",
+                    psd_triangle_kind = TriangleKind$UPPER,
+                    psd_sqrt2_scaling = TRUE)
+  prob <- Problem(Minimize(matrix_trace(X)), list(con))
+
+  ## Asked for PSD: converted.
+  red <- ExactCone2Cone(target_cones = list(PSD), solver_context = ctx)
+  out <- reduction_apply(red, prob)
+  expect_true(.s7_is(out[[1L]]@constraints[[1L]], SvecPSD))
+
+  ## Asked for something else: left alone.
+  red2 <- ExactCone2Cone(target_cones = list(SOC), solver_context = ctx)
+  out2 <- reduction_apply(red2, prob)
+  expect_true(.s7_is(out2[[1L]]@constraints[[1L]], PSD))
+})
+
+## The svec length is n(n+1)/2 per cone, NOT n^2 -- this is what the solver's
+## cone dims are checked against, and getting it wrong is a hard solver failure
+## ("cone dimensions ... not equal to num rows in A").
+## @cvxpy NONE
+test_that("SvecPSD reports the packed size, and the chain packs PSD for svec solvers", {
+  n <- 4L
+  X <- Variable(c(n, n), symmetric = TRUE)
+  sv <- SvecPSD(Variable(c((n * (n + 1L)) %/% 2L, 1L)), n = n)
+  expect_equal(constr_size(sv), (n * (n + 1L)) %/% 2L)
+  expect_equal(num_cones(sv), 1L)
+  expect_equal(cone_sizes(sv), n)
+
+  skip_if_not_installed("clarabel")
+  prob <- Problem(Minimize(matrix_trace(X)), list(X %>>% diag(n)))
+  d <- problem_data(prob, solver = "CLARABEL")
+  expect_equal(nrow(d[[1L]]$A), (n * (n + 1L)) %/% 2L)
+  expect_equal(d[[1L]]$dims@psd, n)
+})
+
+## A solver that takes FULL PSD matrices (CVXOPT/cccp `psdc`) must NOT be
+## converted: its PSD_TRIANGLE_KIND is NA, so expand_cones leaves PSD alone.
+## @cvxpy NONE
+test_that("a full-matrix PSD solver gets no svec conversion", {
+  skip_if_not_installed("cccp")
+  n <- 3L
+  X <- Variable(c(n, n), symmetric = TRUE)
+  prob <- Problem(Minimize(matrix_trace(X)), list(X %>>% diag(n)))
+  d <- problem_data(prob, solver = "CVXOPT")
+  expect_equal(nrow(d[[1L]]$A), n * n)
+})

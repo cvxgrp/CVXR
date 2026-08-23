@@ -130,6 +130,7 @@ method(is_dgp, Minimize) <- function(x) is_log_log_convex(x@args[[1L]])
 ## is_dpp: check DPP compliance within DPP scope
 ## CVXPY SOURCE: objective.py lines 167-174
 method(is_dpp, Minimize) <- function(x, context = "dcp") {
+  .check_dpp_context(context)
   arg <- x@args[[1L]]
   curv <- if (identical(tolower(context), "dgp")) with_dpp_scope(is_log_log_convex(arg))
           else with_dpp_scope(is_convex(arg))
@@ -201,6 +202,7 @@ method(is_dgp, Maximize) <- function(x) is_log_log_concave(x@args[[1L]])
 ## is_dpp: check DPP compliance within DPP scope
 ## CVXPY SOURCE: objective.py lines 238-245
 method(is_dpp, Maximize) <- function(x, context = "dcp") {
+  .check_dpp_context(context)
   arg <- x@args[[1L]]
   curv <- if (identical(tolower(context), "dgp")) with_dpp_scope(is_log_log_concave(arg))
           else with_dpp_scope(is_concave(arg))
@@ -224,6 +226,23 @@ method(print, Maximize) <- function(x, ...) {
 
 # -- Objective arithmetic ---------------------------------------------
 ## CVXPY SOURCE: objective.py lines 61-105 (Objective.__add__, __mul__, etc.)
+
+## Reject an unrecognized DPP context.
+## CVXPY SOURCE: objective.py:173-181 / 250-258 -- both Minimize.is_dpp and
+## Maximize.is_dpp raise ValueError("Unsupported context ", context) for
+## anything other than 'dcp'/'dgp'.  CVXR previously fell through to the dcp
+## branch for ANY non-"dgp" string, so a typo silently answered the wrong
+## question instead of erroring.
+.check_dpp_context <- function(context) {
+  if (!is.character(context) || length(context) != 1L ||
+      !(tolower(context) %in% c("dcp", "dgp"))) {
+    cli_abort(c(
+      "Unsupported DPP context {.val {context}}.",
+      "i" = "Use {.val dcp} or {.val dgp}."
+    ))
+  }
+  invisible(TRUE)
+}
 
 ## Negate: -Minimize(f) -> Maximize(-f), -Maximize(f) -> Minimize(-f)
 ## CVXPY SOURCE: objective.py Minimize.__neg__ / Maximize.__neg__
@@ -273,4 +292,65 @@ method(print, Maximize) <- function(x, ...) {
   if (!is.numeric(scalar) || length(scalar) != 1L)
     cli_abort("Objective can only be divided by a numeric scalar.")
   .mul_objective(obj, 1.0 / scalar)
+}
+
+## -- Ops dispatch for Objective ---------------------------------------
+## CVXPY SOURCE: objective.py:61-95 (Objective.__radd__/__sub__/__rsub__/
+## __mul__/__rmul__/__div__), :137-145 (Minimize.__add__), :134-135
+## (Minimize.__neg__), :213-221 (Maximize.__add__), :210-211 (Maximize.__neg__).
+##
+## The four helpers above already implemented CVXPY's semantics exactly --
+## including the direction flip, `(is Maximize) == (scalar < 0)` -- but nothing
+## dispatched to them, so `Minimize(f) * 2` failed with R's "non-numeric
+## argument to binary operator". Registered in .onLoad(), mirroring the
+## Expression and Problem handlers (globals.R).
+##
+## ONE DELIBERATE DEVIATION, for internal consistency: CVXPY accepts `0 + obj`
+## (via __radd__) but REJECTS `obj + 0` (Minimize.__add__ demands an Objective).
+## That asymmetry is an artifact of Python's __add__/__radd__ split, existing so
+## sum() can start from 0; it carries no meaning. R's Ops handler sees both
+## operands at once and cannot reproduce it without inventing an arbitrary
+## rule, and CVXR's own .problem_Ops_handler already accepts either side. So
+## the identity is accepted on BOTH sides here. Everything else -- including
+## `1 + obj` raising, and Minimize + Maximize being a DCP error -- matches.
+#' @keywords internal
+.objective_Ops_handler <- function(e1, e2) {
+  op <- .Generic
+  unary <- (nargs() == 1L)
+
+  if (unary) {
+    if (op == "-") return(.negate_objective(e1))
+    if (op == "+") return(e1)
+    cli_abort("Unary {.val {op}} is not supported on an objective.")
+  }
+
+  .is_zero <- function(v) is.numeric(v) && length(v) == 1L && !is.na(v) && v == 0
+
+  switch(op,
+    "+" = {
+      if (.is_zero(e1)) return(e2)
+      if (.is_zero(e2)) return(e1)
+      if (!.s7_is(e1, Objective) || !.s7_is(e2, Objective))
+        cli_abort("An objective can only be added to another objective, or to {.val 0}.")
+      .add_objectives(e1, e2)
+    },
+    "-" = {
+      if (.is_zero(e1)) return(.negate_objective(e2))
+      if (.is_zero(e2)) return(e1)
+      if (!.s7_is(e1, Objective) || !.s7_is(e2, Objective))
+        cli_abort("An objective can only be subtracted from another objective.")
+      .sub_objectives(e1, e2)
+    },
+    "*" = {
+      if (.s7_is(e1, Objective) && is.numeric(e2)) .mul_objective(e1, e2)
+      else if (is.numeric(e1) && .s7_is(e2, Objective)) .mul_objective(e2, e1)
+      else cli_abort("An objective can only be multiplied by a numeric scalar.")
+    },
+    "/" = {
+      if (!.s7_is(e1, Objective) || !is.numeric(e2))
+        cli_abort("An objective can only be divided by a numeric scalar.")
+      .div_objective(e1, e2)
+    },
+    cli_abort("Operator {.val {op}} is not supported on an objective.")
+  )
 }

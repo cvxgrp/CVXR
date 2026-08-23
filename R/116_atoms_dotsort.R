@@ -27,8 +27,8 @@ Dotsort <- new_class("Dotsort", parent = Atom, package = "CVXR",
 
 ## Validate: W must be constant, size(W) <= size(X)
 method(validate_arguments, Dotsort) <- function(x) {
-  W <- x@args[[2L]]
-  X <- x@args[[1L]]
+  W <- .args(x)[[2L]]
+  X <- .args(x)[[1L]]
   if (!is_constant(W)) {
     cli_abort("The {.arg W} argument to {.fn dotsort} must be constant.")
   }
@@ -43,10 +43,10 @@ method(shape_from_args, Dotsort) <- function(x) c(1L, 1L)
 
 ## Sign
 method(sign_from_args, Dotsort) <- function(x) {
-  x_pos <- is_nonneg(x@args[[1L]])
-  x_neg <- is_nonpos(x@args[[1L]])
-  w_pos <- is_nonneg(x@args[[2L]])
-  w_neg <- is_nonpos(x@args[[2L]])
+  x_pos <- is_nonneg(.args(x)[[1L]])
+  x_neg <- is_nonpos(.args(x)[[1L]])
+  w_pos <- is_nonneg(.args(x)[[2L]])
+  w_neg <- is_nonpos(.args(x)[[2L]])
   list(
     is_nonneg = (x_pos && w_pos) || (x_neg && w_neg),
     is_nonpos = (x_neg && w_pos) || (x_pos && w_neg)
@@ -58,8 +58,8 @@ method(is_atom_convex, Dotsort) <- function(x) TRUE
 method(is_atom_concave, Dotsort) <- function(x) FALSE
 
 ## Monotonicity: increasing if W nonneg, decreasing if W nonpos
-method(is_incr, Dotsort) <- function(x, idx, ...) is_nonneg(x@args[[2L]])
-method(is_decr, Dotsort) <- function(x, idx, ...) is_nonpos(x@args[[2L]])
+method(is_incr, Dotsort) <- function(x, idx, ...) is_nonneg(.args(x)[[2L]])
+method(is_decr, Dotsort) <- function(x, idx, ...) is_nonpos(.args(x)[[2L]])
 
 ## PWL
 method(is_pwl, Dotsort) <- function(x) TRUE

@@ -27,9 +27,16 @@
 #' @returns Character string
 #' @noRd
 .bigq_to_key <- function(w) {
-  n <- length(w)
-  parts <- vapply(seq_len(n), function(i) as.character(w[i]), character(1))
-  paste(parts, collapse = ",")
+  ## `w[i]` on a `bigq` allocates a fresh 1-element bigq and re-enters gmp's C
+  ## layer, so the element-wise form was O(len^2) -- and since the call count
+  ## also grows with the problem dimension, ~O(n^3) in geo_mean's. `gmp`'s
+  ## `as.character` is already vectorized over the whole vector.
+  ## Measured: 14.2x on a length-13 key, 28.4x on length-31; -14.5% end-to-end
+  ## on geo_mean(n=12) against a 0.7% drift, keys byte-identical over a 608-case
+  ## fuzz. See notes/string_key_hashing_sweep_2026-08-13.md.
+  ## (CVXPY has no counterpart: power_tools.py:90 keys its cache on a tuple of
+  ## Fractions directly -- `d[tuple(tmp)] = v` -- so this helper is R-only.)
+  paste(as.character(w), collapse = ",")
 }
 
 #' Get the maximum denominator from a bigq vector
@@ -644,7 +651,7 @@ gm_constrs <- function(t_var, x_list, p) {
 
   .get_or_create <- function(key_str) {
     if (!exists(key_str, envir = var_cache, inherits = FALSE)) {
-      assign(key_str, Variable(t_var@shape), envir = var_cache)
+      assign(key_str, Variable(.shape(t_var)), envir = var_cache)
     }
     get(key_str, envir = var_cache, inherits = FALSE)
   }

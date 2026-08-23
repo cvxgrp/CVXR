@@ -39,7 +39,7 @@ GeoMean <- new_class("GeoMean", parent = Atom, package = "CVXR",
     if (!expr_is_vector(x)) {
       cli_abort("{.arg x} must be a row or column vector.")
     }
-    n <- if (expr_is_scalar(x)) 1L else max(x@shape)
+    n <- if (expr_is_scalar(x)) 1L else max(.shape(x))
 
     ## Default weights: uniform
     if (is.null(p)) p <- rep(1, n)
@@ -97,7 +97,7 @@ method(is_decr, GeoMean) <- function(x, idx, ...) FALSE
 # -- domain: x[w > 0] >= 0 -----------------------------------------
 method(atom_domain, GeoMean) <- function(x) {
   selection <- which(x@w > 0)
-  list(x@args[[1L]][selection] >= 0)
+  list(.args(x)[[1L]][selection] >= 0)
 }
 
 # -- get_data -------------------------------------------------------
@@ -108,14 +108,14 @@ method(get_data, GeoMean) <- function(x) {
 # -- name -----------------------------------------------------------
 method(expr_name, GeoMean) <- function(x) {
   weights <- paste(x@w, collapse = ", ")
-  sprintf("%s(%s, (%s))", class(x)[[1L]], expr_name(x@args[[1L]]), weights)
+  sprintf("%s(%s, (%s))", class(x)[[1L]], expr_name(.args(x)[[1L]]), weights)
 }
 
 ## CVXPY SOURCE: atoms/geo_mean.py GeoMean.format_labeled (lines 284-288).
 method(format_labeled, GeoMean) <- function(x) {
   lbl <- label(x); if (!is.null(lbl)) return(lbl)
   weights <- paste(x@w, collapse = ", ")
-  sprintf("%s(%s, (%s))", class(x)[[1L]], format_labeled(x@args[[1L]]), weights)
+  sprintf("%s(%s, (%s))", class(x)[[1L]], format_labeled(.args(x)[[1L]]), weights)
 }
 
 # -- numeric: prod(x^w) --------------------------------------------
@@ -143,7 +143,7 @@ method(.grad, GeoMean) <- function(x, values, ...) {
   if (any(v[w_arr > 0] <= 0)) return(list(NULL))
   gm_val <- as.numeric(numeric_value(x, values))
   D <- w_arr / v * gm_val
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(D, rows))
 }
 
@@ -185,7 +185,7 @@ GeoMeanApprox <- new_class("GeoMeanApprox", parent = GeoMean, package = "CVXR",
     if (!expr_is_vector(x)) {
       cli_abort("{.arg x} must be a row or column vector.")
     }
-    n <- if (expr_is_scalar(x)) 1L else max(x@shape)
+    n <- if (expr_is_scalar(x)) 1L else max(.shape(x))
 
     ## Default weights: uniform
     if (is.null(p)) p <- rep(1, n)

@@ -28,15 +28,15 @@ QuadForm <- new_class("QuadForm", parent = Atom, package = "CVXR",
 
 # -- validate -----------------------------------------------------
 method(validate_arguments, QuadForm) <- function(x) {
-  P <- x@args[[2L]]
-  xarg <- x@args[[1L]]
+  P <- .args(x)[[2L]]
+  xarg <- .args(x)[[1L]]
   ## P must be square
-  if (P@shape[1L] != P@shape[2L]) {
+  if (.shape(P)[1L] != .shape(P)[2L]) {
     cli_abort("{.arg P} must be square, got shape ({P@shape[1L]}, {P@shape[2L]}).")
   }
   ## x must be a vector compatible with P
-  n <- P@shape[1L]
-  if (xarg@shape[1L] != n) {
+  n <- .shape(P)[1L]
+  if (.shape(xarg)[1L] != n) {
     cli_abort("{.arg x} must have {n} rows to match P, got {xarg@shape[1L]}.")
   }
   ## P must be symmetric/hermitian (CVXPY quad_form.py line 57)
@@ -63,11 +63,11 @@ method(sign_from_args, QuadForm) <- function(x) {
 ## .check_dpp_args mirrors quad_form.py _check_dpp_args(): x param-free
 ## (avoid quadratic-in-params) and P param-affine (DPP requirement).
 .quad_form_check_dpp_args <- function(x) {
-  is_param_free(x@args[[1L]]) && is_param_affine(x@args[[2L]])
+  is_param_free(.args(x)[[1L]]) && is_param_affine(.args(x)[[2L]])
 }
 
 method(is_atom_convex, QuadForm) <- function(x) {
-  P <- x@args[[2L]]
+  P <- .args(x)[[2L]]
   if (quad_form_dpp_scope_active()) {
     return(.quad_form_check_dpp_args(x) && is_psd(P))
   }
@@ -75,7 +75,7 @@ method(is_atom_convex, QuadForm) <- function(x) {
 }
 
 method(is_atom_concave, QuadForm) <- function(x) {
-  P <- x@args[[2L]]
+  P <- .args(x)[[2L]]
   if (quad_form_dpp_scope_active()) {
     return(.quad_form_check_dpp_args(x) && is_nsd(P))
   }
@@ -96,11 +96,11 @@ method(is_atom_log_log_concave, QuadForm) <- function(x) FALSE
 method(is_incr, QuadForm) <- function(x, idx, ...) {
   if (idx == 1L) {
     ## nabla_x f = 2Px: nonneg when (x>=0, P>=0) or (x<=0, P<=0)
-    (is_nonneg(x@args[[1L]]) && is_nonneg(x@args[[2L]])) ||
-      (is_nonpos(x@args[[1L]]) && is_nonpos(x@args[[2L]]))
+    (is_nonneg(.args(x)[[1L]]) && is_nonneg(.args(x)[[2L]])) ||
+      (is_nonpos(.args(x)[[1L]]) && is_nonpos(.args(x)[[2L]]))
   } else if (idx == 2L) {
     ## d f / d P_ij = x_i * x_j: nonneg when x has definite sign
-    is_nonneg(x@args[[1L]]) || is_nonpos(x@args[[1L]])
+    is_nonneg(.args(x)[[1L]]) || is_nonpos(.args(x)[[1L]])
   } else {
     FALSE
   }
@@ -108,8 +108,8 @@ method(is_incr, QuadForm) <- function(x, idx, ...) {
 method(is_decr, QuadForm) <- function(x, idx, ...) {
   if (idx == 1L) {
     ## nabla_x f = 2Px: nonpos when (x>=0, P<=0) or (x<=0, P>=0)
-    (is_nonneg(x@args[[1L]]) && is_nonpos(x@args[[2L]])) ||
-      (is_nonpos(x@args[[1L]]) && is_nonneg(x@args[[2L]]))
+    (is_nonneg(.args(x)[[1L]]) && is_nonpos(.args(x)[[2L]])) ||
+      (is_nonpos(.args(x)[[1L]]) && is_nonneg(.args(x)[[2L]]))
   } else {
     FALSE
   }
@@ -153,7 +153,7 @@ method(.grad, QuadForm) <- function(x, values, ...) {
   xv <- as.numeric(values[[1L]])
   P  <- as.matrix(values[[2L]])
   D  <- (P + Conj(t(P))) %*% xv
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 
@@ -221,11 +221,11 @@ quad_form <- function(x, P, assume_PSD = FALSE) {
   x <- as_expr(x)
   P <- as_expr(P)
   ## Dimension checks
-  if (length(P@shape) != 2L || P@shape[1L] != P@shape[2L]) {
+  if (length(.shape(P)) != 2L || .shape(P)[1L] != .shape(P)[2L]) {
     cli_abort("Invalid dimensions for arguments to {.fn quad_form}: P must be square.")
   }
-  n <- P@shape[1L]
-  if (x@shape[1L] != n) {
+  n <- .shape(P)[1L]
+  if (.shape(x)[1L] != n) {
     cli_abort("Invalid dimensions for arguments to {.fn quad_form}: x has {x@shape[1L]} rows, P has {n}.")
   }
   if (is_constant(x)) {

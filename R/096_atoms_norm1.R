@@ -11,8 +11,8 @@ Norm1 <- new_class("Norm1", parent = AxisAtom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(Norm1, S7_object(),
       id       = as.integer(id),
@@ -30,11 +30,11 @@ Norm1 <- new_class("Norm1", parent = AxisAtom, package = "CVXR",
 ## CVXPY SOURCE: norm1.py:43-46. CVXR axis 1-based -> numpy = 2 - axis;
 ## reshape to the atom's 2D shape (cf. SumEntries).
 method(bounds_from_args, Norm1) <- function(x) {
-  b <- get_bounds(x@args[[1L]])
+  b <- get_bounds(.args(x)[[1L]])
   npaxis <- if (is.null(x@axis)) NULL else 2L - x@axis
   rb <- norm1_bounds(b[[1L]], b[[2L]], axis = npaxis, keepdims = x@keepdims)
   lb <- rb[[1L]]; ub <- rb[[2L]]
-  dim(lb) <- x@shape; dim(ub) <- x@shape
+  dim(lb) <- .shape(x); dim(ub) <- .shape(x)
   list(lb, ub)
 }
 
@@ -47,13 +47,20 @@ method(sign_from_args, Norm1) <- function(x) {
 method(is_atom_convex, Norm1) <- function(x) TRUE
 method(is_atom_concave, Norm1) <- function(x) FALSE
 
+# -- log-log curvature (norm1.py:58-66) ---------------------------
+## On positive arguments norm1 is a sum of positives, which is log-log
+## convex.  Without this the DGP analyzer inherited Atom's default FALSE
+## and refused valid geometric programs.
+method(is_atom_log_log_convex, Norm1) <- function(x) TRUE
+method(is_atom_log_log_concave, Norm1) <- function(x) FALSE
+
 # -- monotonicity -------------------------------------------------
-method(is_incr, Norm1) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
-method(is_decr, Norm1) <- function(x, idx, ...) is_nonpos(x@args[[1L]])
+method(is_incr, Norm1) <- function(x, idx, ...) is_nonneg(.args(x)[[1L]])
+method(is_decr, Norm1) <- function(x, idx, ...) is_nonpos(.args(x)[[1L]])
 
 # -- PWL ----------------------------------------------------------
 method(is_pwl, Norm1) <- function(x) {
-  is_pwl(x@args[[1L]]) && is_real(x@args[[1L]])
+  is_pwl(.args(x)[[1L]]) && is_real(.args(x)[[1L]])
 }
 
 # -- numeric ------------------------------------------------------

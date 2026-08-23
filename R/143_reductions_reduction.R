@@ -33,9 +33,9 @@ InverseData <- new_class("InverseData", package = "CVXR",
     var_shapes <- list()
     vert_offset <- 0L
     for (v in vars_) {
-      vid <- as.character(v@id)
+      vid <- as.character(.id(v))
       sz <- expr_size(v)
-      var_shapes[[vid]] <- v@shape
+      var_shapes[[vid]] <- .shape(v)
       var_offsets[[vid]] <- vert_offset
       id_map[[vid]] <- c(vert_offset, sz)
       vert_offset <- vert_offset + sz
@@ -51,8 +51,8 @@ InverseData <- new_class("InverseData", package = "CVXR",
     param_to_size[[as.character(LINOP_CONSTANT_ID)]] <- 1L
     offset <- 0L
     for (p in parameters(problem)) {
-      pid <- as.character(p@id)
-      param_shapes[[pid]] <- p@shape
+      pid <- as.character(.id(p))
+      param_shapes[[pid]] <- .shape(p)
       param_to_size[[pid]] <- expr_size(p)
       param_id_map[[pid]] <- offset
       offset <- offset + expr_size(p)

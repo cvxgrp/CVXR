@@ -416,11 +416,18 @@ test_that("neg(x) creates negation of Minimum(x, 0)", {
 })
 
 ## @cvxpy NONE
-test_that("inv_pos(x) creates Power with p=-1", {
+test_that("inv_pos(x) creates PowerApprox with p=-1 (SOC path, as CVXPY)", {
   x <- Variable(3)
   ip <- inv_pos(x)
+  ## inv_pos.py:7 is `power(x, -1)` -- the WRAPPER, whose `approx = TRUE`
+  ## default yields PowerApprox (SOC).  This test previously asserted the bare
+  ## `Power` class, pinning a defect: constructing Power directly emits
+  ## PowCone3D, which locks out every SOC-only solver.  PowerApprox extends
+  ## Power, so the class check below still holds -- which is exactly why the
+  ## old assertion could not tell the two apart.  `p_used` is an exact <bigq>.
+  expect_s3_class(ip, "CVXR::PowerApprox")
   expect_s3_class(ip, "CVXR::Power")
-  expect_equal(ip@p_used, -1)
+  expect_equal(as.numeric(ip@p_used), -1)
 })
 
 ## ── power_tools ────────────────────────────────────────────────────

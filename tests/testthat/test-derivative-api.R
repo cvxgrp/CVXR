@@ -301,3 +301,30 @@ test_that("Dgp2Dcp param_backward passes through when the log-param id is absent
   ## Empty dparams: the log-parameter id is absent -> empty dict out, no error.
   expect_equal(param_backward(dgp, list()), list())
 })
+
+## Regression guard, 2026-08-11: DIFFCP extends SCS_Solver and takes the same
+## lower-tri sqrt(2)-scaled svec PSD format.  That used to reach DIFFCP by S7
+## method inheritance (`solver_psd_format_mat` on SCS_Solver); once the format
+## became a class PROPERTY (D_19.6 step A), inheritance no longer supplies it --
+## `.fast_new` gives a subclass only what its own constructor names.  A blanket
+## NA there stuffs PSD blocks as full n x n matrices while the cone dims still
+## declare n(n+1)/2 svec rows, and the solve dies on the size mismatch.
+##
+## ABSOLUTE ORACLE (see test-psd-dual-recovery.R): for  min tr(CX)  s.t. X >= I,
+## the optimum is tr(C) and the dual is exactly C.
+## @cvxpy NONE
+test_that("DIFFCP solves a PSD problem with the SCS svec format", {
+  n <- 3L
+  C <- diag(c(2, 3, 4))
+  X <- Variable(c(n, n), symmetric = TRUE)
+  prob <- Problem(Minimize(matrix_trace(C %*% X)), list((X - diag(n)) %>>% 0))
+
+  ## The stuffed A must have n(n+1)/2 = 6 PSD rows, not n^2 = 9.
+  d <- problem_data(prob, solver = "DIFFCP")
+  expect_equal(nrow(d[[1L]]$A), 6L)
+  expect_equal(d[[1L]]$dims@psd, n)
+
+  prob2 <- Problem(Minimize(matrix_trace(C %*% X)), list((X - diag(n)) %>>% 0))
+  expect_equal(psolve(prob2, solver = "DIFFCP"), sum(diag(C)), tolerance = 1e-5)
+  expect_equal(status(prob2), "optimal")
+})

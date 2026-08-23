@@ -20,7 +20,7 @@ QuadOverLin <- new_class("QuadOverLin", parent = AxisAtom, package = "CVXR",
     if (is.null(axis)) {
       shape <- c(1L, 1L)
     } else {
-      shape <- .axis_shape(x@shape, axis, keepdims)
+      shape <- .axis_shape(.shape(x), axis, keepdims)
     }
 
     obj <- .fast_new(QuadOverLin, S7_object(),
@@ -39,8 +39,8 @@ QuadOverLin <- new_class("QuadOverLin", parent = AxisAtom, package = "CVXR",
 # -- validate: y must be scalar -----------------------------------
 ## CVXPY: quad_over_lin.py lines 144-152
 method(validate_arguments, QuadOverLin) <- function(x) {
-  y <- x@args[[2L]]
-  if (!all(y@shape == c(1L, 1L))) {
+  y <- .args(x)[[2L]]
+  if (!all(.shape(y) == c(1L, 1L))) {
     cli_abort("{.arg y} must be scalar in {.cls QuadOverLin}.")
   }
   ## CVXPY: quad_over_lin.py line 149-150 -- second arg cannot be complex
@@ -57,7 +57,7 @@ method(validate_arguments, QuadOverLin) <- function(x) {
 # -- shape --------------------------------------------------------
 ## CVXPY: Inherits AxisAtom.shape_from_args -> reduce first arg along axis
 method(shape_from_args, QuadOverLin) <- function(x) {
-  .axis_shape(x@args[[1L]]@shape, x@axis, x@keepdims)
+  .axis_shape(.arg_shape(x), x@axis, x@keepdims)
 }
 
 # -- sign: always nonneg ------------------------------------------
@@ -77,10 +77,10 @@ method(is_atom_smooth, QuadOverLin) <- function(x) TRUE
 ## Increasing in x when x >= 0, decreasing when x <= 0
 ## Decreasing in y (always)
 method(is_incr, QuadOverLin) <- function(x, idx, ...) {
-  if (idx == 1L) is_nonneg(x@args[[1L]]) else FALSE
+  if (idx == 1L) is_nonneg(.args(x)[[1L]]) else FALSE
 }
 method(is_decr, QuadOverLin) <- function(x, idx, ...) {
-  if (idx == 1L) is_nonpos(x@args[[1L]]) else TRUE
+  if (idx == 1L) is_nonpos(.args(x)[[1L]]) else TRUE
 }
 
 # -- log-log: convex (CVXPY quad_over_lin.py lines 124-132) ------
@@ -89,21 +89,21 @@ method(is_atom_log_log_concave, QuadOverLin) <- function(x) FALSE
 
 # -- domain: y >= 0 -----------------------------------------------
 method(atom_domain, QuadOverLin) <- function(x) {
-  list(x@args[[2L]] >= 0)
+  list(.args(x)[[2L]] >= 0)
 }
 
 # -- quadratic analysis -------------------------------------------
 ## CVXPY: quad_over_lin.py lines 154-167
 method(is_quadratic, QuadOverLin) <- function(x) {
-  is_affine(x@args[[1L]]) && is_constant(x@args[[2L]])
+  is_affine(.args(x)[[1L]]) && is_constant(.args(x)[[2L]])
 }
 
 method(has_quadratic_term, QuadOverLin) <- function(x) {
-  is_constant(x@args[[2L]])
+  is_constant(.args(x)[[2L]])
 }
 
 method(is_qpwa, QuadOverLin) <- function(x) {
-  is_pwl(x@args[[1L]]) && is_constant(x@args[[2L]])
+  is_pwl(.args(x)[[1L]]) && is_constant(.args(x)[[2L]])
 }
 
 # -- get_data -----------------------------------------------------
@@ -152,7 +152,7 @@ method(.grad, QuadOverLin) <- function(x, values, ...) {
   ## d/dy = -||X||^2 / y^2, scalar.
   Dy <- -sum(as.numeric(X)^2) / (y^2)
 
-  rows_X <- as.integer(prod(x@args[[1L]]@shape))
+  rows_X <- as.integer(prod(.arg_shape(x)))
   list(
     .dense_to_csc_vector(DX, rows_X),
     Matrix::sparseMatrix(

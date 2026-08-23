@@ -20,11 +20,11 @@ SumLargest <- new_class("SumLargest", parent = AxisAtom, package = "CVXR",
     k <- as.numeric(k)
     if (!is.null(axis)) {
       axis <- as.integer(axis)
-      .validate_axis(axis, length(x@shape))
+      .validate_axis(axis, length(.shape(x)))
     }
     keepdims <- as.logical(keepdims)
     ## Shape via axis-aware reduction (AxisAtom convention)
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(SumLargest, S7_object(),
       id       = as.integer(id),
@@ -48,7 +48,7 @@ method(validate_arguments, SumLargest) <- function(x) {
   }
   ## AxisAtom.validate_arguments: axis bounds + reject complex args.
   if (!is.null(x@axis)) {
-    ndim <- length(x@args[[1L]]@shape)
+    ndim <- length(.arg_shape(x))
     axis <- x@axis
     if (axis < 0L) axis <- axis + ndim + 1L
     if (axis < 1L || axis > ndim) {
@@ -66,8 +66,8 @@ method(validate_arguments, SumLargest) <- function(x) {
 
 # -- sign: same as arg --------------------------------------------
 method(sign_from_args, SumLargest) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]),
-       is_nonpos = is_nonpos(x@args[[1L]]))
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]),
+       is_nonpos = is_nonpos(.args(x)[[1L]]))
 }
 
 # -- curvature: convex --------------------------------------------
@@ -79,7 +79,7 @@ method(is_incr, SumLargest) <- function(x, idx, ...) TRUE
 method(is_decr, SumLargest) <- function(x, idx, ...) FALSE
 
 # -- PWL ----------------------------------------------------------
-method(is_pwl, SumLargest) <- function(x) is_pwl(x@args[[1L]])
+method(is_pwl, SumLargest) <- function(x) is_pwl(.args(x)[[1L]])
 
 # -- get_data -----------------------------------------------------
 ## CVXPY SOURCE: sum_largest.py get_data -> [self.k, self.axis, self.keepdims]

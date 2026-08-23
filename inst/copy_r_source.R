@@ -61,6 +61,46 @@ for (f in names(all_files)) {
 
 cat(sprintf("Copied %d files to R/\n", length(all_files)))
 
+## ── Duplicate top-level definitions ─────────────────────────
+## R/ files are prefixed by LOAD ORDER, so two files defining the same name do
+## not collide -- the later one silently wins. That is how the native
+## `upper_tri_to_full` (018_lin_ops_RcppExports.R) sat registered and
+## UNREACHABLE from Phase 5b until 2026-08-14, buried by an R function of the
+## same name in 260_reductions_cvx_attr2constr.R. No error, no warning, and the
+## C++ routine it shadowed had been written precisely to make that call fast.
+##
+## Report every such collision at build time. This is deliberately a WARNING and
+## not an error: S7 method registration and deliberate overrides are legitimate,
+## so the judgment stays with the reader -- but it can no longer be silent.
+## `scripts/validate_rcpp_bridge.R` turns the specific case of a shadowed native
+## wrapper into a hard failure.
+assign_names <- function(path) {
+  exprs <- tryCatch(parse(path), error = function(e) NULL)
+  if (is.null(exprs)) return(character(0))
+  out <- character(0)
+  for (e in exprs) {
+    if (is.call(e) && length(e) >= 3L &&
+        as.character(e[[1L]])[1L] %in% c("<-", "=", "<<-") &&
+        (is.symbol(e[[2L]]) || is.character(e[[2L]])))
+      out <- c(out, as.character(e[[2L]]))
+  }
+  out
+}
+defs <- list()
+for (f in names(all_files)) {
+  for (nm in assign_names(file.path(pkg_dir, all_files[f])))
+    defs[[nm]] <- c(defs[[nm]], all_files[f])
+}
+dupes <- defs[vapply(defs, function(x) length(unique(x)) > 1L, logical(1))]
+if (length(dupes)) {
+  cat(sprintf("\nWARNING: %d name(s) defined in more than one source file.\n",
+              length(dupes)))
+  cat("The LAST file in load order wins; the earlier definition is unreachable.\n")
+  for (nm in names(dupes))
+    cat(sprintf("  %-28s %s\n", nm, paste(unique(dupes[[nm]]), collapse = "  ->  ")))
+  cat("\n")
+}
+
 ## Generate Collate field for DESCRIPTION
 collate_entries <- paste0("    '", names(all_files), "'", collapse = "\n")
 cat("\n## Add to DESCRIPTION Collate field:\nCollate:\n", collate_entries, "\n")

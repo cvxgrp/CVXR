@@ -156,30 +156,36 @@ test_that("OSQP infeasible LP (equalities) yields a Farkas certificate dual", {
   expect_true(sum(b * y) < 0)
 })
 
-## HiGHS reports infeasible status / +Inf value / NULL primal correctly,
-## but the R `highs` package (1.12) exposes no getDualRay(), so the
-## infeasibility certificate (CVXPY's highs_conif.py #3228) cannot be
-## recovered. We verify the satisfiable guarantees, then skip the
-## certificate assertion as @v19-pending until R `highs` adds a dual-ray
-## accessor (same upstream-capability gap as HiGHS warm-start).
+## HiGHS propagates the certificate too, via hi_solver_get_dual_ray().  The
+## accessor has been in the R `highs` package since 1.14 (DESCRIPTION already
+## requires >= 1.14); the earlier @v19-pending skips here predated it and were
+## written against 1.12.
+##
+## Note these two run through HiGHS_QP_Solver, not HiGHS_Conic_Solver: CVXR's
+## .solve_as_qp() sends a named-solver LP down the QP path, where CVXPY 1.9
+## prefers the conic interface for a non-quadratic objective.  Both CVXR
+## interfaces carry the ray, so the certificate is available either way -- the
+## use_quad_obj = FALSE case below pins the conic one.
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_highs_infeasible_lp_ineq_constraints
-## @v19-pending: highs-infeasibility-certificate [now]
-test_that("HiGHS infeasible LP (inequalities): status/value/primal (cert pending)", {
+test_that("HiGHS infeasible LP (inequalities) yields a Farkas certificate dual", {
   skip_if_not_installed("highs")
   A <- matrix(c(1, 0, 0, 1, -1, -1), nrow = 3, byrow = TRUE)
   b <- c(0, 0, -1)
   x <- Variable(2)
   con <- A %*% x <= b
   prob <- Problem(Minimize(0), list(con))
-  .infeasible_guarantees(prob, list(x), list(con),
-                         solver = "HIGHS", check_duals = FALSE)
-  skip("@v19-pending: HiGHS infeasibility certificate needs R highs getDualRay() (unimplemented upstream)")
+  .infeasible_guarantees(prob, list(x), list(con), solver = "HIGHS")
+
+  ## Farkas certificate: y >= 0, A^T y == 0, b^T y < 0.
+  y <- as.numeric(dual_value(con))
+  expect_true(all(y >= -1e-6))
+  expect_equal(as.numeric(t(A) %*% y), c(0, 0), tolerance = 1e-4)
+  expect_true(sum(b * y) < 0)
 })
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_highs_infeasible_lp_eq_constraints
-## @v19-pending: highs-infeasibility-certificate [now]
-test_that("HiGHS infeasible LP (equalities): status/value/primal (cert pending)", {
+test_that("HiGHS infeasible LP (equalities) yields a Farkas certificate dual", {
   skip_if_not_installed("highs")
   A <- matrix(c(1, 0, 0, 1, 1, 1), nrow = 3, byrow = TRUE)
   b <- c(0, 0, 1)
@@ -187,9 +193,66 @@ test_that("HiGHS infeasible LP (equalities): status/value/primal (cert pending)"
   ceq <- A %*% x == b
   cnn <- x >= 0
   prob <- Problem(Minimize(0), list(ceq, cnn))
-  .infeasible_guarantees(prob, list(x), list(ceq, cnn),
-                         solver = "HIGHS", check_duals = FALSE)
-  skip("@v19-pending: HiGHS infeasibility certificate needs R highs getDualRay() (unimplemented upstream)")
+  .infeasible_guarantees(prob, list(x), list(ceq, cnn), solver = "HIGHS")
+
+  ## Farkas certificate: A^T y >= 0, b^T y < 0.
+  y <- as.numeric(dual_value(ceq))
+  expect_true(min(as.numeric(t(A) %*% y)) >= -1e-4)
+  expect_true(sum(b * y) < 0)
+})
+
+## The conic interface carries the ray as well; use_quad_obj = FALSE is what
+## routes a named-HiGHS LP to HiGHS_Conic_Solver rather than HiGHS_QP_Solver.
+test_that("HiGHS conic interface also yields the certificate", {
+  skip_if_not_installed("highs")
+  A <- matrix(c(1, 0, 0, 1, -1, -1), nrow = 3, byrow = TRUE)
+  b <- c(0, 0, -1)
+  x <- Variable(2)
+  con <- A %*% x <= b
+  prob <- Problem(Minimize(0), list(con))
+  psolve(prob, solver = "HIGHS", use_quad_obj = FALSE)
+  expect_equal(status(prob), "infeasible")
+
+  y <- as.numeric(dual_value(con))
+  expect_false(is.null(y))
+  expect_true(all(y >= -1e-6))
+  expect_equal(as.numeric(t(A) %*% y), c(0, 0), tolerance = 1e-4)
+  expect_true(sum(b * y) < 0)
+})
+
+## HiGHS can report infeasible WITHOUT producing a ray -- measured for
+## solver = "ipm" and "pdlp" on both highs 1.14.0-2 and 1.15.1.  The R accessor
+## returns dual_ray = NULL there (the Python one returns a zero vector, which is
+## why CVXPY's unguarded highs_conif.py:204 silently yields an invalid all-zero
+## "certificate").  CVXR must degrade to no duals, not error and not fabricate.
+##
+## The HiGHS option is itself named "solver", so it cannot travel through
+## psolve()'s `...` alongside psolve's own `solver` argument -- the same clash
+## CVXPY sidesteps with its `highs_options` dict.  Use the decomposed API.
+test_that("HiGHS infeasible without a dual ray degrades to no duals", {
+  skip_if_not_installed("highs")
+  A <- matrix(c(1, 0, 0, 1, -1, -1), nrow = 3, byrow = TRUE)
+  b <- c(0, 0, -1)
+  for (hs in c("ipm", "pdlp")) {
+    x <- Variable(2)
+    con <- A %*% x <= b
+    prob <- Problem(Minimize(0), list(con))
+    pd <- problem_data(prob, solver = "HIGHS")
+
+    raw <- solve_via_data(pd$chain, pd$data, warm_start = FALSE,
+                          verbose = FALSE, solver_opts = list(solver = hs))
+    expect_no_error(
+      problem_unpack_results(prob, raw, pd$chain, pd$inverse_data))
+    expect_equal(status(prob), "infeasible")
+
+    ## Either absent, or a genuine certificate -- never an all-zero vector
+    ## masquerading as one.
+    dv <- dual_value(con)
+    if (!is.null(dv)) {
+      y <- as.numeric(dv)
+      expect_true(sum(b * y) < 0)
+    }
+  }
 })
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_highs_dense_quad_form

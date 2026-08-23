@@ -11,8 +11,8 @@ MinEntries <- new_class("MinEntries", parent = AxisAtom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(MinEntries, S7_object(),
       id       = as.integer(id),
@@ -33,18 +33,18 @@ MinEntries <- new_class("MinEntries", parent = AxisAtom, package = "CVXR",
 ## CVXPY SOURCE: min.py:88-91. CVXR axis 1-based -> numpy = 2 - axis;
 ## reshape to the atom's 2D shape (cf. SumEntries).
 method(bounds_from_args, MinEntries) <- function(x) {
-  b <- get_bounds(x@args[[1L]])
+  b <- get_bounds(.args(x)[[1L]])
   npaxis <- if (is.null(x@axis)) NULL else 2L - x@axis
   rb <- min_reduction_bounds(b[[1L]], b[[2L]], axis = npaxis, keepdims = x@keepdims)
   lb <- rb[[1L]]; ub <- rb[[2L]]
-  dim(lb) <- x@shape; dim(ub) <- x@shape
+  dim(lb) <- .shape(x); dim(ub) <- .shape(x)
   list(lb, ub)
 }
 
 # -- sign: same as arg --------------------------------------------
 method(sign_from_args, MinEntries) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]),
-       is_nonpos = is_nonpos(x@args[[1L]]))
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]),
+       is_nonpos = is_nonpos(.args(x)[[1L]]))
 }
 
 # -- curvature: concave -------------------------------------------
@@ -60,7 +60,7 @@ method(is_incr, MinEntries) <- function(x, idx, ...) TRUE
 method(is_decr, MinEntries) <- function(x, idx, ...) FALSE
 
 # -- PWL ----------------------------------------------------------
-method(is_pwl, MinEntries) <- function(x) is_pwl(x@args[[1L]])
+method(is_pwl, MinEntries) <- function(x) is_pwl(.args(x)[[1L]])
 
 # -- numeric ------------------------------------------------------
 method(numeric_value, MinEntries) <- function(x, values, ...) {

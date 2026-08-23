@@ -30,7 +30,7 @@ Length <- new_class("Length", parent = Atom, package = "CVXR",
 ## validate: argument must be a vector
 ## CVXPY SOURCE: length.py __init__
 method(validate_arguments, Length) <- function(x) {
-  arg <- x@args[[1L]]
+  arg <- .args(x)[[1L]]
   if (!is_vector(arg)) {
     cli_abort("{.fn length_expr} can only be applied to vectors.")
   }
@@ -70,8 +70,8 @@ method(is_atom_quasiconcave, Length) <- function(x) FALSE
 
 ## Monotonicity: increasing when arg is nonneg, decreasing when arg is nonpos
 ## CVXPY SOURCE: length.py is_incr/is_decr
-method(is_incr, Length) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
-method(is_decr, Length) <- function(x, idx, ...) is_nonpos(x@args[[1L]])
+method(is_incr, Length) <- function(x, idx, ...) is_nonneg(.args(x)[[1L]])
+method(is_decr, Length) <- function(x, idx, ...) is_nonpos(.args(x)[[1L]])
 
 ## Per-atom subgradient: undefined (step function).
 ## CVXPY SOURCE: atoms/length.py:84-85 (length._grad). Returns list(NULL)

@@ -28,7 +28,7 @@ Sign <- new_class("Sign", parent = Atom, package = "CVXR",
       id    = as.integer(id),
       .cache = new.env(parent = emptyenv()),
       args  = list(x),
-      shape = x@shape       ## mirrors CVXPY shape_from_args: same as arg
+      shape = .shape(x)       ## mirrors CVXPY shape_from_args: same as arg
     )
     validate_arguments(obj)
     obj
@@ -36,13 +36,13 @@ Sign <- new_class("Sign", parent = Atom, package = "CVXR",
 )
 
 ## shape_from_args mirrors CVXPY:36-38: returns the argument's shape.
-method(shape_from_args, Sign) <- function(x) x@args[[1L]]@shape
+method(shape_from_args, Sign) <- function(x) .arg_shape(x)
 
 ## sign_from_args mirrors CVXPY:41-44: the atom's own sign is the
 ## argument's sign (nonneg if arg is nonneg; nonpos if arg is nonpos).
 method(sign_from_args, Sign) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]),
-       is_nonpos = is_nonpos(x@args[[1L]]))
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]),
+       is_nonpos = is_nonpos(.args(x)[[1L]]))
 }
 
 ## Sign is neither convex nor concave (CVXPY:46-54).
@@ -56,8 +56,8 @@ method(is_atom_log_log_concave, Sign) <- function(x) FALSE
 ## DQCP only when the argument is scalar (CVXPY:56-63).
 ## For vector input, is_dqcp() on the containing Problem will
 ## correctly return FALSE because both flags are FALSE here.
-method(is_atom_quasiconvex, Sign)  <- function(x) is_scalar(x@args[[1L]])
-method(is_atom_quasiconcave, Sign) <- function(x) is_scalar(x@args[[1L]])
+method(is_atom_quasiconvex, Sign)  <- function(x) is_scalar(.args(x)[[1L]])
+method(is_atom_quasiconcave, Sign) <- function(x) is_scalar(.args(x)[[1L]])
 
 ## Step function: neither monotone increasing nor decreasing globally
 ## (CVXPY:65-73).

@@ -27,8 +27,8 @@ PfEigenvalue <- new_class("PfEigenvalue", parent = Atom, package = "CVXR",
 
 # -- validate -------------------------------------------------------
 method(validate_arguments, PfEigenvalue) <- function(x) {
-  X <- x@args[[1L]]
-  if (length(X@shape) != 2L || X@shape[1L] != X@shape[2L]) {
+  X <- .args(x)[[1L]]
+  if (length(.shape(X)) != 2L || .shape(X)[1L] != .shape(X)[2L]) {
     cli_abort("The argument to {.fn pf_eigenvalue} must be a square matrix.")
   }
   invisible(NULL)

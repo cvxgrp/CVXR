@@ -229,9 +229,25 @@ test_that("CVXPY parity: concave_multiply — sqrt(x)*sqrt(y)", {
   expect_false(is_quasiconvex(expr2))
 
   problem2 <- Problem(Maximize(expr2), list(x2 <= 4, y2 <= 9))
-  ## CVXR: sign analysis for multiply superlevel set fails on (sqrt+const)*(sqrt+const)
-  expect_error(psolve(problem2, solver = "SCS", qcp = TRUE),
-               "Incorrect signs")
+  ## Truth: (sqrt(4) + 2) * (sqrt(9) + 4) = 4 * 7 = 28.
+  ##
+  ## This used to be `expect_error(..., "Incorrect signs")`, with a comment
+  ## claiming CVXR's sign analysis for the multiply superlevel set could not
+  ## handle (sqrt + const) * (sqrt + const). That was pinning a DEFECT as
+  ## expected behavior -- the bisection's parameter-side inverse expression was
+  ## being canonicalized into cone epigraphs (missing `canonicalize_params`,
+  ## CVXPY canonicalization.py:150-151 / dqcp2dcp.py:124,167), so the query
+  ## subproblem it built was not the one the algorithm intended.
+  ##
+  ## With that fixed, CVXR solves it and agrees with CVXPY 1.9.2 to 7 s.f.:
+  ##            CVXR         CVXPY 1.9.2
+  ##   SCS      28.000000    28.00000027909995
+  ##   CLARABEL 28.000000    27.99999999616916
+  ##   ECOS     27.999990    27.999997943663498   (both optimal_inaccurate)
+  result2 <- psolve(problem2, solver = "SCS", qcp = TRUE)
+  expect_equal(as.numeric(result2), 28.0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x2)), 4.0, tolerance = 1e-5)
+  expect_equal(as.numeric(value(y2)), 9.0, tolerance = 1e-5)
 })
 
 ## -- test_basic_ratio ------------------------------------------------

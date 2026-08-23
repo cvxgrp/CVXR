@@ -57,7 +57,10 @@ test_that("DQCP bisection: maximize x*y with x+y<=4", {
 
   expect_true(is_dqcp(prob))
 
-  result <- psolve(prob, qcp = TRUE)
+  ## Auto-selection is scoped to the Imports solvers: on a machine with MOSEK
+  ## licensed it would otherwise be chosen here, and MOSEK cannot solve this
+  ## bisection's subproblems -- a local-only failure that CI never reproduces.
+  result <- with_imports_solvers(psolve(prob, qcp = TRUE))
   expect_equal(as.numeric(result), 4.0, tolerance = 1e-2)
   expect_equal(as.numeric(value(x)), 2.0, tolerance = 0.1)
   expect_equal(as.numeric(value(y)), 2.0, tolerance = 0.1)

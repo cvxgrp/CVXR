@@ -26,8 +26,11 @@ test_that("doubles key exactly as the previous sprintf('%a') implementation did"
                          .CSE_TAG_CONST_VAL, as.numeric(v),
                          as.integer(dim_or_length(v)))
   pairs <- list(
-    list(NA_real_, NaN),        # distinct: different bit patterns, and R agrees
-    list(NaN, 0 / 0),           # merged: the same NaN on this platform
+    list(NA_real_, NaN),        # distinct: R distinguishes NA from NaN
+    list(NaN, 0 / 0),           # merged on EVERY platform: NaNs are
+                                # canonicalized before keying (0/0 is the
+                                # negative quiet NaN on x86 -- raw-bit keying
+                                # failed CI on Linux/Windows)
     list(Inf, -Inf),
     list(0, -0),                # distinct: equal numerically, different bits
     list(1, 1 + 3e-16),         # distinct: a real one-ulp difference

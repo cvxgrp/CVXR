@@ -33,8 +33,15 @@ test_that("chordal decomposition leaves PSD duals unchanged", {
   solve_with <- function(chordal) {
     con <- M %>>% 0
     prob <- Problem(Minimize(sum(d)), list(con))
+    ## complete_dual is passed EXPLICITLY, not inherited from the package
+    ## default: it is what reconstructs the full dual from the decomposed
+    ## blocks, and it only DEFAULTS to TRUE in clarabel >= 0.11.3. On
+    ## 0.11.2 (where the default is FALSE) enabling decomposition without
+    ## it returns a partial dual -- duals off by O(1) and not PSD, which
+    ## is exactly how this test failed on CI against a 0.11.2-era build.
     val <- psolve(prob, solver = "CLARABEL",
-                  chordal_decomposition_enable = chordal)
+                  chordal_decomposition_enable = chordal,
+                  chordal_decomposition_complete_dual = TRUE)
     list(val = val, dual = as.matrix(dual_value(con)), status = status(prob))
   }
 

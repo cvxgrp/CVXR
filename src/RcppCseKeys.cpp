@@ -36,11 +36,11 @@
 //      children = c(2,3)) whatever values they hold.
 //   4. Doubles are keyed by their exact bit pattern, which is the property
 //      sprintf("%a") supplied: equal doubles always collide, unequal ones never
-//      do. NA_real_ and NaN are DIFFERENT bit patterns and stay distinct,
-//      matching R. NaN PAYLOADS are platform-dependent, so a computed NaN may
-//      key differently from the NaN constant on some platforms -- a missed
-//      merge, the safe direction. These keys are per-apply and must never be
-//      persisted or compared across processes.
+//      do. NaNs are canonicalized before keying (see push_double): NA_real_ is
+//      one value and every other NaN is another, matching R and removing the
+//      platform-dependence of raw NaN payloads (an earlier version keyed raw
+//      bits and CI caught K(NaN) != K(0/0) on x86). These keys are per-apply
+//      and must never be persisted or compared across processes.
 //   5. unordered_map compares keys EXACTLY after hashing, so a hash collision
 //      selects a slower bucket and can never merge unlike subtrees.
 //   6. The store is PER-APPLY. `aa_memo` depends on `quad_obj`, so sharing a
@@ -99,9 +99,18 @@ inline int intern(CseStore* st, std::vector<int>& v, int id) {
 }
 
 // Fold a double into the signature as its exact 64 bits, low word first.
+// NaNs are canonicalized FIRST: raw NaN bit patterns are platform-dependent
+// (0/0 is the negative quiet NaN on x86, the positive one on ARM), so keying
+// raw bits made key equality platform-dependent -- caught by CI on Linux and
+// Windows, where K(NaN) != K(0/0) while both R and the legacy sprintf("%a")
+// key (R normalizes NaN formatting to the string "NaN") consider them equal.
+// R's semantics are the spec: NA_real_ is distinct from every other NaN
+// (R_IsNA tests its payload), and all other NaNs are ONE value.
 inline void push_double(std::vector<int>& v, double x) {
+  double canon = x;
+  if (ISNAN(x)) canon = R_IsNA(x) ? NA_REAL : R_NaN;
   uint64_t bits;
-  std::memcpy(&bits, &x, sizeof(bits));
+  std::memcpy(&bits, &canon, sizeof(bits));
   v.push_back(static_cast<int>(bits & 0xffffffffULL));
   v.push_back(static_cast<int>(bits >> 32));
 }

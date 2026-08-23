@@ -10,21 +10,26 @@
 ## and refuses below it. So for a merely ill-conditioned P the two languages
 ## disagreed about whether a value exists at all.
 ##
-## Found by revdepcheck, not by this suite: SLSEdesign's vignette computes a
-## c-optimal design whose optimum is DEGENERATE -- the information matrix is
-## rank-deficient in the directions the criterion does not constrain -- so the
-## better the solver converges, the closer P gets to singular. At the optimum
-## rcond(P) = 4.3e-18, `solve(P)` refused, and that aborted
+## Found by revdepcheck, not by this suite: SLSEdesign's vignette solves a
+## c-optimal design with SCS, and SCS NEVER converges on it (100,000
+## iterations, `optimal_inaccurate`, on every platform). Its unconverged
+## iterate wanders through near-singular territory: at SCS's stall point
+## rcond(B) = 4.3e-18, `solve(B)` refused, and that aborted
 ## `value(problem@objective)` inside psolve(), taking the whole solve with it.
-## CVXR 1.9.1 did not hit it only because it stopped further out, where it
-## returned -4.08e-05 -- also wrong, since matrix_frac is mathematically >= 0,
-## and four orders worse than the -5.2e-14 the converged answer gives.
+## The OPTIMUM itself is well-conditioned: CLARABEL and MOSEK independently
+## agree on 0.016494 (`optimal`), where rcond(B) = 5.9e-05 and the 2x2
+## information block has eigenvalues {16481, 56} -- full rank, two support
+## points for two parameters (measured 2026-08-23). An earlier version of
+## this header claimed the optimum was degenerate and ~0; both claims were
+## derived from unconverged SCS output (CVXR 1.9.1's -4.08e-05 was the same
+## artifact) and were false.
 ##
 ## CVXR deviates from upstream in ONE way, deliberately: it warns. numpy
 ## inverts silently and the result can be meaningless; R's refusal existed for
 ## a reason. Keeping the value and adding the warning gives both.
 
-## The exact matrix from that vignette's optimum, to 17 significant digits.
+## The exact matrix at SCS's unconverged stall point on that vignette's
+## problem, to 17 significant digits. NOT the optimum -- see the header.
 .ill_conditioned_B <- function() {
   matrix(c(1, 0, 0,
            0, 3.8709486609044189e+12, 2.2715196466934160e+15,
@@ -82,9 +87,9 @@ test_that("the constructor shortcut for a numeric P behaves the same way", {
 })
 
 test_that("the SLSEdesign shape solves end to end", {
-  ## The reduced form of SLSEdesign::copt()'s problem: a c-optimal design whose
-  ## optimum drives the information matrix to rank deficiency. Pre-fix this
-  ## raised "system is computationally singular" from inside psolve().
+  ## The reduced form of SLSEdesign::copt()'s problem. Pre-fix, SCS's
+  ## unconverged iterate made B ill-conditioned enough that psolve() raised
+  ## "system is computationally singular" from inside value().
   my_peleg <- function(xi, theta) {
     deno <- theta[1] + theta[2] * xi
     matrix(c(-xi / deno^2, -xi^2 / deno^2), ncol = 1)
@@ -99,9 +104,22 @@ test_that("the SLSEdesign shape solves end to end", {
   prob <- Problem(Minimize(matrix_frac(c(0, 1, 1), B)),
                   list(w >= 0, sum_entries(w) == 1))
   val <- suppressWarnings(psolve(prob, solver = "SCS", reltol = 1e-6, abstol = 1e-6))
+  ## The SCS guard is ONLY that the solve completes and returns a number.
+  ## SCS never converges here (100k iterations, `optimal_inaccurate` on
+  ## every platform) and its terminal iterate is BLAS-dependent (-3.3e-09
+  ## under Apple Accelerate, 0.096 under reference BLAS), so nothing about
+  ## its value may be asserted. An earlier version pinned |val| < 1e-3 on
+  ## the false premise that the optimum is 0 -- see the header.
   expect_true(is.numeric(val))
   expect_false(is.na(as.numeric(val)))
-  ## The true optimum is 0; SCS approaches it from below on this degenerate
-  ## problem. Pin only that it is near zero, not its sign.
-  expect_lt(abs(as.numeric(val)), 1e-3)
+
+  ## The real pin, on a solver that terminates: the true optimum is
+  ## 0.0164945 (CLARABEL `optimal`, cross-platform identical; MOSEK
+  ## independently agrees at 0.0164958). Fresh Problem object -- reused
+  ## Constraint objects leak duals across solver calls via `.cache`.
+  prob2 <- Problem(Minimize(matrix_frac(c(0, 1, 1), B)),
+                   list(w >= 0, sum_entries(w) == 1))
+  val2 <- psolve(prob2, solver = "CLARABEL")
+  expect_equal(status(prob2), "optimal")
+  expect_equal(as.numeric(val2), 0.0164945, tolerance = 1e-3)
 })

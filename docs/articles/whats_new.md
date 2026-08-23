@@ -7,9 +7,87 @@ introductory tutorial, see
 [`vignette("cvxr_intro")`](https://www.cvxgrp.org/CVXR/articles/cvxr_intro.md);
 for worked examples, visit the [CVXR website](https://cvxr.rbind.io).
 
+- [CVXR 1.9.2](#cvxr-192) — correctness fixes, solver-options overhaul,
+  faster solves
 - [CVXR 1.9.1](#cvxr-19x) — disciplined nonlinear programming,
   derivatives, bounds propagation, new atoms
 - [CVXR 1.8.x](#cvxr-18x) — the ground-up S7 rewrite
+
+## CVXR 1.9.2
+
+`CVXR` 1.9.2 tracks CVXPY 1.9.2. It is primarily a **correctness
+release**: several defects that returned plausible-looking wrong answers
+with no error or warning are fixed, solver options are easier to pass
+and harder to lose silently, and solving is faster across the board.
+
+### Correctness: weighted quadratic objectives
+
+A constant weight multiplying `sum(square(x))` was discarded when the
+quadratic objective was assembled, so penalized least-squares problems
+were solved with the wrong penalty — ridge regression being the common
+case, where every value of the penalty parameter returned the same fit.
+The defect had been present since 1.8.2;
+[`sum_squares()`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md),
+[`quad_form()`](https://www.cvxgrp.org/CVXR/reference/quad_form.md), and
+`p_norm(x, 2)^2` were never affected. If you used a weighted
+`sum(square(x))` objective, results can legitimately change with this
+release — they are now the answers to the problem you wrote.
+
+### `dual_value()` returns constraint-shaped duals
+
+[`dual_value()`](https://www.cvxgrp.org/CVXR/reference/dual_value.md)
+now returns a matrix shaped like its constraint rather than a flat
+vector, making the documented return type accurate. Linear indexing
+(`d[3]`) is unchanged, since R matrices index linearly in column-major
+order, but code calling [`length()`](https://rdrr.io/r/base/length.html)
+or [`dim()`](https://rdrr.io/r/base/dim.html) on a dual may need
+adjusting. Scalar constraints, `SOC`, and `ExpCone` duals are
+deliberately unchanged, matching CVXPY.
+
+### Solver options
+
+Passing solver options is now more uniform, and options can no longer
+vanish silently:
+
+- The standard tolerance names `feastol`, `reltol`, `abstol`, and
+  `num_iter` now also map onto MOSEK and HiGHS.
+- A standard option that a solver cannot express now produces a
+  **warning** (condition class `cvxr_unmapped_solver_param`) instead of
+  being silently dropped.
+- **MOSEK** accepts CVXPY-style `mosek_params` and the `eps` keyword,
+  which fans out to MOSEK’s tolerance parameters exactly as in CVXPY;
+  all options are routed to the correct `Rmosek` parameter groups.
+- **SCS** accepts `eps`, which sets both `eps_abs` and `eps_rel`.
+
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"MOSEK"``, eps ``=`` ``1e-8``)`` `[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"SCS"``, eps ``=`` ``1e-6``)`
+
+### New warnings and catchable errors
+
+- A parameterized problem that is not DPP now warns that repeated solves
+  will not be faster, matching CVXPY; the answers are unchanged.
+- [`matrix_frac()`](https://www.cvxgrp.org/CVXR/reference/matrix_frac.md)
+  with an ill-conditioned second argument now returns a value (as CVXPY
+  does) and warns, where it previously raised R’s “computationally
+  singular” error.
+- Five error conditions — `DPPError`, `DGPError`, `DQCPError`,
+  `DNLPError`, and `ParameterError` — are now catchable by class with
+  [`tryCatch()`](https://rdrr.io/r/base/conditions.html), as in CVXPY;
+  previously they could only be matched by message text.
+
+### Mixed-integer declarations
+
+A *partial* `boolean`/`integer` index list (for example
+`Variable(2, boolean = c(1))`) now correctly makes the problem
+mixed-integer. Such problems previously appeared to solve with a
+continuous solver; they now require a mixed-integer-capable solver and
+say so if none is installed.
+
+### Performance
+
+1.9.2 is roughly a third faster than 1.9.1 overall, with substantially
+lower memory use on larger problems, and DQCP problems solve
+dramatically faster: the bisection now compiles its subproblem once and
+re-solves it per iterate instead of rebuilding it from scratch.
 
 ## CVXR 1.9.1
 

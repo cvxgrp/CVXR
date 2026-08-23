@@ -60,7 +60,6 @@ Setting via `value(param) <- v` is not allowed and signals an error.
 If `p` and `q` are scalar `Parameter`s, the expression `p * q` is not
 DPP. Wrapping it in a `CallbackParam`,
 
-
     pq <- CallbackParam(callback = function() value(p) * value(q))
 
 yields a DPP-compliant Parameter whose value tracks `p` and `q`

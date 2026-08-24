@@ -27,8 +27,8 @@ ConditionNumber <- new_class("ConditionNumber", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: condition_number.py lines 59-65
 method(validate_arguments, ConditionNumber) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L]) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L]) {
     cli_abort("The argument to {.fn condition_number} must be a square matrix, got shape ({A@shape[1L]}, {A@shape[2L]}).")
   }
   invisible(NULL)
@@ -67,7 +67,7 @@ method(numeric_value, ConditionNumber) <- function(x, values, ...) {
 # -- domain -------------------------------------------------------
 ## CVXPY: condition_number.py lines 41-44 -- [A.H == A, A >> 0]
 method(atom_domain, ConditionNumber) <- function(x) {
-  A <- x@args[[1L]]
+  A <- .args(x)[[1L]]
   list(expr_H(A) == A, PSD(A))
 }
 

@@ -30,8 +30,8 @@ LambdaMax <- new_class("LambdaMax", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: lambda_max.py lines 64-69
 method(validate_arguments, LambdaMax) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L]) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L]) {
     cli_abort("The argument to {.fn lambda_max} must be a square matrix, got shape ({A@shape[1L]}, {A@shape[2L]}).")
   }
   invisible(NULL)
@@ -86,7 +86,7 @@ method(.grad, LambdaMax) <- function(x, values, ...) {
   ev <- .eigvalsh(A, only_values = FALSE)
   v_max <- ev$vectors[, 1L, drop = FALSE]
   D <- v_max %*% t(v_max)
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 

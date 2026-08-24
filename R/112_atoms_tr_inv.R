@@ -28,8 +28,8 @@ TrInv <- new_class("TrInv", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: tr_inv.py lines 52-57
 method(validate_arguments, TrInv) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L]) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L]) {
     cli_abort("The argument to {.fn tr_inv} must be a square matrix, got shape ({A@shape[1L]}, {A@shape[2L]}).")
   }
   invisible(NULL)
@@ -75,7 +75,7 @@ method(numeric_value, TrInv) <- function(x, values, ...) {
 # -- domain -------------------------------------------------------
 ## CVXPY: tr_inv.py lines 111-114 -- X >> 0
 method(domain, TrInv) <- function(x) {
-  list(PSD(x@args[[1L]]))
+  list(PSD(.args(x)[[1L]]))
 }
 
 # -- get_data -----------------------------------------------------
@@ -96,7 +96,7 @@ method(.grad, TrInv) <- function(x, values, ...) {
   if (min(ev) <= 0) return(list(NULL))
   D <- t(solve(X))
   D <- -D %*% D
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 

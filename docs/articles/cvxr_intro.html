@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu and
 Balasubramanian Narasimhan</h4>
             
-            <h4 data-toc-skip class="date">2026-06-09</h4>
+            <h4 data-toc-skip class="date">2026-08-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/cvxr_intro.Rmd" class="external-link"><code>vignettes/cvxr_intro.Rmd</code></a></small>
       <div class="d-none name"><code>cvxr_intro.Rmd</code></div>
@@ -200,16 +200,16 @@ are nonnegative:</p>
 <span></span>
 <span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="va">objective</span>, constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">constraint1</span>, <span class="va">constraint2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, solver <span class="op">=</span> <span class="st">"CLARABEL"</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co">## verbose = TRUE for details</span></span>
-<span><span class="co">#&gt; ────────────────────────────────── CVXR v1.9.1 ─────────────────────────────────</span></span>
+<span><span class="co">#&gt; ────────────────────────────────── CVXR v1.9.2 ─────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Problem: 1 variable, 2 constraints (QP)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compilation: <span style="color: #0000BB;">"CLARABEL"</span> via CVXR::Dcp2Cone -&gt; CVXR::CvxAttr2Constr -&gt; CVXR::ConeMatrixStuffing -&gt; CVXR::Clarabel_Solver</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.013s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.012s</span></span>
 <span><span class="co">#&gt; ─────────────────────────────── Numerical solver ───────────────────────────────</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────── Summary ───────────────────────────────────</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Status: optimal</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Optimal value: 1287.63</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.013s</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.011s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Compile time: 0.012s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Solver time: 0.012s</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="va">betaHat</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         [,1]</span></span>
 <span><span class="co">#&gt;  [1,]  0.000</span></span>
@@ -280,9 +280,9 @@ Software</em>, 94(14), <a href="DOI:10.18637/jss.v094.i14" class="uri">DOI:10.18
 </h2>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.6.0 (2026-04-24)</span></span>
+<span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: aarch64-apple-darwin23</span></span>
-<span><span class="co">#&gt; Running under: macOS Tahoe 26.5.1</span></span>
+<span><span class="co">#&gt; Running under: macOS Tahoe 26.6.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib </span></span>
@@ -298,22 +298,22 @@ Software</em>, 94(14), <a href="DOI:10.18637/jss.v094.i14" class="uri">DOI:10.18
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] CVXR_1.9.1</span></span>
+<span><span class="co">#&gt; [1] CVXR_1.9.2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] Matrix_1.7-5      piqp_0.6.2        jsonlite_2.0.0    compiler_4.6.0   </span></span>
-<span><span class="co">#&gt;  [5] highs_1.14.0-2    Rcpp_1.1.1-1.1    slam_0.1-55       cccp_0.3-3       </span></span>
+<span><span class="co">#&gt;  [1] Matrix_1.7-6      piqp_0.6.2        jsonlite_2.0.0    compiler_4.6.1   </span></span>
+<span><span class="co">#&gt;  [5] highs_1.14.0-2    Rcpp_1.1.2        slam_0.1-56       cccp_0.3-3       </span></span>
 <span><span class="co">#&gt;  [9] jquerylib_0.1.4   systemfonts_1.3.2 textshaping_1.0.5 yaml_2.3.12      </span></span>
-<span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.2   lattice_0.22-9    R6_2.6.1         </span></span>
+<span><span class="co">#&gt; [13] fastmap_1.2.0     clarabel_0.11.3   lattice_0.22-9    R6_2.6.1         </span></span>
 <span><span class="co">#&gt; [17] scip_1.10.0-3     knitr_1.51        htmlwidgets_1.6.4 backports_1.5.1  </span></span>
 <span><span class="co">#&gt; [21] Rcplex_0.3-8      checkmate_2.3.4   gurobi_13.0-1     desc_1.4.3       </span></span>
-<span><span class="co">#&gt; [25] osqp_1.0.0        bslib_0.11.0      rlang_1.2.0       cachem_1.1.0     </span></span>
-<span><span class="co">#&gt; [29] xfun_0.58         fs_2.1.0          sass_0.4.10       S7_0.2.2         </span></span>
-<span><span class="co">#&gt; [33] otel_0.2.0        cli_3.6.6         pkgdown_2.2.0     Rglpk_0.6-5.1    </span></span>
-<span><span class="co">#&gt; [37] digest_0.6.39     grid_4.6.0        xpress_9.8.2      gmp_0.7-5.1      </span></span>
+<span><span class="co">#&gt; [25] osqp_1.0.0        bslib_0.12.0      rlang_1.3.0       cachem_1.1.0     </span></span>
+<span><span class="co">#&gt; [29] xfun_0.60         fs_2.1.0          sass_0.4.10       S7_0.2.2         </span></span>
+<span><span class="co">#&gt; [33] otel_0.2.0        cli_3.6.6         pkgdown_2.2.1     Rglpk_0.6-5.1    </span></span>
+<span><span class="co">#&gt; [37] digest_0.6.39     grid_4.6.1        xpress_9.8.2      gmp_0.7-5.1      </span></span>
 <span><span class="co">#&gt; [41] lifecycle_1.0.5   ECOSolveR_0.6.1   scs_3.2.7         evaluate_1.0.5   </span></span>
 <span><span class="co">#&gt; [45] codetools_0.2-20  Rmosek_11.1.2     ragg_1.5.2        rmarkdown_2.31   </span></span>
-<span><span class="co">#&gt; [49] tools_4.6.0       htmltools_0.5.9</span></span></code></pre></div>
+<span><span class="co">#&gt; [49] tools_4.6.1       htmltools_0.5.9</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -326,7 +326,7 @@ Software</em>, 94(14), <a href="DOI:10.18637/jss.v094.i14" class="uri">DOI:10.18
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

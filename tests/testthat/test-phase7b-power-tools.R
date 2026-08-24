@@ -623,6 +623,34 @@ test_that(".bigq_to_key produces consistent keys", {
   expect_false(.bigq_to_key(w) == .bigq_to_key(w2))
 })
 
+## @cvxpy NONE
+test_that(".bigq_to_key vectorization is byte-identical to the element-wise form", {
+  ## The body was `vapply(seq_len(n), function(i) as.character(w[i]), ...)`,
+  ## which is O(len^2) because `w[i]` on a bigq re-enters gmp per element. It is
+  ## now one vectorized `as.character(w)`. A DIFFERENT key is a different cache
+  ## bucket -- i.e. a wrong decomposition -- so equality is asserted directly
+  ## against the old form, including the cases where gmp normalizes.
+  elementwise <- function(w) {
+    paste(vapply(seq_len(length(w)), function(i) as.character(w[i]),
+                 character(1)), collapse = ",")
+  }
+  cases <- list(
+    as.bigq(integer(0), integer(0)),               # length 0
+    as.bigq(0L, 1L),                               # zero
+    as.bigq(1L, 1L),                               # unit
+    as.bigq(-3L, 7L),                              # negative
+    as.bigq(2L, 4L),                               # unreduced -> 1/2
+    as.bigq(c(1L, 2L, 3L), c(2L, 4L, 6L)),         # all reduce to 1/2
+    as.bigq(c(1L, 1L, 1L, 1L), c(2L, 3L, 6L, 12L)),
+    as.bigq(rep(1L, 40L), seq_len(40L))            # long, mixed denominators
+  )
+  for (w in cases) expect_identical(.bigq_to_key(w), elementwise(w))
+
+  ## Large numerators/denominators, where a lossy conversion would show up.
+  big <- as.bigq(as.bigz("123456789012345678901234567890"), as.bigz("7"))
+  expect_identical(.bigq_to_key(big), elementwise(big))
+})
+
 # ══════════════════════════════════════════════════════════════════════
 # gm — SOC constraint factory
 # ══════════════════════════════════════════════════════════════════════

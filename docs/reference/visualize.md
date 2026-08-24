@@ -31,23 +31,23 @@ visualize(
 
   `"text"`
 
-  :   Console display (default).
+  : Console display (default).
 
   `"json"`
 
-  :   JSON data model (for interop with HTML/Python).
+  : JSON data model (for interop with HTML/Python).
 
   `"html"`
 
-  :   Interactive D3+KaTeX HTML (Phase 2).
+  : Interactive D3+KaTeX HTML (Phase 2).
 
   `"latex"`
 
-  :   LaTeX align\* environments (Phase 3).
+  : LaTeX align\* environments (Phase 3).
 
   `"tikz"`
 
-  :   TikZ forest tree diagrams (Phase 3).
+  : TikZ forest tree diagrams (Phase 3).
 
 - solver:
 

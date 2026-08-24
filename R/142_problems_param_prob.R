@@ -47,7 +47,7 @@ get_parameter_vector <- function(param_to_size, param_id_to_col,
             cli_abort(c(
               "Problem contains an unspecified parameter.",
               "i" = "Set {.code value({name(p)}) <- <value>} before solving."
-            ))
+            ), class = "ParameterError")   ## CVXPY: raise ParameterError, eval_params.py:15
           }
           param_vec[(col + 1L):(col + sz)] <- as.vector(val)  # column-major
           break
@@ -127,13 +127,31 @@ ParamConeProg <- new_class("ParamConeProg", package = "CVXR",
 ## index of each stored value, which scatters directly into (row, col) via
 ## sparseMatrix() -> a general dgCMatrix (no ddiMatrix/dsCMatrix surprises that
 ## some solver interfaces, e.g. XPRESS, cannot coerce).
-.dpp_contract_reshape <- function(tensor, pv_sparse, nrow, ncol) {
+##
+## `zero_rows` (1-based flat column-major indices, from A_mapping_nonzero_rows)
+## are appended with value 0 so they survive as EXPLICIT ZEROS in the result.
+## CVXPY SOURCE: canonInterface.py:240-247, which does the same by appending
+## `np.zeros(nonzero_rows.size)` to the COO triplets before rebuilding the CSC.
+## The product above DROPS them: an entry whose parameter is currently 0
+## multiplies out to 0 and leaves the pattern, which is why a DIFFCP gradient
+## was exactly 0 at a parameter value of 0. `Matrix::sparseMatrix()` sums
+## duplicate (i, j) pairs, so appending a 0 at a position that is already
+## present is a no-op, and it RETAINS a stored zero where it is not -- verified,
+## along with the fact that the column subsetting, negation and row permutation
+## downstream all preserve explicit zeros.
+.dpp_contract_reshape <- function(tensor, pv_sparse, nrow, ncol,
+                                  zero_rows = NULL) {
   flat <- methods::as(tensor %*% pv_sparse, "CsparseMatrix")  # (nrow*ncol, 1)
   k <- flat@i                                                  # 0-based flat idx
+  x <- flat@x
+  if (length(zero_rows) > 0L) {
+    k <- c(k, as.integer(zero_rows) - 1L)
+    x <- c(x, numeric(length(zero_rows)))
+  }
   Matrix::sparseMatrix(
     i = (k %% nrow) + 1L,
     j = (k %/% nrow) + 1L,
-    x = flat@x,
+    x = x,
     dims = c(nrow, ncol))
 }
 
@@ -144,9 +162,26 @@ ParamConeProg <- new_class("ParamConeProg", package = "CVXR",
 ## Returns list(c, d, A, b) or list(P, c, d, A, b) if quad_obj.
 ## c: numeric(x_length), d: numeric(1), A: sparse (m, x_length), b: numeric(m)
 
+## `keep_zeros` mirrors the upstream argument of the same name
+## (cone_matrix_stuffing.py:213-214 -> ReducedMat.cache, utilities.py:138-140):
+## when TRUE, every entry of `A` that a parameter CAN drive is kept in the
+## sparsity pattern as an explicit zero, even where the current parameter value
+## makes it numerically zero. Exactly one caller sets it -- the DIFFCP
+## interface (diffcp_conif.py:72) -- because the derivative of the solution map
+## is taken with respect to the entries of A, and an entry that is not in the
+## pattern has no derivative at all.
+##
+## Measured, on max x1 + 2*x2 s.t. p*x1 + x2 <= 1, 0 <= x1 <= 3, 0 <= x2 <= 5:
+##                    CVXR before      CVXR after      CVXPY 1.9.2
+##      p = 0         0                -3              -3.000000
+##      p = 0.1       -3               -3              -3.000004
+## (seeding gradient(x) = sum(x); the objective seed gives -6 throughout.)
+## A silently zero gradient, with no error and no warning -- gradient descent
+## started at p = 0 never moves.
 apply_parameters <- function(param_prog, quad_obj = FALSE,
                              id_to_param_value = NULL,
-                             zero_offset = FALSE) {
+                             zero_offset = FALSE,
+                             keep_zeros = FALSE) {
   pv <- get_parameter_vector(param_prog@param_to_size,
                               param_prog@param_id_to_col,
                               param_prog@parameters,
@@ -172,7 +207,12 @@ apply_parameters <- function(param_prog, quad_obj = FALSE,
   n_cols <- xl + 1L
   n_rows <- nrow(param_prog@A_tensor) %/% n_cols
   if (n_rows > 0L) {
-    Ab <- .dpp_contract_reshape(param_prog@A_tensor, pv_sparse, n_rows, n_cols)
+    zero_rows <- if (isTRUE(keep_zeros)) {
+      A_mapping_nonzero_rows(param_prog@A_tensor, xl,
+                             const_col = param_prog@param_id_to_col[["-1"]])
+    } else NULL
+    Ab <- .dpp_contract_reshape(param_prog@A_tensor, pv_sparse, n_rows, n_cols,
+                                zero_rows = zero_rows)
     A <- Ab[, seq_len(xl), drop = FALSE]
     b <- as.numeric(Ab[, n_cols])
   } else {

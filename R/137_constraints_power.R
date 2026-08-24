@@ -182,14 +182,25 @@ method(residual, PowCone3D) <- function(x) {
 }
 
 # -- save_dual_value ----------------------------------------------
-## CVXPY SOURCE: power.py lines 133-142
-## NOTE: Different reshape order than ExpCone -- (3, -1) not (-1, 3)
-## Uses C-order reshape (CR-1)
+## CVXPY SOURCE: power.py lines 133-140
+##
+## `val` arrives as the (3, num_cones) matrix that ConeMatrixStuffing.invert
+## produced by reshaping the flat dual to this constraint's shape -- PowCone3D
+## is deliberately NOT on that method's exempt list, exactly as upstream
+## (cone_matrix_stuffing.py:473-478).  Row i is coordinate i across all cones.
+##
+## This method used to build that matrix itself, because CVXR had no reshape in
+## the stuffing layer: the dual arrived FLAT and INTERLEAVED per cone
+## (x1,y1,z1, x2,y2,z2, ...), since format_constraints stuffs PowCone3D with
+## spacing = 2, offset = i - 1 (conic_solver.R:166-176).  Filling that table
+## `byrow` transposes it -- silently wrong for every constraint with
+## num_cones() >= 2, invisible at nc = 1 where both fills coincide (2c16fca).
+## With the reshape ported (D_19.6 step C) the layout knowledge lives in ONE
+## place; keeping a local copy here would relocate the deviation, not remove it.
 
 method(save_dual_value, PowCone3D) <- function(x, val) {
-  nc <- num_cones(x)
-  ## CVXPY: np.reshape(value, (3, -1)) in C-order
-  val_mat <- .reshape_c_order(val, 3L, nc)
+  ## CVXPY SOURCE: power.py:133-140 -- dv_i = reshape(value[i], arg_i.shape, 'F')
+  val_mat <- as.matrix(val)
   dv0 <- matrix(val_mat[1L, ], nrow = x@.x@shape[1L], ncol = x@.x@shape[2L])
   dv1 <- matrix(val_mat[2L, ], nrow = x@.y@shape[1L], ncol = x@.y@shape[2L])
   dv2 <- matrix(val_mat[3L, ], nrow = x@.z@shape[1L], ncol = x@.z@shape[2L])
@@ -432,11 +443,12 @@ method(residual, PowConeND) <- function(x) {
 # -- save_dual_value ----------------------------------------------
 ## CVXPY SOURCE: power.py lines 292-305
 ## Value has shape (m+1, k); first m rows are W duals, last row is z duals.
+## ConeMatrixStuffing.invert delivers it already shaped (PowConeND is not on its
+## exempt list), so the old `if (!is.matrix(val))` fallback -- which existed only
+## because CVXR had no reshape there -- is gone (D_19.6 step C).
 
 method(save_dual_value, PowConeND) <- function(x, val) {
-  if (!is.matrix(val)) {
-    val <- matrix(val, nrow = x@shape[1L], ncol = x@shape[2L])
-  }
+  val <- as.matrix(val)
   dW <- val[seq_len(nrow(val) - 1L), , drop = FALSE]
   dz <- val[nrow(val), ]
 

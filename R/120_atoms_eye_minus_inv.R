@@ -12,7 +12,7 @@ EyeMinusInv <- new_class("EyeMinusInv", parent = Atom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     X <- as_expr(X)
-    shape <- X@shape
+    shape <- .shape(X)
 
     obj <- .fast_new(EyeMinusInv, S7_object(),
       id    = as.integer(id),
@@ -27,15 +27,15 @@ EyeMinusInv <- new_class("EyeMinusInv", parent = Atom, package = "CVXR",
 
 # -- validate -------------------------------------------------------
 method(validate_arguments, EyeMinusInv) <- function(x) {
-  X <- x@args[[1L]]
-  if (length(X@shape) != 2L || X@shape[1L] != X@shape[2L]) {
+  X <- .args(x)[[1L]]
+  if (length(.shape(X)) != 2L || .shape(X)[1L] != .shape(X)[2L]) {
     cli_abort("The argument to {.fn eye_minus_inv} must be a square matrix.")
   }
   invisible(NULL)
 }
 
 # -- shape ----------------------------------------------------------
-method(shape_from_args, EyeMinusInv) <- function(x) x@args[[1L]]@shape
+method(shape_from_args, EyeMinusInv) <- function(x) .arg_shape(x)
 
 # -- sign: always positive -----------------------------------------
 method(sign_from_args, EyeMinusInv) <- function(x) {
@@ -56,7 +56,7 @@ method(is_decr, EyeMinusInv) <- function(x, idx, ...) FALSE
 
 # -- numeric --------------------------------------------------------
 method(numeric_value, EyeMinusInv) <- function(x, values, ...) {
-  n <- x@args[[1L]]@shape[1L]
+  n <- .arg_shape(x)[1L]
   solve(diag(n) - values[[1L]])
 }
 

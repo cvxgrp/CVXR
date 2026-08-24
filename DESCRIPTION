@@ -1,8 +1,8 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.9.1
-Date: 2026-06-05
+Version: 1.9.2
+Date: 2026-08-23
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -59,7 +59,7 @@ Enhances:
     piqp (>= 0.6),
     scip,
     xpress,
-    diffcp (>= 0.1),
+    diffcp (>= 0.1.2),
     ipopt,
     sparsediff,
     Uno
@@ -73,4 +73,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0

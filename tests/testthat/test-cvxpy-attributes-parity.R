@@ -556,8 +556,13 @@ test_that("Parameter with PSD used in quad_form (CVXPY parity)", {
 # 12. test_bool_int_variable
 # ====================================================================
 
-## @cvxpy test_attributes.py::TestMultipleAttributes::test_bool_int_variable
-test_that("Variable with both boolean and integer (CVXPY parity)", {
+## NOT the upstream test of this name: that one is a 2x2 carrying PARTIAL index
+## lists for both attributes (`boolean=[(0,0),(0,1)], integer=[(1,1),(0,1)]`,
+## asserting X == [[1,0],[3,4]]). It is ported in test-mip-index-attrs.R, which
+## now carries the `## @cvxpy` mapping. This one covers the scalar
+## whole-variable case, which upstream does not test separately.
+## @cvxpy NONE
+test_that("Variable with both boolean and integer, whole-variable form", {
   ## Boolean is a subset of integer, so both should work.
   ## Neither boolean nor integer is in CONVEX_ATTRIBUTES, so
   ## CvxAttr2Constr does NOT strip them. Both are preserved.

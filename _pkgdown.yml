@@ -206,6 +206,7 @@ reference:
   - multiply
   - vdot
   - scalar_product
+  - deep_flatten
   - cvxr_outer
   - dotsort
   - inv_prod

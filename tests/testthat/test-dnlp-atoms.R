@@ -158,9 +158,16 @@ test_that("tan domain is the two box constraints -pi/2 <= x <= pi/2", {
 })
 
 ## @cvxpy NONE
-test_that("atanh domain aborts: open interval needs strict inequalities", {
+## CVXPY 1.9.2 (hyperbolic.py:199) relaxed atanh's domain from the STRICT
+## `x < 1`, `x > -1` -- which raise "Strict inequalities are not allowed" and
+## so made _domain unevaluable upstream -- to non-strict bounds.  This test
+## previously asserted the abort; it now asserts the two constraints, like Tan
+## above.  Full metadata port: test-cvxpy-1.9.2-atom-fixes.R.
+test_that("atanh domain is the two box constraints -1 <= x <= 1", {
   x <- Variable(2)
-  expect_error(atom_domain(Atanh(x)), "strict inequalities")
+  d <- atom_domain(Atanh(x))
+  expect_equal(length(d), 2L)
+  expect_true(all(vapply(d, function(c) S7_inherits(c, Inequality), logical(1))))
 })
 
 # ===================================================================

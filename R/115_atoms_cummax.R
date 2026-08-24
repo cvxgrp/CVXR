@@ -11,7 +11,7 @@ Cummax <- new_class("Cummax", parent = AxisAtom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    shape <- x@shape
+    shape <- .shape(x)
 
     obj <- .fast_new(Cummax, S7_object(),
       id       = as.integer(id),
@@ -30,13 +30,13 @@ Cummax <- new_class("Cummax", parent = AxisAtom, package = "CVXR",
 
 ## Shape: same as input (cummax preserves shape)
 method(shape_from_args, Cummax) <- function(x) {
-  x@args[[1L]]@shape
+  .arg_shape(x)
 }
 
 ## Sign: passthrough from argument
 method(sign_from_args, Cummax) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]),
-       is_nonpos = is_nonpos(x@args[[1L]]))
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]),
+       is_nonpos = is_nonpos(.args(x)[[1L]]))
 }
 
 ## Curvature: convex

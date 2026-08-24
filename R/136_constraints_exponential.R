@@ -3,6 +3,13 @@
 #####
 
 ## CVXPY SOURCE: constraints/exponential.py
+## PARTIAL PORT: in: ExpCone (exponential.py:30-166) -- constructor and
+##   validation, metadata, residual, dual cone, save_dual_value.
+##   out: RelEntrConeQuad (:168) and OpRelEntrConeQuad (:283), plus
+##   ExpCone.as_quad_approx which returns the former -- all NOT TARGETED. They
+##   are the quadratic approximation of the operator relative entropy cone, and
+##   their only consumers would be the quantum-information atoms, which are also
+##   not targeted (atoms/quantum_rel_entr.R, reductions/cone2cone/approx.R).
 ## ExpCone -- Exponential Cone constraint
 
 #' Create an Exponential Cone Constraint

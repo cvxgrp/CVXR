@@ -11,8 +11,8 @@ LogSumExp <- new_class("LogSumExp", parent = AxisAtom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(LogSumExp, S7_object(),
       id       = as.integer(id),
@@ -29,7 +29,7 @@ LogSumExp <- new_class("LogSumExp", parent = AxisAtom, package = "CVXR",
 
 # -- sign: nonneg when arg is nonneg ------------------------------
 method(sign_from_args, LogSumExp) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]),
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]),
        is_nonpos = FALSE)
 }
 

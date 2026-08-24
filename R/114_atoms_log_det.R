@@ -28,8 +28,8 @@ LogDet <- new_class("LogDet", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: log_det.py lines 51-53
 method(validate_arguments, LogDet) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L]) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L]) {
     cli_abort("The argument to {.fn log_det} must be a square matrix, got shape ({A@shape[1L]}, {A@shape[2L]}).")
   }
   invisible(NULL)
@@ -90,7 +90,7 @@ method(numeric_value, LogDet) <- function(x, values, ...) {
 # -- domain -------------------------------------------------------
 ## CVXPY: log_det.py lines 107-110 -- A >> 0
 method(domain, LogDet) <- function(x) {
-  list(PSD(x@args[[1L]]))
+  list(PSD(.args(x)[[1L]]))
 }
 
 # -- get_data -----------------------------------------------------
@@ -111,7 +111,7 @@ method(.grad, LogDet) <- function(x, values, ...) {
   ev <- .eigvalsh(X, only_values = TRUE)$values
   if (min(ev) <= 0) return(list(NULL))
   D <- t(solve(X))
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 

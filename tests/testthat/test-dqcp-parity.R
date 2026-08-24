@@ -110,7 +110,13 @@ test_that("DQCP parity: maximize sqrt(x)*sqrt(y), nonneg", {
   x <- Variable(nonneg = TRUE)
   y <- Variable(nonneg = TRUE)
   prob <- Problem(Maximize(sqrt(x) * sqrt(y)), list(x <= 4, y <= 9))
-  result <- psolve(prob, qcp = TRUE)
+  ## `solver = "SCS"` is part of the port, not a workaround: upstream is
+  ## `problem.solve(cp.SCS, qcp=True)` (test_dqcp.py:326).  This test had
+  ## dropped the pin and used auto-selection, so it was never mirroring the
+  ## case it names.  The pin matters -- CVXPY 1.9.2 itself returns `user_limit`
+  ## with value 0.0 on this problem under its DEFAULT solver, so an unpinned
+  ## version asserts behavior upstream does not have.
+  result <- psolve(prob, qcp = TRUE, solver = "SCS")
 
   expect_equal(status(prob), "optimal")
   expect_equal(as.numeric(result), 6.0, tolerance = 0.1)

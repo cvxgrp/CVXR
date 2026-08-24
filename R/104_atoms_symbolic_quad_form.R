@@ -20,7 +20,7 @@ SymbolicQuadForm <- new_class("SymbolicQuadForm", parent = Atom, package = "CVXR
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
     P <- as_expr(P)
-    shape <- expr@shape
+    shape <- .shape(expr)
 
     .fast_new(SymbolicQuadForm, S7_object(),
       id                  = as.integer(id),

@@ -16,4 +16,4 @@ square(x)
 
 ## Value
 
-A Power atom with p=2
+A `PowerApprox` atom with p=2, the same atom `power(x, 2)` builds

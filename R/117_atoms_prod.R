@@ -14,7 +14,7 @@ Prod <- new_class("Prod", parent = AxisAtom, package = "CVXR",
     x <- as_expr(x)
     if (!is.null(axis)) axis <- as.integer(axis)
     keepdims <- as.logical(keepdims)
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(Prod, S7_object(),
       id       = as.integer(id),
@@ -31,7 +31,7 @@ Prod <- new_class("Prod", parent = AxisAtom, package = "CVXR",
 
 # -- sign -----------------------------------------------------------
 method(sign_from_args, Prod) <- function(x) {
-  list(is_nonneg = is_nonneg(x@args[[1L]]), is_nonpos = FALSE)
+  list(is_nonneg = is_nonneg(.args(x)[[1L]]), is_nonpos = FALSE)
 }
 
 # -- curvature: neither convex nor concave --------------------------
@@ -48,7 +48,7 @@ method(is_atom_log_log_concave, Prod) <- function(x) TRUE
 method(is_atom_smooth, Prod) <- function(x) TRUE
 
 # -- monotonicity ---------------------------------------------------
-method(is_incr, Prod) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
+method(is_incr, Prod) <- function(x, idx, ...) is_nonneg(.args(x)[[1L]])
 method(is_decr, Prod) <- function(x, idx, ...) FALSE
 
 # -- numeric --------------------------------------------------------

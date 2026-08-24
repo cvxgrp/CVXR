@@ -339,6 +339,9 @@ Multiplication, dot products, and related
   product (inner product)
 - [`scalar_product()`](https://www.cvxgrp.org/CVXR/reference/scalar_product.md)
   : Scalar product (alias for vdot)
+- [`deep_flatten()`](https://www.cvxgrp.org/CVXR/reference/deep_flatten.md)
+  : Recursively flatten a nested list of expressions into one column
+  vector
 - [`cvxr_outer()`](https://www.cvxgrp.org/CVXR/reference/cvxr_outer.md)
   : Outer product of two vectors
 - [`dotsort()`](https://www.cvxgrp.org/CVXR/reference/dotsort.md) :

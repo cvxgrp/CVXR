@@ -18,7 +18,7 @@ Gmatmul <- new_class("Gmatmul", parent = Atom, package = "CVXR",
     A <- as_expr(A)
     X <- as_expr(X)
     ## Shape: matrix multiplication shape A %*% X
-    shape <- c(A@shape[1L], X@shape[2L])
+    shape <- c(.shape(A)[1L], .shape(X)[2L])
 
     obj <- .fast_new(Gmatmul, S7_object(),
       id    = as.integer(id),
@@ -37,7 +37,7 @@ Gmatmul <- new_class("Gmatmul", parent = Atom, package = "CVXR",
 ## as a property (so DGP doesn't log-transform it), not in `args`.
 method(parameters, Gmatmul) <- function(x) {
   unique_list(c(
-    unlist(lapply(x@args, parameters), recursive = FALSE),
+    unlist(lapply(.args(x), parameters), recursive = FALSE),
     parameters(x@A)
   ))
 }
@@ -47,11 +47,11 @@ method(validate_arguments, Gmatmul) <- function(x) {
   if (!is_constant(x@A)) {
     cli_abort("{.fn gmatmul} requires that {.arg A} be constant.")
   }
-  if (!is_pos(x@args[[1L]])) {
+  if (!is_pos(.args(x)[[1L]])) {
     cli_abort("{.fn gmatmul} requires that {.arg X} be positive.")
   }
   ## Check dimension compatibility
-  if (x@A@shape[2L] != x@args[[1L]]@shape[1L]) {
+  if (.shape(x@A)[2L] != .arg_shape(x)[1L]) {
     cli_abort("Incompatible dimensions: A is {x@A@shape[1L]}x{x@A@shape[2L]} but X is {x@args[[1L]]@shape[1L]}x{x@args[[1L]]@shape[2L]}.")
   }
   invisible(NULL)
@@ -59,7 +59,7 @@ method(validate_arguments, Gmatmul) <- function(x) {
 
 # -- shape ----------------------------------------------------------
 method(shape_from_args, Gmatmul) <- function(x) {
-  c(x@A@shape[1L], x@args[[1L]]@shape[2L])
+  c(.shape(x@A)[1L], .arg_shape(x)[2L])
 }
 
 # -- sign: always positive -----------------------------------------

@@ -11,6 +11,7 @@ rsrc_tree/utilities/error.R
 rsrc_tree/utilities/power_tools.R
 rsrc_tree/utilities/grad.R
 rsrc_tree/utilities/solver_context.R
+rsrc_tree/utilities/psd_utils.R
 rsrc_tree/utilities/bounds.R
 rsrc_tree/settings.R
 rsrc_tree/lin_ops/LinOp.R
@@ -93,7 +94,6 @@ rsrc_tree/atoms/cvar.R
 rsrc_tree/atoms/ptp.R
 rsrc_tree/atoms/stats.R
 rsrc_tree/atoms/inv_prod.R
-rsrc_tree/zzz_R_specific/convenience.R
 rsrc_tree/atoms/norm1.R
 rsrc_tree/atoms/norm_inf.R
 rsrc_tree/atoms/pnorm.R
@@ -145,6 +145,7 @@ rsrc_tree/reductions/reduction.R
 rsrc_tree/reductions/eval_params.R
 rsrc_tree/reductions/flip_objective.R
 rsrc_tree/reductions/canonicalization.R
+rsrc_tree/reductions/subexpr_cache.R
 rsrc_tree/reductions/dcp2cone/dcp2cone.R
 rsrc_tree/reductions/dcp2cone/canonicalizers/abs_canon.R
 rsrc_tree/reductions/dcp2cone/canonicalizers/cummax_canon.R
@@ -257,6 +258,7 @@ rsrc_tree/utilities/coeff_extractor.R
 rsrc_tree/utilities/perspective_utils.R
 rsrc_tree/reductions/dcp2cone/cone_matrix_stuffing.R
 rsrc_tree/reductions/cvx_attr2constr.R
+rsrc_tree/reductions/cone2cone/exact.R
 rsrc_tree/reductions/solvers/utilities.R
 rsrc_tree/reductions/solvers/solver.R
 rsrc_tree/reductions/solvers/nlp_solvers/nlp_solver.R

@@ -22,13 +22,8 @@ Convex Optimization.” *Journal of Statistical Software*, **94**(14),
 1–34.
 [doi:10.18637/jss.v094.i14](https://doi.org/10.18637/jss.v094.i14).
 
-    @Article{,
-      title = {{CVXR}: An {R} Package for Disciplined Convex Optimization},
-      author = {Anqi Fu and Balasubramanian Narasimhan and Stephen Boyd},
-      journal = {Journal of Statistical Software},
-      year = {2020},
-      volume = {94},
-      number = {14},
-      pages = {1--34},
-      doi = {10.18637/jss.v094.i14},
-    }
+@Article{, title = {{CVXR}: An {R} Package for Disciplined Convex
+Optimization}, author = {Anqi Fu and Balasubramanian Narasimhan and
+Stephen Boyd}, journal = {Journal of Statistical Software}, year =
+{2020}, volume = {94}, number = {14}, pages = {1--34}, doi =
+{10.18637/jss.v094.i14}, }

@@ -288,9 +288,9 @@ test_that("SCIP: time limit with no solution raises error", {
 ## @cvxpy test_conic_solvers.py::TestSCIP::test_scip_solver_stats
 test_that("SCIP: solver stats available", {
   h <- sth_lp_0()
-  result <- solve(h$prob, solver = "SCIP")
-  expect_equal(result$solver, "SCIP")
+  psolve(h$prob, solver = "SCIP")
   ss <- solver_stats(h$prob)
+  expect_equal(ss@solver_name, "SCIP")
   expect_true(!is.null(ss@solve_time))
   expect_true(!is.null(ss@num_iters))
 })

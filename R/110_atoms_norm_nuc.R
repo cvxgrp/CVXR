@@ -28,8 +28,8 @@ NormNuc <- new_class("NormNuc", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## Must be 2D (same as sigma_max)
 method(validate_arguments, NormNuc) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L) {
     cli_abort("The argument to {.fn norm_nuc} must be a 2-d matrix.")
   }
   invisible(NULL)
@@ -79,7 +79,7 @@ method(.grad, NormNuc) <- function(x, values, ...) {
   X <- as.matrix(values[[1L]])
   s <- svd(X)
   D <- s$u %*% t(s$v)
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 

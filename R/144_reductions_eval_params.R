@@ -31,18 +31,18 @@
       cli_abort(c(
         "Problem contains an unspecified parameter.",
         "i" = "Set {.code value({expr_name(expr)}) <- <value>} before solving."
-      ))
+      ), class = "ParameterError")   ## CVXPY: raise ParameterError, eval_params.py:15
     }
     return(Constant(v))
   }
 
   ## Recursive case: rebuild node with substituted children
 
-  new_args <- lapply(expr@args, .replace_params_with_consts)
+  new_args <- lapply(.args(expr), .replace_params_with_consts)
   ## If nothing changed, return original (avoids unnecessary copy)
   changed <- !identical(
-    vapply(new_args, function(a) a@id, integer(1L)),
-    vapply(expr@args, function(a) a@id, integer(1L))
+    vapply(new_args, function(a) .id(a), integer(1L)),
+    vapply(.args(expr), function(a) .id(a), integer(1L))
   )
   if (!changed) return(expr)
 
@@ -70,7 +70,7 @@ method(reduction_apply, EvalParams) <- function(x, problem, ...) {
   ## -- Objective --------------------------------------------------
   obj <- problem@objective
   if (length(parameters(obj)) > 0L) {
-    new_obj_expr <- .replace_params_with_consts(obj@args[[1L]])
+    new_obj_expr <- .replace_params_with_consts(.args(obj)[[1L]])
     obj <- S7_class(obj)(new_obj_expr)
   }
 
@@ -82,11 +82,11 @@ method(reduction_apply, EvalParams) <- function(x, problem, ...) {
       new_constraints[[i]] <- con
       next
     }
-    new_args <- lapply(con@args, .replace_params_with_consts)
+    new_args <- lapply(.args(con), .replace_params_with_consts)
     ## Check if anything actually changed
     changed <- !identical(
-      vapply(new_args, function(a) a@id, integer(1L)),
-      vapply(con@args, function(a) a@id, integer(1L))
+      vapply(new_args, function(a) .id(a), integer(1L)),
+      vapply(.args(con), function(a) .id(a), integer(1L))
     )
     if (!changed) {
       new_constraints[[i]] <- con

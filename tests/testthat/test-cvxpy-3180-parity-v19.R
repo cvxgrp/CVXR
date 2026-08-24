@@ -10,8 +10,11 @@
 ##   - Clarabel "Unsolved" status -> SOLVER_ERROR (clarabel_conif.R)
 ##
 ## The two quantum-atom tests (quantum_rel_entr, von_neumann_entr) are skip()ed
-## and @v19-pending: those atoms are DEFERRED post-v1.0 (see CLAUDE.md /
-## atoms/quantum_rel_entr.R, von_neumann_entr.R stubs).
+## and marked `## @not-targeted:` -- those atoms are out of CVXR's scope (see
+## CLAUDE.md "Remaining Work", atoms/quantum_rel_entr.R, atoms/von_neumann_entr.R).
+## Their bodies are kept as executable documentation of what the atoms would have
+## to satisfy. That marker is NOT `@v19-pending`, and the difference is the point:
+## pending means coming, not-targeted means decided against.
 
 # =====================================================================
 # test_complex.py::TestComplex2RealAccepts::test_accepts_returns_bool
@@ -225,9 +228,10 @@ test_that("CVXPY 1.9 parity (#3180): a^x (rpow) for constant base a", {
 # test_quantum_rel_entr.py::TestQuantumRelEntr::test_real_inputs
 # =====================================================================
 ## @cvxpy test_quantum_rel_entr.py::TestQuantumRelEntr::test_real_inputs
-## @v19-pending: quantum atoms (quantum_rel_entr) [deferred-post-v1.0]
+## @not-targeted: quantum-information atoms are out of CVXR's scope; see
+##   CLAUDE.md "Remaining Work" and atoms/quantum_rel_entr.R
 test_that("CVXPY 1.9 parity (#3180): quantum_rel_entr with real inputs", {
-  skip("@v19-pending: quantum atoms deferred to post-v1.0 (see atoms/quantum_rel_entr.R stub)")
+  skip("NOT TARGETED: quantum-information atoms are out of CVXR's scope (see atoms/quantum_rel_entr.R)")
   n <- 2L
   X <- Variable(c(n, n), symmetric = TRUE)
   Y <- diag(n)
@@ -242,9 +246,10 @@ test_that("CVXPY 1.9 parity (#3180): quantum_rel_entr with real inputs", {
 # test_von_neumann_entr.py::Test_von_neumann_entr::test_max_entropy
 # =====================================================================
 ## @cvxpy test_von_neumann_entr.py::Test_von_neumann_entr::test_max_entropy
-## @v19-pending: quantum atoms (von_neumann_entr) [deferred-post-v1.0]
+## @not-targeted: quantum-information atoms are out of CVXR's scope; see
+##   CLAUDE.md "Remaining Work" and atoms/von_neumann_entr.R
 test_that("CVXPY 1.9 parity (#3180): von_neumann_entr max entropy is log(n)", {
-  skip("@v19-pending: quantum atoms deferred to post-v1.0 (see atoms/von_neumann_entr.R stub)")
+  skip("NOT TARGETED: quantum-information atoms are out of CVXR's scope (see atoms/von_neumann_entr.R)")
   n <- 3L
   N <- Variable(c(n, n), symmetric = TRUE)
   prob <- Problem(Maximize(von_neumann_entr(N)),

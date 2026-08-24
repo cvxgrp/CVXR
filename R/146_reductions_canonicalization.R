@@ -44,7 +44,7 @@ method(reduction_apply, Canonicalization) <- function(x, problem, ...) {
     con_result <- .canonicalize_tree(con)
     all_chunks[[i + 1L]] <- c(con_result[[2L]], list(con_result[[1L]]))
     ## Store constraint ID mapping
-    assign(as.character(con@id), con_result[[1L]]@id,
+    assign(as.character(.id(con)), .id(con_result[[1L]]),
            envir = inverse_data@cons_id_map)
   }
   canon_constraints <- unlist(all_chunks, recursive = FALSE)
@@ -61,14 +61,9 @@ method(reduction_invert, Canonicalization) <- function(x, solution, inverse_data
   ## We need to reverse: find solution@dual_vars[[as.character(new_id)]]
   ## and store under as.character(old_id)
   if (length(solution@dual_vars) > 0L) {
-    dvars <- list()
-    old_ids <- ls(inverse_data@cons_id_map, all.names = TRUE)
-    for (old_id in old_ids) {
-      new_id <- as.character(get(old_id, envir = inverse_data@cons_id_map))
-      if (!is.null(solution@dual_vars[[new_id]])) {
-        dvars[[old_id]] <- solution@dual_vars[[new_id]]
-      }
-    }
+    ## O(n), matching CVXPY's dict comprehension; the per-id loop this replaces
+    ## was O(n^2) in R. See `.remap_by_id_map` (zzz_R_specific/utility.R).
+    dvars <- .remap_by_id_map(solution@dual_vars, inverse_data@cons_id_map)
     return(Solution(status      = solution@status,
                     opt_val     = solution@opt_val,
                     primal_vars = solution@primal_vars,
@@ -82,18 +77,23 @@ method(reduction_invert, Canonicalization) <- function(x, solution, inverse_data
 
 ## .canonicalize_tree: recursive bottom-up walk
 ## CVXPY SOURCE: canonicalization.py lines 86-123
-.canonicalize_tree <- function(expr) {
+## `canonicalize_params` mirrors upstream's argument of the same name
+## (canonicalization.py:90): should constant subtrees that contain PARAMETERS be
+## canonicalized? TRUE (the default, and every caller except Dqcp2Dcp) keeps the
+## DPP behavior -- a parameterized constant is canonicalized so its structure is
+## available to the parametrized-compilation path. Dqcp2Dcp passes FALSE.
+.canonicalize_tree <- function(expr, canonicalize_params = TRUE) {
   ## Recurse into each argument -- pre-allocate, flatten once
-  n_args <- length(expr@args)
+  n_args <- length(.args(expr))
   canon_args <- vector("list", n_args)
   constr_chunks <- vector("list", n_args + 1L)
   for (i in seq_len(n_args)) {
-    arg_result <- .canonicalize_tree(expr@args[[i]])
+    arg_result <- .canonicalize_tree(.args(expr)[[i]], canonicalize_params)
     canon_args[[i]] <- arg_result[[1L]]
     constr_chunks[[i]] <- arg_result[[2L]]
   }
   ## Canonicalize this node
-  node_result <- .canonicalize_expr(expr, canon_args)
+  node_result <- .canonicalize_expr(expr, canon_args, canonicalize_params)
   constr_chunks[[n_args + 1L]] <- node_result[[2L]]
   constrs <- unlist(constr_chunks, recursive = FALSE)
   if (is.null(constrs)) constrs <- list()
@@ -102,10 +102,26 @@ method(reduction_invert, Canonicalization) <- function(x, solution, inverse_data
 
 ## .canonicalize_expr: canonicalize a single node
 ## CVXPY SOURCE: canonicalization.py lines 125-157
-.canonicalize_expr <- function(expr, args) {
-  ## Skip constants (no parameters) -- collapse them
-  if (.s7_is(expr, Expression) &&
-      is_constant(expr) && length(parameters(expr)) == 0L) {
+##   canon_with_params = canonicalize_params and expr.parameters()
+##   skip_canon = expr.is_constant() and not canon_with_params
+##   if skip_canon: return expr, []
+## Constant trees are always collapsed; a constant tree containing parameters is
+## PRESERVED (canonicalized) when canonicalize_params is TRUE and collapsed when
+## it is FALSE. Dqcp2Dcp needs FALSE: the bisection's inverted sublevel bound is
+## a function of the bisection PARAMETER alone, so it is constant at solve time.
+## Canonicalizing it introduces epigraph variables whose relaxation is one-sided,
+## and for a nested inverse chain (e.g. sqrt(inv_pos(power(x, 2)))) the resulting
+## sublevel set stops depending on the parameter entirely -- every bisection
+## query reports feasible and the search converges to a wrong point while
+## reporting `optimal`. See test-dqcp-nested-inverse.R.
+##
+## The condition is ordered so `parameters(expr)` is reached only when
+## `is_constant(expr)` already held, matching the short-circuit the previous
+## `is_constant(expr) && length(parameters(expr)) == 0L` had: this walk is on
+## the hot canonicalization path.
+.canonicalize_expr <- function(expr, args, canonicalize_params = TRUE) {
+  if (.s7_is(expr, Expression) && is_constant(expr) &&
+      !(canonicalize_params && length(parameters(expr)) > 0L)) {
     return(list(expr, list()))
   }
 

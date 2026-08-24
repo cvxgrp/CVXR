@@ -5,10 +5,9 @@
 ## CVXPY SOURCE: constraints/psd.py
 ## PSD -- Positive Semidefinite constraint
 ##
-## NOTE: CVXPY 1.9.0 (PR #3268) added a `SvecPSD` class to psd.py, the target of
-## the PSD->SvecPSD ExactCone2Cone reduction. CVXR does NOT implement SvecPSD:
-## svec packing of PSD blocks is done inside each solver interface, not via a
-## separate cone reduction (see reductions/cone2cone/exact.R). Intentional omission.
+##
+## Holds both PSD and `SvecPSD` (CVXPY 1.9.0, PR #3268), the target of the
+## PSD->SvecPSD conversion in `reductions/cone2cone/exact.R`.
 
 #' Create a Positive Semidefinite Constraint
 #'
@@ -101,5 +100,85 @@ method(dual_cone, PSD) <- function(x, ...) {
     PSD(x@dual_variables[[1L]])
   } else {
     PSD(args[[1L]])
+  }
+}
+
+# -- SvecPSD ------------------------------------------------------
+## CVXPY SOURCE: psd.py lines 125-197
+##
+## A PSD constraint in scaled vectorized (svec) form: the argument is a
+## column of length n*(n+1)/2 holding the scaled triangle of a symmetric PSD
+## matrix.  Produced by `ExactCone2Cone` for solvers that want the packed
+## triangle rather than the full matrix; users do not construct it directly.
+##
+## `.n` is the side length of the ORIGINAL matrix, not the triangle length.
+
+SvecPSD <- new_class("SvecPSD", parent = Cone, package = "CVXR",
+  properties = list(
+    .n = class_integer
+  ),
+  constructor = function(expr, n, constr_id = NULL) {
+    if (FALSE) new_object(S7_object())  ## S7 static-check guard
+    expr <- as_expr(expr)
+    if (is.null(constr_id)) constr_id <- next_expr_id()
+
+    .fast_new(SvecPSD, S7_object(),
+      id    = as.integer(constr_id),
+      .cache = new.env(parent = emptyenv()),
+      args  = list(expr),
+      dual_variables = list(Variable(expr@shape)),
+      shape = expr@shape,
+      .label = "",
+      .n    = as.integer(n)
+    )
+  }
+)
+
+## CVXPY SOURCE: psd.py lines 148-150
+method(get_data, SvecPSD) <- function(x) list(x@.n, x@id)
+
+## CVXPY SOURCE: psd.py lines 152-153
+method(expr_name, SvecPSD) <- function(x) {
+  sprintf("svec_psd(%s, n=%d)", expr_name(x@args[[1L]]), x@.n)
+}
+
+## CVXPY SOURCE: psd.py lines 155-159
+method(is_dcp, SvecPSD) <- function(x) is_affine(x@args[[1L]])
+
+## CVXPY SOURCE: psd.py lines 161-162
+method(is_dgp, SvecPSD) <- function(x) FALSE
+
+## CVXPY SOURCE: psd.py lines 167-169
+method(num_cones, SvecPSD) <- function(x) {
+  tri_dim <- (x@.n * (x@.n + 1L)) %/% 2L
+  as.integer(expr_size(x@args[[1L]]) %/% tri_dim)
+}
+
+## CVXPY SOURCE: psd.py lines 175-176
+method(cone_sizes, SvecPSD) <- function(x) rep(x@.n, num_cones(x))
+
+## CVXPY SOURCE: psd.py lines 178-180 -- the svec length, NOT n^2.
+method(constr_size, SvecPSD) <- function(x) {
+  as.integer((x@.n * (x@.n + 1L)) %/% 2L * num_cones(x))
+}
+
+## CVXPY SOURCE: psd.py lines 182-189 -- deliberately NOT implemented upstream
+## either: the residual is only meaningful on the original PSD constraint,
+## which is what `ExactCone2Cone` maps the solution back onto.
+method(residual, SvecPSD) <- function(x) {
+  if (is.null(value(x@args[[1L]]))) return(NULL)
+  cli_abort(c(
+    "{.fn residual} is not implemented for {.cls SvecPSD}.",
+    "i" = "Check the residual on the original {.cls PSD} constraint instead."
+  ))
+}
+
+## CVXPY SOURCE: psd.py lines 191-197 -- the PSD cone is self-dual.
+method(dual_cone, SvecPSD) <- function(x, ...) {
+  args <- list(...)
+  if (length(args) == 0L) {
+    SvecPSD(x@dual_variables[[1L]], n = x@.n)
+  } else {
+    SvecPSD(args[[1L]], n = x@.n)
   }
 }

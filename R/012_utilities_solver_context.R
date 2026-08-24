@@ -14,20 +14,32 @@
 ## holds S7 class objects (e.g. PowCone3D, PowConeND, SOC), matching how
 ## CVXR stores `@SUPPORTED_CONSTRAINTS` on solver instances.
 
+## `psd_triangle_kind` / `psd_sqrt2_scaling` mirror solver_context.py:27-28 --
+## the chosen solver's PSD svec format, carried so the PSD -> svec conversion
+## and its dual recovery read it from ONE place instead of each solver
+## interface re-deriving it (ADR D_19.6).  NA means the solver takes full PSD
+## matrices (CVXPY's `None`).
+
 SolverInfo <- new_class("SolverInfo", package = "CVXR",
   properties = list(
     solver_name                  = class_character,
     solver_supported_constraints = class_list,
-    solver_supports_bounds       = class_logical
+    solver_supports_bounds       = class_logical,
+    psd_triangle_kind            = class_character,
+    psd_sqrt2_scaling            = class_logical
   ),
   constructor = function(solver_name = NA_character_,
                          solver_supported_constraints = list(),
-                         solver_supports_bounds = FALSE) {
+                         solver_supports_bounds = FALSE,
+                         psd_triangle_kind = NA_character_,
+                         psd_sqrt2_scaling = NA) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     .fast_new(SolverInfo, S7_object(),
       solver_name                  = as.character(solver_name),
       solver_supported_constraints = solver_supported_constraints,
-      solver_supports_bounds       = isTRUE(solver_supports_bounds)
+      solver_supports_bounds       = isTRUE(solver_supports_bounds),
+      psd_triangle_kind            = as.character(psd_triangle_kind),
+      psd_sqrt2_scaling            = as.logical(psd_sqrt2_scaling)
     )
   }
 )

@@ -23,7 +23,7 @@ Perspective <- new_class("Perspective", parent = Atom, package = "CVXR",
     id <- next_expr_id()
     f <- as_expr(f)
     args <- c(list(s), variables(f))
-    shape <- f@shape
+    shape <- .shape(f)
 
     obj <- .fast_new(Perspective, S7_object(),
       id     = as.integer(id),
@@ -44,7 +44,7 @@ method(validate_arguments, Perspective) <- function(x) {
   if (expr_size(x@.f) != 1L) {
     cli_abort("Perspective requires a scalar function f, got size {expr_size(x@.f)}.")
   }
-  s <- x@args[[1L]]
+  s <- .args(x)[[1L]]
   if (expr_size(s) != 1L) {
     cli_abort("Perspective requires scalar s, got size {expr_size(s)}.")
   }
@@ -61,7 +61,7 @@ method(validate_arguments, Perspective) <- function(x) {
 method(sign_from_args, Perspective) <- function(x) {
   f_pos <- is_nonneg(x@.f)
   f_neg <- is_nonpos(x@.f)
-  s_pos <- is_nonneg(x@args[[1L]])
+  s_pos <- is_nonneg(.args(x)[[1L]])
   list(is_nonneg = f_pos && s_pos,
        is_nonpos = f_neg && s_pos)
 }
@@ -71,12 +71,12 @@ method(sign_from_args, Perspective) <- function(x) {
 ## With DPP scope: non-param-free f -> not convex/concave (forces EvalParams)
 method(is_atom_convex, Perspective) <- function(x) {
   if (dpp_scope_active() && !is_param_free(x@.f)) return(FALSE)
-  is_convex(x@.f) && is_nonneg(x@args[[1L]])
+  is_convex(x@.f) && is_nonneg(.args(x)[[1L]])
 }
 
 method(is_atom_concave, Perspective) <- function(x) {
   if (dpp_scope_active() && !is_param_free(x@.f)) return(FALSE)
-  is_concave(x@.f) && is_nonneg(x@args[[1L]])
+  is_concave(x@.f) && is_nonneg(.args(x)[[1L]])
 }
 
 # -- monotonicity -------------------------------------------------
@@ -86,7 +86,7 @@ method(is_decr, Perspective) <- function(x, idx, ...) FALSE
 
 # -- shape --------------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 135-138
-method(shape_from_args, Perspective) <- function(x) x@.f@shape
+method(shape_from_args, Perspective) <- function(x) .shape(x@.f)
 
 # -- numeric ------------------------------------------------------
 ## CVXPY SOURCE: perspective.py lines 63-95

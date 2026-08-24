@@ -28,11 +28,11 @@ GenLambdaMax <- new_class("GenLambdaMax", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: gen_lambda_max.py lines 61-71
 method(validate_arguments, GenLambdaMax) <- function(x) {
-  A <- x@args[[1L]]
-  B <- x@args[[2L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L] ||
-      B@shape[1L] != B@shape[2L] ||
-      !identical(A@shape, B@shape)) {
+  A <- .args(x)[[1L]]
+  B <- .args(x)[[2L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L] ||
+      .shape(B)[1L] != .shape(B)[2L] ||
+      !identical(.shape(A), .shape(B))) {
     cli_abort("The arguments to {.fn gen_lambda_max} must be square matrices of the same dimension.")
   }
   invisible(NULL)
@@ -75,8 +75,8 @@ method(numeric_value, GenLambdaMax) <- function(x, values, ...) {
 # -- domain -------------------------------------------------------
 ## CVXPY: gen_lambda_max.py lines 42-46 -- [A.H == A, B.H == B, B >> 0]
 method(atom_domain, GenLambdaMax) <- function(x) {
-  A <- x@args[[1L]]
-  B <- x@args[[2L]]
+  A <- .args(x)[[1L]]
+  B <- .args(x)[[2L]]
   list(expr_H(A) == A, expr_H(B) == B, PSD(B))
 }
 

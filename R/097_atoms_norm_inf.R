@@ -11,8 +11,8 @@ NormInf <- new_class("NormInf", parent = AxisAtom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    if (!is.null(axis)) .validate_axis(axis, length(x@shape))
-    shape <- .axis_shape(x@shape, axis, keepdims)
+    if (!is.null(axis)) .validate_axis(axis, length(.shape(x)))
+    shape <- .axis_shape(.shape(x), axis, keepdims)
 
     obj <- .fast_new(NormInf, S7_object(),
       id       = as.integer(id),
@@ -30,11 +30,11 @@ NormInf <- new_class("NormInf", parent = AxisAtom, package = "CVXR",
 ## CVXPY SOURCE: norm_inf.py:46-49. CVXR axis 1-based -> numpy = 2 - axis;
 ## reshape to the atom's 2D shape (cf. SumEntries).
 method(bounds_from_args, NormInf) <- function(x) {
-  b <- get_bounds(x@args[[1L]])
+  b <- get_bounds(.args(x)[[1L]])
   npaxis <- if (is.null(x@axis)) NULL else 2L - x@axis
   rb <- norm_inf_bounds(b[[1L]], b[[2L]], axis = npaxis, keepdims = x@keepdims)
   lb <- rb[[1L]]; ub <- rb[[2L]]
-  dim(lb) <- x@shape; dim(ub) <- x@shape
+  dim(lb) <- .shape(x); dim(ub) <- .shape(x)
   list(lb, ub)
 }
 
@@ -48,15 +48,15 @@ method(is_atom_convex, NormInf) <- function(x) TRUE
 method(is_atom_concave, NormInf) <- function(x) FALSE
 
 # -- monotonicity -------------------------------------------------
-method(is_incr, NormInf) <- function(x, idx, ...) is_nonneg(x@args[[1L]])
-method(is_decr, NormInf) <- function(x, idx, ...) is_nonpos(x@args[[1L]])
+method(is_incr, NormInf) <- function(x, idx, ...) is_nonneg(.args(x)[[1L]])
+method(is_decr, NormInf) <- function(x, idx, ...) is_nonpos(.args(x)[[1L]])
 
 # -- log-log: convex (CVXPY norm_inf.py) --------------------------
 method(is_atom_log_log_convex, NormInf) <- function(x) TRUE
 method(is_atom_log_log_concave, NormInf) <- function(x) FALSE
 
 # -- PWL ----------------------------------------------------------
-method(is_pwl, NormInf) <- function(x) is_pwl(x@args[[1L]])
+method(is_pwl, NormInf) <- function(x) is_pwl(.args(x)[[1L]])
 
 # -- numeric ------------------------------------------------------
 method(numeric_value, NormInf) <- function(x, values, ...) {

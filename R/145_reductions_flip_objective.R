@@ -24,7 +24,7 @@ method(reduction_accepts, FlipObjective) <- function(x, problem, ...) TRUE
 method(reduction_apply, FlipObjective) <- function(x, problem, ...) {
   is_maximize <- .s7_is(problem@objective, Maximize)
   obj_cls <- if (is_maximize) Minimize else Maximize
-  new_obj <- obj_cls(-problem@objective@args[[1L]])
+  new_obj <- obj_cls(-.args(problem@objective)[[1L]])
   new_problem <- Problem(new_obj, problem@constraints)
   list(new_problem, list())
 }

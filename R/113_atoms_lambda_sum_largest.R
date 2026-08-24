@@ -38,8 +38,8 @@ LambdaSumLargest <- new_class("LambdaSumLargest", parent = Atom, package = "CVXR
 # -- validate -----------------------------------------------------
 ## CVXPY: lambda_sum_largest.py lines 33-40
 method(validate_arguments, LambdaSumLargest) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L || A@shape[1L] != A@shape[2L]) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L || .shape(A)[1L] != .shape(A)[2L]) {
     cli_abort("First argument to {.fn lambda_sum_largest} must be a square matrix.")
   }
   if (x@k <= 0L) {

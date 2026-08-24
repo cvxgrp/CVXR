@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan, and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2026-06-09</h4>
+            <h4 data-toc-skip class="date">2026-08-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/whats_new.Rmd" class="external-link"><code>vignettes/whats_new.Rmd</code></a></small>
       <div class="d-none name"><code>whats_new.Rmd</code></div>
@@ -81,11 +81,112 @@ see <code><a href="../articles/cvxr_intro.html">vignette("cvxr_intro")</a></code
 <a href="https://cvxr.rbind.io" class="external-link">CVXR website</a>.</p>
 <ul>
 <li>
+<a href="#cvxr-192">CVXR 1.9.2</a> — correctness fixes,
+solver-options overhaul, faster solves</li>
+<li>
 <a href="#cvxr-19x">CVXR 1.9.1</a> — disciplined nonlinear
 programming, derivatives, bounds propagation, new atoms</li>
 <li>
 <a href="#cvxr-18x">CVXR 1.8.x</a> — the ground-up S7 rewrite</li>
 </ul>
+<div class="section level2">
+<h2 id="cvxr-192">CVXR 1.9.2<a class="anchor" aria-label="anchor" href="#cvxr-192"></a>
+</h2>
+<p><code>CVXR</code> 1.9.2 tracks CVXPY 1.9.2. It is primarily a
+<strong>correctness release</strong>: several defects that returned
+plausible-looking wrong answers with no error or warning are fixed,
+solver options are easier to pass and harder to lose silently, and
+solving is faster across the board.</p>
+<div class="section level3">
+<h3 id="correctness-weighted-quadratic-objectives">Correctness: weighted quadratic objectives<a class="anchor" aria-label="anchor" href="#correctness-weighted-quadratic-objectives"></a>
+</h3>
+<p>A constant weight multiplying <code>sum(square(x))</code> was
+discarded when the quadratic objective was assembled, so penalized
+least-squares problems were solved with the wrong penalty — ridge
+regression being the common case, where every value of the penalty
+parameter returned the same fit. The defect had been present since
+1.8.2; <code><a href="../reference/sum_squares.html">sum_squares()</a></code>, <code><a href="../reference/quad_form.html">quad_form()</a></code>, and
+<code>p_norm(x, 2)^2</code> were never affected. If you used a weighted
+<code>sum(square(x))</code> objective, results can legitimately change
+with this release — they are now the answers to the problem you
+wrote.</p>
+</div>
+<div class="section level3">
+<h3 id="dual_value-returns-constraint-shaped-duals">
+<code>dual_value()</code> returns constraint-shaped duals<a class="anchor" aria-label="anchor" href="#dual_value-returns-constraint-shaped-duals"></a>
+</h3>
+<p><code><a href="../reference/dual_value.html">dual_value()</a></code> now returns a matrix shaped like its
+constraint rather than a flat vector, making the documented return type
+accurate. Linear indexing (<code>d[3]</code>) is unchanged, since R
+matrices index linearly in column-major order, but code calling
+<code><a href="https://rdrr.io/r/base/length.html" class="external-link">length()</a></code> or <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> on a dual may need
+adjusting. Scalar constraints, <code>SOC</code>, and
+<code>ExpCone</code> duals are deliberately unchanged, matching
+CVXPY.</p>
+</div>
+<div class="section level3">
+<h3 id="solver-options">Solver options<a class="anchor" aria-label="anchor" href="#solver-options"></a>
+</h3>
+<p>Passing solver options is now more uniform, and options can no longer
+vanish silently:</p>
+<ul>
+<li>The standard tolerance names <code>feastol</code>,
+<code>reltol</code>, <code>abstol</code>, and <code>num_iter</code> now
+also map onto MOSEK and HiGHS.</li>
+<li>A standard option that a solver cannot express now produces a
+<strong>warning</strong> (condition class
+<code>cvxr_unmapped_solver_param</code>) instead of being silently
+dropped.</li>
+<li>
+<strong>MOSEK</strong> accepts CVXPY-style <code>mosek_params</code>
+and the <code>eps</code> keyword, which fans out to MOSEK’s tolerance
+parameters exactly as in CVXPY; all options are routed to the correct
+<code>Rmosek</code> parameter groups.</li>
+<li>
+<strong>SCS</strong> accepts <code>eps</code>, which sets both
+<code>eps_abs</code> and <code>eps_rel</code>.</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"MOSEK"</span>, eps <span class="op">=</span> <span class="fl">1e-8</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"SCS"</span>, eps <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="new-warnings-and-catchable-errors">New warnings and catchable errors<a class="anchor" aria-label="anchor" href="#new-warnings-and-catchable-errors"></a>
+</h3>
+<ul>
+<li>A parameterized problem that is not DPP now warns that repeated
+solves will not be faster, matching CVXPY; the answers are
+unchanged.</li>
+<li>
+<code><a href="../reference/matrix_frac.html">matrix_frac()</a></code> with an ill-conditioned second argument
+now returns a value (as CVXPY does) and warns, where it previously
+raised R’s “computationally singular” error.</li>
+<li>Five error conditions — <code>DPPError</code>,
+<code>DGPError</code>, <code>DQCPError</code>, <code>DNLPError</code>,
+and <code>ParameterError</code> — are now catchable by class with
+<code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch()</a></code>, as in CVXPY; previously they could only be
+matched by message text.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="mixed-integer-declarations">Mixed-integer declarations<a class="anchor" aria-label="anchor" href="#mixed-integer-declarations"></a>
+</h3>
+<p>A <em>partial</em> <code>boolean</code>/<code>integer</code> index
+list (for example <code>Variable(2, boolean = c(1))</code>) now
+correctly makes the problem mixed-integer. Such problems previously
+appeared to solve with a continuous solver; they now require a
+mixed-integer-capable solver and say so if none is installed.</p>
+</div>
+<div class="section level3">
+<h3 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+</h3>
+<p>1.9.2 is roughly a third faster than 1.9.1 overall, with
+substantially lower memory use on larger problems, and DQCP problems
+solve dramatically faster: the bisection now compiles its subproblem
+once and re-solves it per iterate instead of rebuilding it from
+scratch.</p>
+</div>
+</div>
 <div class="section level2">
 <h2 id="cvxr-19x">CVXR 1.9.1<a class="anchor" aria-label="anchor" href="#cvxr-19x"></a>
 </h2>
@@ -105,7 +206,7 @@ You build the problem from differentiable atoms, check it with
 and the disciplined nonlinear grammar additionally allows smooth atoms
 in forms DCP forbids (for example, a product of two variable-dependent
 expressions).</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/is_dnlp.html">is_dnlp</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>                       <span class="co"># TRUE</span></span>
@@ -148,14 +249,14 @@ Request derivatives at solve time with
 <code>requires_grad = TRUE</code>.</p>
 <p><strong>Forward mode</strong> (perturb parameters, see the change in
 the solution):</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, requires_grad <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/delta.html">delta</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">da</span>                      <span class="co"># perturbation of parameter a</span></span>
 <span><span class="fu"><a href="../reference/derivative.html">derivative</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span>                 <span class="co"># propagate forward</span></span>
 <span><span class="fu"><a href="../reference/delta.html">delta</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>                            <span class="co"># resulting change in variable x</span></span></code></pre></div>
 <p><strong>Reverse mode</strong> (gradient of the solution with respect
 to parameters):</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, requires_grad <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/backward.html">backward</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span>                   <span class="co"># propagate backward</span></span>
 <span><span class="fu"><a href="../reference/gradient.html">gradient</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>                         <span class="co"># d(solution) / d(a)</span></span></code></pre></div>
@@ -172,7 +273,7 @@ Analysis</a>.</p>
 <p><code><a href="../reference/get_bounds.html">get_bounds()</a></code> now works on <strong>any
 expression</strong>, not just variables, propagating interval bounds
 through affine, elementwise, and piecewise-linear atoms:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">3</span>, bounds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/get_bounds.html">get_bounds</a></span><span class="op">(</span><span class="va">A</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">x</span> <span class="op">+</span> <span class="va">b</span><span class="op">)</span>         <span class="co"># bounds propagated through the affine map</span></span>
 <span><span class="fu"><a href="../reference/get_bounds.html">get_bounds</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>             <span class="co"># and through atoms</span></span></code></pre></div>
@@ -227,7 +328,7 @@ and <code>ignore_dpp</code> arguments, matching CVXPY’s
 </ul>
 </div>
 <div class="section level3">
-<h3 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+<h3 id="performance-1">Performance<a class="anchor" aria-label="anchor" href="#performance-1"></a>
 </h3>
 <p>Canonicalization and solving are now faster than the 1.8.2 CRAN
 release (roughly 5–13% lower wall-clock on solve-dominated problems such
@@ -301,7 +402,7 @@ and <code>numeric</code> objects work natively without wrapping.</li>
 </h3>
 <p>The primary solve function is now <code><a href="../reference/psolve.html">psolve()</a></code>, which
 returns the optimal value directly:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cvxr.rbind.io" class="external-link">CVXR</a></span><span class="op">)</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
@@ -310,7 +411,7 @@ returns the optimal value directly:</p>
 <span><span class="va">prob_status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>   <span class="co"># check status</span></span></code></pre></div>
 <p>The old <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code> still works but returns a
 backward-compatible list:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">value</span>       <span class="co"># optimal value</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="fu">getValue</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="co"># variable value (deprecated)</span></span>
@@ -589,7 +690,7 @@ MIP), CVXOPT (LP, SOCP), PIQP (QP), SCIP, and XPRESS</li>
 <h4 id="math-function-dispatch">Math function dispatch<a class="anchor" aria-label="anchor" href="#math-function-dispatch"></a>
 </h4>
 <p>Standard R math functions work directly on CVXR expressions:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>        <span class="co"># elementwise absolute value</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>       <span class="co"># elementwise square root</span></span>
@@ -678,7 +779,7 @@ proper row vector of shape <code>(1, n)</code> rather than collapsing to
 a 1D vector. When comparing such a result with an R numeric vector
 (which CVXR treats as a column), you may need to use <code><a href="https://rdrr.io/r/base/t.html" class="external-link">t()</a></code> or
 <code>matrix(..., nrow = 1)</code> to match shapes:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Old (worked in CVXR 1.x because axis reductions were 1D):</span></span>
 <span><span class="fu"><a href="../reference/sum_entries.html">sum_entries</a></span><span class="op">(</span><span class="va">X</span>, axis <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">==</span> <span class="va">target_vec</span></span>
 <span><span class="co">## New (wrap target as row vector to match the (1, n) shape):</span></span>
@@ -695,7 +796,7 @@ dimensions.</p>
 <p>If you encounter issues involving the <code>Rmosek</code> package
 while submitting your package to CRAN, include the following code in
 <code>&lt;your_pkg&gt;/R/zzz.R</code> to resolve the issue.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Content of &lt;your_pkg&gt;/R/zzz.R</span></span>
 <span></span>
 <span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>
@@ -736,7 +837,7 @@ Convex Optimization.” <em>Journal of Statistical Software</em>, 94(14).
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

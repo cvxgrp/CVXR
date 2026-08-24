@@ -12,12 +12,18 @@ scalar_product(x, y)
 
 - x:
 
-  An Expression or numeric value.
+  An Expression, numeric value, or nested list thereof. The
+  conjugate-linear argument.
 
 - y:
 
-  An Expression or numeric value.
+  An Expression, numeric value, or nested list thereof. The linear
+  argument.
 
 ## Value
 
-A scalar Expression representing sum(x \* y).
+A scalar Expression representing `sum(Conj(x) * y)`.
+
+## See also
+
+[`vdot()`](https://www.cvxgrp.org/CVXR/reference/vdot.md)

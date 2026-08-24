@@ -31,12 +31,12 @@ MatrixFrac <- new_class("MatrixFrac", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: matrix_frac.py lines 87-99
 method(validate_arguments, MatrixFrac) <- function(x) {
-  X <- x@args[[1L]]
-  P <- x@args[[2L]]
-  if (length(P@shape) != 2L || P@shape[1L] != P@shape[2L]) {
+  X <- .args(x)[[1L]]
+  P <- .args(x)[[2L]]
+  if (length(.shape(P)) != 2L || .shape(P)[1L] != .shape(P)[2L]) {
     cli_abort("The second argument to {.fn matrix_frac} must be a square matrix.")
   }
-  if (X@shape[1L] != P@shape[1L]) {
+  if (.shape(X)[1L] != .shape(P)[1L]) {
     cli_abort("The arguments to {.fn matrix_frac} have incompatible dimensions.")
   }
   invisible(NULL)
@@ -65,15 +65,70 @@ method(is_decr, MatrixFrac) <- function(x, idx, ...) FALSE
 # -- quadratic overrides ------------------------------------------
 ## CVXPY: matrix_frac.py lines 131-144
 method(is_quadratic, MatrixFrac) <- function(x) {
-  is_affine(x@args[[1L]]) && is_constant(x@args[[2L]])
+  is_affine(.args(x)[[1L]]) && is_constant(.args(x)[[2L]])
 }
 
 method(has_quadratic_term, MatrixFrac) <- function(x) {
-  is_constant(x@args[[2L]])
+  is_constant(.args(x)[[2L]])
 }
 
 method(is_qpwa, MatrixFrac) <- function(x) {
-  is_pwl(x@args[[1L]]) && is_constant(x@args[[2L]])
+  is_pwl(.args(x)[[1L]]) && is_constant(.args(x)[[2L]])
+}
+
+# -- .mf_inv: the inverse CVXPY computes here ----------------------
+## Every `LA.inv(P)` in matrix_frac.py -- numeric (:42,44), _grad (:68) and the
+## `matrix_frac()` constructor shortcut (:149) -- is `numpy.linalg.inv`, which
+## has NO conditioning test: it goes straight to LAPACK and raises only on
+## EXACT singularity.
+##
+## Base R's `solve()` is different. It applies `tol = .Machine$double.eps`
+## against the reciprocal condition number and refuses anything below it with
+## "system is computationally singular". For a merely ILL-CONDITIONED P the two
+## languages therefore disagree about whether a value exists at all, and CVXR
+## raised where CVXPY returns a number.
+##
+## Found by revdepcheck, not by the suite: SLSEdesign's vignette computes a
+## c-optimal design whose optimum is DEGENERATE -- the information matrix is
+## rank-deficient in the directions the criterion does not constrain -- so the
+## better the solver converges, the closer P gets to singular. At the optimum
+## rcond(P) = 4.3e-18 and `solve(P)` refused, which aborted
+## `value(problem@objective)` inside psolve() and took the whole solve with it.
+##
+## `tol = 0` restores numpy's behavior, and the numbers agree exactly:
+##     R    solve(P, diag(n), tol = 0)  ->  matrix_frac = -5.23946e-14
+##     numpy np.linalg.inv(P)           ->  matrix_frac = -5.2394597073595286e-14
+## which is the right answer (mathematically 0, approached from below). CVXR
+## 1.9.1 did not error on this problem only because it stopped further from the
+## optimum, where it returned -4.08e-05 -- also negative, and four orders worse.
+##
+## DELIBERATE ADDITION over upstream: numpy inverts an ill-conditioned matrix
+## silently, and the result can be numerically meaningless. R's refusal existed
+## for a reason, so rather than simply deleting the check CVXR keeps the value
+## (parity) and WARNS when the conditioning is below what base R would have
+## accepted. The user gets the number CVXPY would give, plus the information R
+## would have given, instead of one at the cost of the other.
+##
+## Returns NULL when P is exactly singular, which is `LA.LinAlgError`.
+.mf_inv <- function(P, warn = TRUE) {
+  n <- nrow(P)
+  inv <- tryCatch(solve(P, diag(n), tol = 0), error = function(e) NULL)
+  ## Warn only when a value is actually being RETURNED. An exactly singular P
+  ## returns NULL and the caller reports that; warning "ill-conditioned" on the
+  ## way to a "singular" error would be two messages for one problem.
+  if (!is.null(inv) && isTRUE(warn)) {
+    rc <- tryCatch(rcond(P), error = function(e) NA_real_)
+    if (!is.na(rc) && rc < .Machine$double.eps) {
+      cli_warn(c(
+        "The second argument to {.fn matrix_frac} is ill-conditioned \\
+         (reciprocal condition number {format(rc, digits = 3)}).",
+        "i" = "Its inverse, and any value computed from it, may be numerically meaningless.",
+        "i" = "Base {.fn solve} would refuse this matrix; the value is still returned, \\
+               matching {.pkg CVXPY}."
+      ), class = "matrixFracConditioning")
+    }
+  }
+  inv
 }
 
 # -- numeric ------------------------------------------------------
@@ -81,11 +136,21 @@ method(is_qpwa, MatrixFrac) <- function(x) {
 method(numeric_value, MatrixFrac) <- function(x, values, ...) {
   X <- values[[1L]]
   P <- values[[2L]]
+  P_inv <- .mf_inv(as.matrix(P))
+  if (is.null(P_inv)) {
+    ## Exactly singular. CVXPY's LA.inv raises LinAlgError here too; upstream
+    ## has never decided what the value should be (matrix_frac.py:38 is a
+    ## standing "# TODO raise error if not invertible?"), so keep the error.
+    cli_abort(c(
+      "Cannot evaluate {.fn matrix_frac}: the second argument is singular.",
+      "i" = "{.fn matrix_frac} is {.code trace(t(X) %*% solve(P) %*% X)}, which requires an invertible {.arg P}."
+    ))
+  }
   ## Hermitian form: X^H P^{-1} X for complex
   product <- if (is.complex(X) || is.complex(P)) {
-    Conj(t(X)) %*% solve(P) %*% X
+    Conj(t(X)) %*% P_inv %*% X
   } else {
-    t(X) %*% solve(P) %*% X
+    t(X) %*% P_inv %*% X
   }
   if (length(dim(product)) == 2L) {
     matrix(sum(diag(product)), 1L, 1L)
@@ -97,7 +162,7 @@ method(numeric_value, MatrixFrac) <- function(x, values, ...) {
 # -- domain -------------------------------------------------------
 ## CVXPY: matrix_frac.py lines 48-51 -- P >> 0
 method(domain, MatrixFrac) <- function(x) {
-  list(PSD(x@args[[2L]]))
+  list(PSD(.args(x)[[2L]]))
 }
 
 # -- get_data -----------------------------------------------------
@@ -117,12 +182,19 @@ method(graph_implementation, MatrixFrac) <- function(x, arg_objs, shape, data = 
 method(.grad, MatrixFrac) <- function(x, values, ...) {
   X <- as.matrix(values[[1L]])
   P <- as.matrix(values[[2L]])
-  P_inv <- tryCatch(solve(P), error = function(e) NULL)
+  ## CVXPY SOURCE: matrix_frac.py:67-70 -- `try: P_inv = LA.inv(P) except
+  ## LA.LinAlgError: return [None, None]`. `.mf_inv` is that `LA.inv`; see its
+  ## header for why base `solve()` is not.
+  ##
+  ## `warn = FALSE`: the conditioning warning belongs to the VALUE, which is
+  ## computed from the same P in the same solve and warns there. Warning again
+  ## here would double every message, and upstream's _grad is silent.
+  P_inv <- .mf_inv(P, warn = FALSE)
   if (is.null(P_inv)) return(list(NULL, NULL))
 
   ## d/dX = (P^-1 + P^-T) X
   DX <- (P_inv + t(P_inv)) %*% X
-  rows_X <- as.integer(prod(x@args[[1L]]@shape))
+  rows_X <- as.integer(prod(.arg_shape(x)))
 
   ## d/dP = -(P^-1 X X^T P^-1)^T  (CVXPY's exact form, see lines 80-83)
   DP <- P_inv %*% X
@@ -131,7 +203,7 @@ method(.grad, MatrixFrac) <- function(x, values, ...) {
   DP <- -t(DP)
   ## CVXPY then transposes again before raveling: t(DP).ravel(order='F')
   ## i.e. emits the *original* (untransposed) entries in column-major.
-  rows_P <- as.integer(prod(x@args[[2L]]@shape))
+  rows_P <- as.integer(prod(.arg_shape(x, 2L)))
 
   list(
     .dense_to_csc_vector(as.numeric(DX), rows_X),
@@ -156,8 +228,16 @@ matrix_frac <- function(X, P) {
   ## CVXPY: matrix_frac.py lines 147-153
   ## If P is a constant numeric matrix, shortcut via QuadForm
   if (is.matrix(P) && !inherits(P, "Expression") && !.s7_is(P, Expression)) {
-    invP <- solve(P)
-    return(quad_form(X, (invP + t(invP)) / 2.0))
+    ## CVXPY SOURCE: matrix_frac.py:148-150 -- `invP = LA.inv(P)`, same
+    ## conditioning semantics as the other two sites. See `.mf_inv`.
+    invP <- .mf_inv(P)
+    if (is.null(invP)) {
+      cli_abort(c(
+        "The second argument to {.fn matrix_frac} is singular.",
+        "i" = "A constant {.arg P} is inverted eagerly to build a {.fn quad_form}."
+      ))
+    }
+    return(quad_form(X, (invP + t(Conj(invP))) / 2.0))
   }
   MatrixFrac(X, P)
 }

@@ -86,6 +86,186 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// CseKeys__new
+SEXP CseKeys__new();
+RcppExport SEXP _CVXR_CseKeys__new() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(CseKeys__new());
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__class_code
+int CseKeys__class_code(SEXP s, std::string cls);
+RcppExport SEXP _CVXR_CseKeys__class_code(SEXP sSEXP, SEXP clsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< std::string >::type cls(clsSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__class_code(s, cls));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__memo_get
+int CseKeys__memo_get(SEXP s, int id);
+RcppExport SEXP _CVXR_CseKeys__memo_get(SEXP sSEXP, SEXP idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__memo_get(s, id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__key_node
+int CseKeys__key_node(SEXP s, int id, int class_code, Rcpp::IntegerVector shape, int data_key, Rcpp::IntegerVector child_keys);
+RcppExport SEXP _CVXR_CseKeys__key_node(SEXP sSEXP, SEXP idSEXP, SEXP class_codeSEXP, SEXP shapeSEXP, SEXP data_keySEXP, SEXP child_keysSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type class_code(class_codeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< int >::type data_key(data_keySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type child_keys(child_keysSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__key_node(s, id, class_code, shape, data_key, child_keys));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__intern_ints
+int CseKeys__intern_ints(SEXP s, int id, int tag, Rcpp::IntegerVector x);
+RcppExport SEXP _CVXR_CseKeys__intern_ints(SEXP sSEXP, SEXP idSEXP, SEXP tagSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type tag(tagSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__intern_ints(s, id, tag, x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__intern_doubles
+int CseKeys__intern_doubles(SEXP s, int id, int tag, Rcpp::NumericVector x, Rcpp::IntegerVector dims);
+RcppExport SEXP _CVXR_CseKeys__intern_doubles(SEXP sSEXP, SEXP idSEXP, SEXP tagSEXP, SEXP xSEXP, SEXP dimsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type tag(tagSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type dims(dimsSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__intern_doubles(s, id, tag, x, dims));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__intern_sparse
+int CseKeys__intern_sparse(SEXP s, int id, int tag, Rcpp::IntegerVector i, Rcpp::IntegerVector j, Rcpp::NumericVector x, Rcpp::IntegerVector dims);
+RcppExport SEXP _CVXR_CseKeys__intern_sparse(SEXP sSEXP, SEXP idSEXP, SEXP tagSEXP, SEXP iSEXP, SEXP jSEXP, SEXP xSEXP, SEXP dimsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type tag(tagSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type i(iSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type j(jSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type dims(dimsSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__intern_sparse(s, id, tag, i, j, x, dims));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__intern_strings
+int CseKeys__intern_strings(SEXP s, int id, int tag, Rcpp::CharacterVector x);
+RcppExport SEXP _CVXR_CseKeys__intern_strings(SEXP sSEXP, SEXP idSEXP, SEXP tagSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type tag(tagSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__intern_strings(s, id, tag, x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__memo_size
+int CseKeys__memo_size(SEXP s);
+RcppExport SEXP _CVXR_CseKeys__memo_size(SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__memo_size(s));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__n_signatures
+int CseKeys__n_signatures(SEXP s);
+RcppExport SEXP _CVXR_CseKeys__n_signatures(SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__n_signatures(s));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__aa_get
+int CseKeys__aa_get(SEXP s, int id);
+RcppExport SEXP _CVXR_CseKeys__aa_get(SEXP sSEXP, SEXP idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__aa_get(s, id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__aa_set
+void CseKeys__aa_set(SEXP s, int id, int val);
+RcppExport SEXP _CVXR_CseKeys__aa_set(SEXP sSEXP, SEXP idSEXP, SEXP valSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type val(valSEXP);
+    CseKeys__aa_set(s, id, val);
+    return R_NilValue;
+END_RCPP
+}
+// CseKeys__result_get
+SEXP CseKeys__result_get(SEXP s, int key);
+RcppExport SEXP _CVXR_CseKeys__result_get(SEXP sSEXP, SEXP keySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type key(keySEXP);
+    rcpp_result_gen = Rcpp::wrap(CseKeys__result_get(s, key));
+    return rcpp_result_gen;
+END_RCPP
+}
+// CseKeys__result_set
+void CseKeys__result_set(SEXP s, int key, SEXP value);
+RcppExport SEXP _CVXR_CseKeys__result_set(SEXP sSEXP, SEXP keySEXP, SEXP valueSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type s(sSEXP);
+    Rcpp::traits::input_parameter< int >::type key(keySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type value(valueSEXP);
+    CseKeys__result_set(s, key, value);
+    return R_NilValue;
+END_RCPP
+}
 // LinOp__new
 SEXP LinOp__new();
 RcppExport SEXP _CVXR_LinOp__new() {
@@ -434,6 +614,20 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_multiply_dgCMatrix_vector", (DL_FUNC) &_CVXR_multiply_dgCMatrix_vector, 2},
     {"_CVXR_sweep_in_place", (DL_FUNC) &_CVXR_sweep_in_place, 2},
     {"_CVXR_upper_tri_to_full", (DL_FUNC) &_CVXR_upper_tri_to_full, 1},
+    {"_CVXR_CseKeys__new", (DL_FUNC) &_CVXR_CseKeys__new, 0},
+    {"_CVXR_CseKeys__class_code", (DL_FUNC) &_CVXR_CseKeys__class_code, 2},
+    {"_CVXR_CseKeys__memo_get", (DL_FUNC) &_CVXR_CseKeys__memo_get, 2},
+    {"_CVXR_CseKeys__key_node", (DL_FUNC) &_CVXR_CseKeys__key_node, 6},
+    {"_CVXR_CseKeys__intern_ints", (DL_FUNC) &_CVXR_CseKeys__intern_ints, 4},
+    {"_CVXR_CseKeys__intern_doubles", (DL_FUNC) &_CVXR_CseKeys__intern_doubles, 5},
+    {"_CVXR_CseKeys__intern_sparse", (DL_FUNC) &_CVXR_CseKeys__intern_sparse, 7},
+    {"_CVXR_CseKeys__intern_strings", (DL_FUNC) &_CVXR_CseKeys__intern_strings, 4},
+    {"_CVXR_CseKeys__memo_size", (DL_FUNC) &_CVXR_CseKeys__memo_size, 1},
+    {"_CVXR_CseKeys__n_signatures", (DL_FUNC) &_CVXR_CseKeys__n_signatures, 1},
+    {"_CVXR_CseKeys__aa_get", (DL_FUNC) &_CVXR_CseKeys__aa_get, 2},
+    {"_CVXR_CseKeys__aa_set", (DL_FUNC) &_CVXR_CseKeys__aa_set, 3},
+    {"_CVXR_CseKeys__result_get", (DL_FUNC) &_CVXR_CseKeys__result_get, 2},
+    {"_CVXR_CseKeys__result_set", (DL_FUNC) &_CVXR_CseKeys__result_set, 3},
     {"_CVXR_LinOp__new", (DL_FUNC) &_CVXR_LinOp__new, 0},
     {"_CVXR_LinOp__get_sparse", (DL_FUNC) &_CVXR_LinOp__get_sparse, 1},
     {"_CVXR_LinOp__set_sparse", (DL_FUNC) &_CVXR_LinOp__set_sparse, 2},

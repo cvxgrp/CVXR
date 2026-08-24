@@ -330,8 +330,8 @@ test_that("cumsum solves end-to-end with Clarabel", {
   x <- Variable(c(3L, 1L))
   obj <- Minimize(sum(cumsum(x)))
   prob <- Problem(obj, list(x >= 1))
-  result <- solve(prob, solver = "CLARABEL")
-  expect_equal(result$value, 6, tolerance = 1e-4)
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(val, 6, tolerance = 1e-4)
   expect_equal(as.numeric(value(x)), c(1, 1, 1), tolerance = 1e-4)
 })
 
@@ -343,8 +343,8 @@ test_that("cumsum solves end-to-end with axis=0", {
   cs <- cumsum_axis(x, axis = 2L)
   obj <- Minimize(sum(cs))
   prob <- Problem(obj, list(x >= 1))
-  result <- solve(prob, solver = "CLARABEL")
-  expect_equal(result$value, 6, tolerance = 1e-4)
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(val, 6, tolerance = 1e-4)
 })
 
 # ═══════════════════════════════════════════════════════════════════
@@ -369,8 +369,8 @@ test_that("diff in minimize total variation", {
   x <- Variable(c(5L, 1L))
   obj <- Minimize(norm1(cvxr_diff(x)))
   prob <- Problem(obj, list(x[1L, ] == 0, x[5L, ] == 4))
-  result <- solve(prob, solver = "CLARABEL")
-  expect_equal(result$value, 4, tolerance = 1e-3)
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(val, 4, tolerance = 1e-3)
 })
 
 # ═══════════════════════════════════════════════════════════════════

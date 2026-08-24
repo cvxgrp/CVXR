@@ -1,16 +1,19 @@
 ## Tests for standard solver parameter translation
-## Tests that solver_default_param() and .apply_std_params() work correctly,
-## and that psolve() properly forwards standard params to solvers.
+## Tests that solver_default_param() and .build_solver_params() work
+## correctly, and that psolve() properly forwards standard params to
+## solvers. (These unit tests originally targeted .apply_std_params(),
+## a duplicate of the translation rule with no production callers; it
+## was deleted and the tests re-pointed at the live path.)
 
 context("Standard Solver Parameters")
 
-# ── Unit tests for .apply_std_params() ─────────────────────────────
+# ── Unit tests for .build_solver_params() ──────────────────────────
 
 ## @cvxpy NONE
-test_that(".apply_std_params translates standard names to Clarabel native names", {
-  opts <- CVXR:::.apply_std_params("CLARABEL", list(),
-                                   feastol = 1e-3, reltol = 1e-4,
-                                   abstol = 1e-5, num_iter = 100L)
+test_that("standard names translate to Clarabel native names", {
+  opts <- CVXR:::.build_solver_params("CLARABEL",
+                                      solver_opts(feastol = 1e-3, reltol = 1e-4,
+                                                  abstol = 1e-5, num_iter = 100L))
   expect_equal(opts$tol_feas, 1e-3)
   expect_equal(opts$tol_gap_rel, 1e-4)
   expect_equal(opts$tol_gap_abs, 1e-5)
@@ -18,10 +21,10 @@ test_that(".apply_std_params translates standard names to Clarabel native names"
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params translates standard names to OSQP native names", {
-  opts <- CVXR:::.apply_std_params("OSQP", list(),
-                                   feastol = 1e-3, reltol = 1e-4,
-                                   abstol = 1e-5, num_iter = 500L)
+test_that("standard names translate to OSQP native names", {
+  opts <- CVXR:::.build_solver_params("OSQP",
+                                      solver_opts(feastol = 1e-3, reltol = 1e-4,
+                                                  abstol = 1e-5, num_iter = 500L))
   expect_equal(opts$eps_prim_inf, 1e-3)
   expect_equal(opts$eps_rel, 1e-4)
   expect_equal(opts$eps_abs, 1e-5)
@@ -29,12 +32,15 @@ test_that(".apply_std_params translates standard names to OSQP native names", {
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params translates standard names to SCS native names", {
-  opts <- CVXR:::.apply_std_params("SCS", list(),
-                                   feastol = 1e-3, reltol = 1e-4,
-                                   abstol = 1e-5, num_iter = 1000L)
-  ## SCS has no feastol mapping — should be absent
-
+test_that("standard names translate to SCS native names", {
+  ## SCS has no feastol mapping — dropped, and since the unmapped-param
+  ## warning landed, dropped LOUDLY.
+  expect_warning(
+    opts <- CVXR:::.build_solver_params("SCS",
+                                        solver_opts(feastol = 1e-3, reltol = 1e-4,
+                                                    abstol = 1e-5, num_iter = 1000L)),
+    class = "cvxr_unmapped_solver_param"
+  )
   expect_null(opts$feastol)
   expect_equal(opts$eps_rel, 1e-4)
   expect_equal(opts$eps_abs, 1e-5)
@@ -42,10 +48,10 @@ test_that(".apply_std_params translates standard names to SCS native names", {
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params translates standard names to ECOS native names", {
-  opts <- CVXR:::.apply_std_params("ECOS", list(),
-                                   feastol = 1e-6, reltol = 1e-7,
-                                   abstol = 1e-7, num_iter = 200L)
+test_that("standard names translate to ECOS native names", {
+  opts <- CVXR:::.build_solver_params("ECOS",
+                                      solver_opts(feastol = 1e-6, reltol = 1e-7,
+                                                  abstol = 1e-7, num_iter = 200L))
   expect_equal(opts$FEASTOL, 1e-6)
   expect_equal(opts$RELTOL, 1e-7)
   expect_equal(opts$ABSTOL, 1e-7)
@@ -53,37 +59,40 @@ test_that(".apply_std_params translates standard names to ECOS native names", {
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params does not override solver-native names in opts", {
+test_that("translation does not override solver-native names in opts", {
   ## User passes both feastol=1e-3 (standard) and tol_feas=1e-6 (native)
   ## Native should win
-  opts <- CVXR:::.apply_std_params("CLARABEL",
-                                   list(tol_feas = 1e-6),
-                                   feastol = 1e-3, reltol = NULL,
-                                   abstol = NULL, num_iter = NULL)
+  opts <- CVXR:::.build_solver_params("CLARABEL",
+                                      solver_opts(feastol = 1e-3, tol_feas = 1e-6))
   expect_equal(opts$tol_feas, 1e-6)
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params leaves opts unchanged for NULL standard params", {
-  opts <- CVXR:::.apply_std_params("CLARABEL", list(extra = 42),
-                                   feastol = NULL, reltol = NULL,
-                                   abstol = NULL, num_iter = NULL)
+test_that("opts pass through unchanged when no standard params are set", {
+  opts <- CVXR:::.build_solver_params("CLARABEL", solver_opts(extra = 42))
   expect_equal(opts, list(extra = 42))
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params returns opts unchanged for unknown solver", {
-  opts <- CVXR:::.apply_std_params("UNKNOWN_SOLVER", list(foo = 1),
-                                   feastol = 1e-3, reltol = 1e-4,
-                                   abstol = 1e-5, num_iter = 100L)
+test_that("an unknown solver drops standard params, with a warning", {
+  expect_warning(
+    opts <- CVXR:::.build_solver_params("UNKNOWN_SOLVER",
+                                        solver_opts(feastol = 1e-3, reltol = 1e-4,
+                                                    abstol = 1e-5, num_iter = 100L,
+                                                    foo = 1)),
+    class = "cvxr_unmapped_solver_param"
+  )
   expect_equal(opts, list(foo = 1))
 })
 
 ## @cvxpy NONE
-test_that(".apply_std_params returns opts unchanged for GLPK (no mappings)", {
-  opts <- CVXR:::.apply_std_params("GLPK", list(),
-                                   feastol = 1e-3, reltol = 1e-4,
-                                   abstol = 1e-5, num_iter = 100L)
+test_that("GLPK (no mappings) drops standard params, with a warning", {
+  expect_warning(
+    opts <- CVXR:::.build_solver_params("GLPK",
+                                        solver_opts(feastol = 1e-3, reltol = 1e-4,
+                                                    abstol = 1e-5, num_iter = 100L)),
+    class = "cvxr_unmapped_solver_param"
+  )
   expect_equal(opts, list())
 })
 
@@ -152,4 +161,9 @@ test_that("solver_default_param() is exported and has expected structure", {
   expect_true(all(c("reltol", "abstol", "feastol", "num_iter") %in% names(cl)))
   expect_equal(cl$feastol$name, "tol_feas")
   expect_equal(cl$feastol$value, 1e-8)
+})
+
+## @cvxpy NONE
+test_that(".apply_std_params is gone -- one translation path only", {
+  expect_false(exists(".apply_std_params", envir = asNamespace("CVXR")))
 })

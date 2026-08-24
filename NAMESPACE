@@ -83,6 +83,7 @@ export(cvxr_norm)
 export(cvxr_outer)
 export(cvxr_std)
 export(cvxr_var)
+export(deep_flatten)
 export(delta)
 export(derivative)
 export(diag)
@@ -250,33 +251,41 @@ export(visualize)
 export(vstack)
 export(xexp)
 import(S7)
-importFrom(Matrix,Diagonal)
-importFrom(Matrix,Matrix)
-importFrom(Matrix,crossprod)
-importFrom(Matrix,sparseMatrix)
-importFrom(Matrix,t)
-importFrom(Matrix,tcrossprod)
+importFrom(Matrix,
+  Diagonal,
+  Matrix,
+  crossprod,
+  sparseMatrix,
+  t,
+  tcrossprod
+)
 importFrom(Rcpp,evalCpp)
 importFrom(clarabel,clarabel_solver)
-importFrom(cli,cli_abort)
-importFrom(cli,cli_alert_info)
-importFrom(cli,cli_alert_success)
-importFrom(cli,cli_bullets)
-importFrom(cli,cli_inform)
-importFrom(cli,cli_rule)
-importFrom(cli,cli_text)
-importFrom(cli,cli_warn)
-importFrom(gmp,as.bigq)
-importFrom(gmp,as.bigz)
-importFrom(gmp,denominator)
-importFrom(gmp,is.bigq)
-importFrom(gmp,is.bigz)
-importFrom(gmp,numerator)
+importFrom(cli,
+  cli_abort,
+  cli_alert_info,
+  cli_alert_success,
+  cli_bullets,
+  cli_inform,
+  cli_rule,
+  cli_text,
+  cli_warn
+)
+importFrom(gmp,
+  as.bigq,
+  as.bigz,
+  denominator,
+  is.bigq,
+  is.bigz,
+  numerator
+)
 importFrom(highs,highs_solve)
-importFrom(methods,.hasSlot)
-importFrom(methods,as)
-importFrom(methods,is)
-importFrom(methods,show)
+importFrom(methods,
+  .hasSlot,
+  as,
+  is,
+  show
+)
 importFrom(osqp,osqp)
 importFrom(scs,scs)
 useDynLib(CVXR, .registration = TRUE)

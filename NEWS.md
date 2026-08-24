@@ -1,3 +1,169 @@
+# CVXR 1.9.2
+
+This release tracks CVXPY 1.9.2. It is chiefly a correctness release: a number
+of bugs that returned plausible wrong answers without any error are fixed, and
+dual variables now come back with the shape of their constraint.
+
+## Incorrect results fixed
+
+* A constant weight on `sum(square(x))` was silently dropped, so penalized
+  least-squares (ridge) problems were solved with weight 1 (since 1.8.2).
+  `sum_squares()`, `quad_form()`, and unweighted terms were unaffected.
+* A failed solve poisoned the compiled-chain cache: repeating the identical
+  call could silently return an answer computed with the previous options, or
+  die with an unrelated `NULL` error instead of the real message.
+* The `sparsity` variable attribute was accepted and then ignored — the
+  variable solved as fully dense. It is now enforced; off-pattern entries come
+  back as structural zeros, matching CVXPY.
+* `gradient(p)` from the derivative API was exactly 0 whenever
+  `value(p) == 0`, and correct elsewhere. Fixed jointly with `diffcp`;
+  requires `diffcp (>= 0.1.2)`.
+* DQCP problems with nested inverses could return a confidently wrong
+  "optimal" answer: the bisection parameter was canonicalized away, so every
+  query point looked feasible.
+* `Variable(pos = TRUE)` and `neg = TRUE` emitted no sign constraint, so
+  bounded problems were reported unbounded on most solvers (since 1.8.2).
+* Partial `boolean`/`integer` attributes were silently ignored — the problem
+  solved as its continuous relaxation and reported `"optimal"`. They are now
+  honored and require a mixed-integer solver.
+* Numeric bounds of the wrong shape on a symmetric leaf were silently
+  truncated (HiGHS returned a feasible but suboptimal answer). Bounds are now
+  shape-checked, and conflicting dimension-reducing attributes
+  (`symmetric` + `diag`, `PSD` + `NSD`, ...) are rejected, as in CVXPY.
+* `project()` and value assignment disagreed with the solver path on partial
+  `boolean`/`integer` indices: one index spelling rejected valid values,
+  another silently accepted invalid ones.
+* A complex `quad_form()` with a negative semidefinite matrix passed
+  `is_dcp()` and then failed to compile; it now solves. An indefinite matrix
+  is no longer mislabeled PSD.
+* Quasiconvex (`qcp = TRUE`) problems treated a matrix product `A %*% x` as
+  an elementwise one; it is now rejected up front with CVXPY's message.
+  Elementwise and scalar products are unaffected.
+* `vdot()` and `scalar_product()` omitted the conjugation for complex
+  arguments. Matching upstream, `vdot()` of a non-affine real argument is now
+  of unknown curvature.
+* `conv(expr, kernel)` — the constant kernel second — read monotonicity off
+  the wrong argument and accepted a concave composition as convex.
+* `sqrt()` and `inv_pos()` now canonicalize to second-order cones as in
+  CVXPY, not power cones: `ECOS` and mixed-integer SOCP solvers accept them,
+  and an `SCS` quasiconvex failure mode (`NaN` objective) is gone. Use
+  `power(x, 0.5, approx = FALSE)` for the power-cone form.
+* Duals of a PSD constraint on a Hermitian matrix were half their correct
+  value; PSD duals were transposed for sizes 3 and up on
+  `CLARABEL`/`SCS`/`MOSEK`; `PowCone3D` duals were transposed across cones in
+  multi-cone constraints. Objectives and primal solutions were never affected.
+* A complex `Parameter` never triggered the complex-to-real reduction, so
+  problems CVXPY solves errored with "Inequality constraints cannot be
+  complex."
+* Gurobi: `SUBOPTIMAL` mapped to `optimal_inaccurate`, claiming a near-optimal
+  solution that need not exist, and the QP path promoted `SOLVER_ERROR` to
+  `OPTIMAL_INACCURATE`. Both now match CVXPY.
+* CPLEX: the status table's labels — and the mappings that followed them —
+  were shifted by one across the abort-status block. Statuses are now derived
+  from `(solstat, pfeas, dfeas)` as upstream does.
+* Smaller fixes: `floor()` could be off by one within solver tolerance of an
+  integer; `log1p()` reported the bounds of `log(x)`; `get_bounds()` errored
+  on fractional powers; a `hermitian` leaf could not hold a complex value;
+  assigning `NaN` to a leaf raised an R internal error instead of the real
+  message.
+
+## Dual variables have their constraint's shape
+
+* `dual_value()` returns a matrix shaped like its constraint — n-by-n for a
+  PSD constraint, n-by-1 for a vector constraint — instead of a flat vector.
+  Scalar constraints, `SOC`, and `ExpCone` are exempt, matching CVXPY.
+* Linear indexing (`d[3]`) still works; code calling `length()` or `dim()` on
+  a dual may need adjusting.
+
+## Mixed-integer variable attributes
+
+* `boolean` and `integer` accept four spellings: whole-variable (`TRUE`),
+  flat 1-based positions, `cbind(row, col)` pairs, and a logical mask of the
+  variable's shape.
+* Index lists are validated at construction — out-of-range, fractional,
+  duplicated, or `NA` indices raise. A partial list combined with
+  `symmetric`/`PSD`/`NSD`/`diag` is rejected, as in CVXPY; logic atoms
+  (`And`, `Or`, ...) accept partially-boolean variables.
+
+## Other improvements
+
+* Common-subexpression elimination: a subtree appearing more than once is
+  canonicalized once. Transparent — solutions, objective values, and duals
+  are unchanged, and only structurally identical subtrees are merged.
+* `Minimize()`/`Maximize()` support `+`, `-`, `*`, `/` as in CVXPY; negation
+  or a negative scale flips the sense, and mixing senses in a sum raises.
+  `is_dpp()` rejects an unrecognized context instead of silently answering
+  the `"dcp"` question.
+* DQCP bisection compiles its one-parameter subproblem family once when the
+  reduction emits no lazy constraints, instead of recanonicalizing at every
+  query — about 14x on `maximize sqrt(x)/exp(x)`. Answers are unchanged.
+  An explicit bisection bound of 0 can now grow, and two valid quasiconvex
+  forms previously rejected now solve.
+* `norm(x, 1)` is recognized as log-log convex; `partial_trace()` and
+  `partial_transpose()` propagate PSD/symmetric/hermitian structure;
+  `atanh()` reports its domain instead of raising.
+* `domain()` on a variable or parameter returns the attribute-implied
+  constraints (previously an empty list).
+* `matrix_frac()` evaluates an ill-conditioned second argument and warns,
+  where base R's `solve()` refused and CVXPY (via NumPy) computes silently.
+* `Inf` is accepted where CVXPY accepts it — constraint right-hand sides and
+  variable bounds — and the decomposed `solve_via_data()` path validates
+  problem data exactly like `psolve()`.
+* Solver selection can skip commercial solvers:
+  `options(CVXR.default_to_commercial_solvers = FALSE)` or the
+  `CVXR_DEFAULT_TO_COMMERCIAL_SOLVERS` environment variable. Default
+  unchanged; explicit `solver =` unaffected.
+
+## Solver behavior
+
+* SCS: acceleration defaults now match SCS's own C defaults, which is what
+  CVXPY gets (`acceleration_lookback = 10`, interval 10); the R `scs`
+  package's defaults had disabled acceleration. Numbers may move at the ~1e-5
+  level; convergence on hard problems improves.
+* CLARABEL: `reduced_tol_infeas_abs` is set to `5e-12` on `clarabel` 0.11.2
+  and earlier (a shim — 0.11.3 fixed the default), restoring the
+  almost-infeasible certificates that quasiconvex bisection needs. Pass the
+  option explicitly to override.
+* `accept_unknown` is now supported for CLARABEL and MOSEK, matching CVXPY:
+  a stalled solve that still produced primal and dual iterates is reported as
+  `optimal_inaccurate`. Deliberately opt-in; other statuses are unaffected.
+* HiGHS: an infeasible problem returns a Farkas dual ray through
+  `dual_value()`, as CLARABEL/OSQP/MOSEK already did. When HiGHS produces no
+  ray (`ipm`/`pdlp`, bound-infeasibility), duals stay `NULL` rather than a
+  zero vector that would read as a certificate. An unmapped HiGHS status is
+  reported as a solver error.
+* The cone scan that picks a solver looks inside constraints, not just the
+  objective; and `square(x)` builds `power(x, 2)` as in CVXPY, so a squared
+  term no longer reads as a power-cone requirement excluding mixed-integer
+  SOCP solvers.
+* A standard parameter (`feastol`/`reltol`/`abstol`/`num_iter`) with no
+  mapping for the chosen solver now warns instead of being silently ignored.
+* MOSEK solver parameters actually reach MOSEK now. They were merged into
+  Rmosek's interface options instead of `problem$dparam`/`$iparam`, so no
+  parameter ever arrived and passing one crashed with an unrelated R error.
+  All three carriers work: Rmosek-native `dparam`/`iparam`/`sparam` lists,
+  `MSK_*`-prefixed names, and CVXPY's `mosek_params`; unknown options raise,
+  as in CVXPY. `feastol`, `reltol`, and `num_iter` translate to MOSEK's
+  native tolerances; HiGHS gains `feastol` (`primal_feasibility_tolerance`).
+* The `eps` keyword works as in CVXPY: for SCS it sets `eps_abs` and
+  `eps_rel` (it was silently ignored); for MOSEK it fans out to all 17
+  tolerance parameters, explicitly-set tolerances taking precedence.
+
+## Performance
+
+* About a third faster than 1.9.1 on a benchmark suite, every problem faster
+  and allocating less — from 8% on the smallest problems to ~60% at 4000
+  constraints. Dual recovery is now linear in the number of constraints (was
+  quadratic), cutting memory up to ~60% on constraint-heavy problems.
+* `geo_mean()`, `power()`, and `p_norm()` with fractional exponents are
+  15-37% faster end to end.
+
+## Notes
+
+* PSD constraints are packed to triangular form in one `PSD -> SvecPSD`
+  reduction following CVXPY 1.9, replacing per-solver copies of that logic
+  (the source of the transposed-dual bug above). No user-facing API change.
+
 # CVXR 1.9.1
 
 This is the first CRAN release since 1.8.2 and is a large one: it tracks

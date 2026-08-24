@@ -11,7 +11,7 @@
 # These are skipped via require_solver() guards in tests.
 on:
   push:
-    branches: [main, master, s7-rewrite]
+    branches: [main, master, 'release-*']
   pull_request:
     branches: [main, master]
 
@@ -40,7 +40,7 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-pandoc@v2
 

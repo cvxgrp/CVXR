@@ -28,8 +28,8 @@ SigmaMax <- new_class("SigmaMax", parent = Atom, package = "CVXR",
 # -- validate -----------------------------------------------------
 ## CVXPY: sigma_max.py lines 33-38 -- must be 2D
 method(validate_arguments, SigmaMax) <- function(x) {
-  A <- x@args[[1L]]
-  if (length(A@shape) != 2L) {
+  A <- .args(x)[[1L]]
+  if (length(.shape(A)) != 2L) {
     cli_abort("The argument to {.fn sigma_max} must be a 2-d matrix.")
   }
   invisible(NULL)
@@ -79,7 +79,7 @@ method(.grad, SigmaMax) <- function(x, values, ...) {
   X <- as.matrix(values[[1L]])
   s <- svd(X)
   D <- s$u[, 1L, drop = FALSE] %*% t(s$v[, 1L, drop = FALSE])
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(.dense_to_csc_vector(as.numeric(D), rows))
 }
 

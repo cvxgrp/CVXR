@@ -12,7 +12,7 @@ OneMInusPos <- new_class("OneMInusPos", parent = Atom, package = "CVXR",
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
-    shape <- x@shape
+    shape <- .shape(x)
 
     obj <- .fast_new(OneMInusPos, S7_object(),
       id    = as.integer(id),
@@ -26,7 +26,7 @@ OneMInusPos <- new_class("OneMInusPos", parent = Atom, package = "CVXR",
 )
 
 # -- shape ----------------------------------------------------------
-method(shape_from_args, OneMInusPos) <- function(x) x@args[[1L]]@shape
+method(shape_from_args, OneMInusPos) <- function(x) .arg_shape(x)
 
 # -- sign: always positive -----------------------------------------
 method(sign_from_args, OneMInusPos) <- function(x) {
@@ -47,7 +47,7 @@ method(is_decr, OneMInusPos) <- function(x, idx, ...) TRUE
 
 # -- numeric --------------------------------------------------------
 method(numeric_value, OneMInusPos) <- function(x, values, ...) {
-  ones <- matrix(1, nrow = x@shape[1L], ncol = x@shape[2L])
+  ones <- matrix(1, nrow = .shape(x)[1L], ncol = .shape(x)[2L])
   ones - values[[1L]]
 }
 
@@ -65,7 +65,7 @@ method(graph_implementation, OneMInusPos) <- function(x, arg_objs, shape, data =
 ## consistent with the atom's DGP-context use (x > 0 always, so
 ## pos(x) = x and grad(1 - pos(x)) = -1 elementwise).
 method(.grad, OneMInusPos) <- function(x, values, ...) {
-  rows <- as.integer(prod(x@args[[1L]]@shape))
+  rows <- as.integer(prod(.arg_shape(x)))
   list(Matrix::sparseMatrix(
     i = seq_len(rows), j = seq_len(rows),
     x = rep(-1, rows),

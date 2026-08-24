@@ -242,8 +242,13 @@ method(is_lp, Problem) <- function(x) {
 is_mixed_integer <- function(problem) {
   cached <- cache_get(problem, "is_mixed_integer")
   if (!cache_miss(cached)) return(cached)
+  ## CVXPY SOURCE: problem.py:451-453 -- `any(v.attributes['boolean'] or
+  ## v.attributes['integer'] ...)`, i.e. TRUTHINESS: a non-empty index list
+  ## counts. `isTRUE()` is FALSE for a vector, so a PARTIAL boolean/integer
+  ## attribute used to leave the problem looking continuous, and it was then
+  ## solved as its relaxation and reported `optimal`.
   result <- any(vapply(variables(problem), function(v) {
-    isTRUE(v@attributes$boolean) || isTRUE(v@attributes$integer)
+    length(v@.boolean_idx) > 0L || length(v@.integer_idx) > 0L
   }, logical(1L)))
   cache_set(problem, "is_mixed_integer", result)
   result
@@ -464,18 +469,73 @@ method(print, Problem) <- function(x, ...) {
 
 .compile <- function(problem, solver = NULL, gp = FALSE, opts = solver_opts(),
                      enforce_dpp = FALSE, ignore_dpp = FALSE) {
-  ## CVXPY SOURCE: problem.py lines 786-806
+  ## CVXPY SOURCE: problem.py lines 816-818 --
+  ##     # Invalid DPP setting.
+  ##     # Must be checked here to avoid cache issues.
+  ##     if enforce_dpp and ignore_dpp:
+  ##         raise DPPError("Cannot set enforce_dpp = True and ignore_dpp = True.")
+  ##
+  ## The two flags are contradictory: enforce_dpp says "refuse to solve unless
+  ## this is DPP", ignore_dpp says "pretend it is not DPP". Upstream rejects the
+  ## pair UNCONDITIONALLY -- verified against CVXPY 1.9.2 for a DPP, a non-DPP
+  ## and a parameter-free problem.
+  ##
+  ## Without this check CVXR gave two wrong answers. `ignore_dpp` forces
+  ## `dpp_ok <- FALSE` in construct_solving_chain(), so `enforce_dpp` then
+  ## aborted with "Problem does not follow DPP rules" -- a FALSE STATEMENT when
+  ## the problem is in fact DPP -- and for a PARAMETER-FREE problem the abort is
+  ## gated on has_params, so the contradictory pair was silently ACCEPTED and the
+  ## problem solved. Wrong message in two cases, wrong outcome in the third.
+  ##
+  ## Position matters and is upstream's own reason: BEFORE the cache key, so a
+  ## rejected call cannot interact with the cache at all (cf. the ordering bug
+  ## fixed just below).
+  if (isTRUE(enforce_dpp) && isTRUE(ignore_dpp)) {
+    cli_abort(c(
+      "Cannot set {.code enforce_dpp = TRUE} and {.code ignore_dpp = TRUE}.",
+      "i" = "{.code enforce_dpp} requires the problem to be DPP; {.code ignore_dpp} treats it as though it were not."
+    ), class = "DPPError")   ## CVXPY: raise DPPError, problem.py:818
+  }
+  ## CVXPY SOURCE: problem.py lines 786-806, and the cache block at 831-841:
+  ##     if key != self._cache.key:
+  ##         self._cache.invalidate()          # clear FIRST
+  ##         solving_chain = self._construct_chain(...)   # may raise
+  ##         self._cache.key = key             # record only on success
+  ##         self._cache.solving_chain = solving_chain
+  ##
+  ## The two orderings matter and CVXR had both wrong. It recorded the key
+  ## BEFORE building, and cleared nothing, so an abort from
+  ## construct_solving_chain() -- non-DCP, non-DGP under gp = TRUE, an
+  ## unavailable solver, enforce_dpp -- left the new key paired with the
+  ## PREVIOUS chain. The next call with the same arguments then matched the
+  ## cache and returned that stale chain:
+  ##
+  ##     prob <- Problem(Minimize(sum_entries(x)), list(x >= 1))  # DCP, not DGP
+  ##     psolve(prob, solver = "CLARABEL")   # 2
+  ##     psolve(prob, gp = TRUE)             # aborts, "not DGP compliant"
+  ##     psolve(prob, gp = TRUE)             # 2  <- SILENTLY solved as DCP
+  ##
+  ## With no prior successful compile the same path yields a NULL chain and
+  ## "no applicable method for `@` applied to an object of class NULL".
+  ## Found while writing tests for the completeness audit; see
+  ## notes/session_handoff_2026-08-17_completeness_audit_and_fixes.md section 5.1.
   cache_key <- list(solver, gp, opts$use_quad_obj, enforce_dpp, ignore_dpp)
   if (!identical(cache_key, problem@.cache$compile_key)) {
-    problem@.cache$compile_key <- cache_key
-    problem@.cache$compile_chain <- construct_solving_chain(problem, solver,
-                                                            gp = gp, opts = opts,
-                                                            enforce_dpp = enforce_dpp,
-                                                            ignore_dpp = ignore_dpp)
+    ## Invalidate first: if the build aborts, the cache must be EMPTY, not
+    ## stale. Anything that survives here would be paired with the wrong key.
+    problem@.cache$compile_key <- NULL
+    problem@.cache$compile_chain <- NULL
     problem@.cache$param_prog <- NULL
     problem@.cache$compile_inverse_data <- NULL
     ## Clear solver-specific cache when chain changes
     problem@.cache$solver_cache <- NULL
+    ## Build into a local; record the key only once it has succeeded.
+    chain <- construct_solving_chain(problem, solver,
+                                     gp = gp, opts = opts,
+                                     enforce_dpp = enforce_dpp,
+                                     ignore_dpp = ignore_dpp)
+    problem@.cache$compile_key <- cache_key
+    problem@.cache$compile_chain <- chain
   }
   problem@.cache$compile_chain
 }
@@ -559,12 +619,24 @@ solver_stats_from_dict <- function(attr, solver_name) {
 ## CVXPY SOURCE: problem.py lines 1482-1518
 
 problem_unpack <- function(problem, solution) {
+  ## `solution@dual_vars[[as.character(con@id)]]` is a LINEAR SCAN of the names
+  ## of an n-entry list, so looking one up per constraint was O(n^2). Resolve
+  ## all n at once with a single vectorized `match()` (one C call over a hash
+  ## table) and index positionally. Same lookups, same order, same values.
+  ## See notes/string_key_hashing_sweep_2026-08-13.md and ADR D_PERF.7.
+  dual_idx <- match(vapply(problem@constraints,
+                           function(con) as.character(con@id), character(1)),
+                    names(solution@dual_vars))
+  dual_at <- function(i) {
+    if (is.na(dual_idx[i])) NULL else solution@dual_vars[[dual_idx[i]]]
+  }
   if (solution@status %in% SOLUTION_PRESENT) {
     for (v in variables(problem)) {
       save_leaf_value(v, solution@primal_vars[[as.character(v@id)]])
     }
-    for (con in problem@constraints) {
-      dual_val <- solution@dual_vars[[as.character(con@id)]]
+    for (i in seq_along(problem@constraints)) {
+      con <- problem@constraints[[i]]
+      dual_val <- dual_at(i)
       if (!is.null(dual_val)) {
         save_dual_value(con, dual_val)
       }
@@ -578,8 +650,9 @@ problem_unpack <- function(problem, solution) {
     ## CVXPY v1.9.0 fix: #3197 -- if the solver returned an infeasibility
     ## certificate for a constraint, expose it as that constraint's dual value;
     ## otherwise clear the dual variables. Mirrors problem.py unpack INF_OR_UNB.
-    for (con in problem@constraints) {
-      dual_val <- solution@dual_vars[[as.character(con@id)]]
+    for (i in seq_along(problem@constraints)) {
+      con <- problem@constraints[[i]]
+      dual_val <- dual_at(i)
       if (!is.null(dual_val)) {
         save_dual_value(con, dual_val)
       } else {
@@ -656,24 +729,51 @@ problem_unpack_results <- function(problem, solution, chain, inverse_data) {
 # Problem data validation -- catch NaN/Inf before solver
 # ==================================================================
 
-.check_finite <- function(val, label) {
+.check_finite <- function(val, label, inf_allowed = FALSE) {
   if (is.null(val) || length(val) == 0L) return(invisible(NULL))
   ## Sparse matrices: check @x slot (non-zero entries only -- O(nnz) not O(n*m))
   nums <- if (inherits(val, "sparseMatrix")) val@x else as.numeric(val)
+  ## `anyNA` is TRUE for NaN, which is what upstream's np.isnan catches.
   if (anyNA(nums))
     cli_abort("Problem data {.val {label}} contains NaN values.")
-  if (any(is.infinite(nums)))
+  if (!inf_allowed && any(is.infinite(nums)))
     cli_abort("Problem data {.val {label}} contains Inf values.")
 }
 
+## CVXPY SOURCE: solving_chain.py:412-449 (_validate_problem_data).
+##
+## Two things were missing. First, upstream checks NINE keys --
+## [P, Q, C, A, B, F, G, LOWER_BOUNDS, UPPER_BOUNDS] (:428-429) -- where CVXR
+## checked four, so a NaN in the QP inequality data or in a bounds vector went
+## through unnoticed. Second, and user-visible: upstream defines
+##     inf_allowed_keys = {s.B, s.G, s.LOWER_BOUNDS, s.UPPER_BOUNDS}   (:427)
+## and NaN-checks those keys only, with the reason stated at :419-420 --
+## "users sometimes use inf for unbounded constraints/variables". CVXR ran every
+## key through an indiscriminate NaN-or-Inf check, so two problems CVXPY solves
+## errored out here:
+##     Minimize(sum(x)), [x >= 1, x <= Inf]   CVXPY 2.0    CVXR "b contains Inf"
+##     Minimize(sum(y)), [y >= c(1, -Inf)]    CVXPY -Inf   CVXR "b contains Inf"
+##
+## Key-name mapping: CVXR's QP path spells the four inequality/equality slots
+## `A_eq` / `b_eq` / `F_ineq` / `g_ineq` where upstream uses `A` / `b` / `F` /
+## `G` (qp_solver.R:114-121 vs qp_solver.py:139-148), and the conic path uses
+## `A` / `b`. Both spellings are listed so the same rule covers both paths.
+## Upstream's `s.G` is the inequality RHS *vector* (`F x <= G`), i.e. CVXR's
+## `g_ineq` -- not a matrix -- which is why it is Inf-allowed.
 .validate_problem_data <- function(data) {
-  ## CVXPY SOURCE: solving_chain.py lines 414-416
   ## Skip validation for non-dict data (e.g., ConstantSolver returns Problem)
   if (!is.list(data)) return(invisible(NULL))
-  .check_finite(data[[SD_A]], SD_A)
-  .check_finite(data[[SD_B]], SD_B)
-  .check_finite(data[[SD_C]], SD_C)
-  .check_finite(data[[SD_P]], SD_P)
+
+  ## Upstream s.B, s.G, s.LOWER_BOUNDS, s.UPPER_BOUNDS, in CVXR's spellings.
+  inf_allowed <- c(SD_B, "b_eq", "g_ineq", "G", LOWER_BOUNDS, UPPER_BOUNDS)
+  keys_to_check <- c(SD_P, SD_C, "q", SD_A, SD_B, "A_eq", "b_eq",
+                     "F", "F_ineq", "G", "g_ineq",
+                     LOWER_BOUNDS, UPPER_BOUNDS)
+
+  for (key in keys_to_check) {
+    .check_finite(data[[key]], key, inf_allowed = key %in% inf_allowed)
+  }
+  invisible(NULL)
 }
 
 # ==================================================================
@@ -893,7 +993,7 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
       cli_abort(c(
         "The problem is not DQCP.",
         "i" = "Check that the objective is quasiconvex (Minimize) or quasiconcave (Maximize), and all constraints are DQCP."
-      ))
+      ), class = "DQCPError")   ## CVXPY: raise error.DQCPError, problem.py:1084
     }
     if (verbose) {
       pkg_ver <- utils::packageVersion("CVXR")
@@ -950,13 +1050,18 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
     cli_abort(c(
       "The problem you specified is not DNLP.",
       "i" = "{.code nlp = TRUE} requires a disciplined nonlinear program (see {.fn is_dnlp})."
-    ))
+    ), class = "DNLPError")   ## CVXPY: raise error.DNLPError, problem.py:1115
   }
 
-  pkg_ver <- utils::packageVersion("CVXR")
-
   ## -- Verbose header ----------------------------------------------
+  ## PERFORMANCE (2026-08-13). `packageVersion()` was computed here on EVERY
+  ## solve although its only use is the header below. It reads and parses
+  ## DESCRIPTION off disk (packageDescription -> file.exists + read.dcf):
+  ## measured 0.43ms per solve, 4.7% of the `qp` bench cell (A/B with the call
+  ## stubbed, N=400, drift -1.3%). The DQCP branch at line ~900 already scoped
+  ## it correctly; this one did not.
   if (verbose) {
+    pkg_ver <- utils::packageVersion("CVXR")
     cli_rule(center = "CVXR v{pkg_ver}")
     nvars <- length(variables(problem))
     ncons <- length(problem@constraints)

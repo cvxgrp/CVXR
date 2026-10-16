@@ -67,12 +67,18 @@ jobs:
               append = TRUE)
         shell: Rscript {0}
 
+      # ECOSolveR from GitHub until CRAN's 0.6.2 (signed-char ECOS_BB fix for
+      # aarch64) reaches every binary repo; then back to any::ECOSolveR.
+      # git:: (not github::) because only git:: fetches the src/ecos submodule,
+      # and only when PKG_GIT_SUBMODULES is true.
       - uses: r-lib/actions/setup-r-dependencies@v2
+        env:
+          PKG_GIT_SUBMODULES: true
         with:
           extra-packages: >-
             any::rcmdcheck,
             any::Rglpk,
-            any::ECOSolveR,
+            git::https://github.com/bnaras/ECOSolveR.git,
             any::cccp,
             any::piqp
           needs: check

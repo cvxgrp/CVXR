@@ -29,7 +29,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-24.04-arm, r: 'release'}
+          - {os: ubuntu-latest,  r: 'release'}
+          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,  r: 'oldrel-1'}
+          - {os: macos-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -62,18 +66,12 @@ jobs:
               append = TRUE)
         shell: Rscript {0}
 
-      # ECOSolveR from GitHub until CRAN's 0.6.2 (signed-char ECOS_BB fix for
-      # aarch64) reaches every binary repo; then back to any::ECOSolveR.
-      # git:: (not github::) because only git:: fetches the src/ecos submodule,
-      # and only when PKG_GIT_SUBMODULES is true.
       - uses: r-lib/actions/setup-r-dependencies@v2
-        env:
-          PKG_GIT_SUBMODULES: true
         with:
           extra-packages: >-
             any::rcmdcheck,
             any::Rglpk,
-            git::https://github.com/bnaras/ECOSolveR.git,
+            any::ECOSolveR,
             any::cccp,
             any::piqp
           needs: check

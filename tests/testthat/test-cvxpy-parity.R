@@ -665,6 +665,22 @@ test_that("pipeline: Dcp2Cone reduces exp atom to ExpCone constraints", {
   expect_true(has_expcone)
 })
 
+## @cvxpy NONE
+test_that("pipeline: ConeMatrixStuffing accepts only DPP problems", {
+  ## cone_matrix_stuffing.py:368-375 ends accepts() with `and problem.is_dpp()`.
+  ## Claims-audit row C0656, ported 1.9.2.9137. CVXPY 1.9.3 oracle measured
+  ## 2026-10-08: accepts False for q*q*x, True for q*x.
+  x <- Variable(2)
+  q <- Parameter(value = 2)
+  cms <- ConeMatrixStuffing()
+  dpp <- Problem(Minimize(sum_entries(q * x)), list(x >= 1))
+  non_dpp <- Problem(Minimize(sum_entries(q * q * x)), list(x >= 1))
+  expect_true(is_dcp(non_dpp))
+  expect_false(is_dpp(non_dpp))
+  expect_true(reduction_accepts(cms, dpp))
+  expect_false(reduction_accepts(cms, non_dpp))
+})
+
 # ═══════════════════════════════════════════════════════════════════════
 # Task #9: QuadForm Edge Cases
 # ═══════════════════════════════════════════════════════════════════════

@@ -15,7 +15,7 @@ library(testthat)
 library(CVXR)
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_norm_inf (test_atoms.py line 72)
+# test_norm_inf (test_atoms.py line 73)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_norm_inf
@@ -39,7 +39,7 @@ test_that("norm_inf: shape, curvature, sign (CVXPY test_norm_inf)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_norm1 (test_atoms.py line 85)
+# test_norm1 (test_atoms.py line 86)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_norm1
@@ -58,7 +58,7 @@ test_that("norm1: shape, curvature (CVXPY test_norm1)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_power (test_atoms.py line 135)
+# test_power (test_atoms.py line 151)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_power
@@ -119,7 +119,7 @@ test_that("power: numeric value for constant (CVXPY test_power)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_pnorm (test_atoms.py line 227)
+# test_pnorm (test_atoms.py line 285)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_pnorm
@@ -199,7 +199,7 @@ test_that("pnorm: axis/keepdims shapes (CVXPY test_pnorm)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_quad_over_lin (test_atoms.py line 318)
+# test_quad_over_lin (test_atoms.py line 376)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_quad_over_lin
@@ -238,7 +238,7 @@ test_that("quad_over_lin: numeric value (CVXPY test_quad_over_lin)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_max (test_atoms.py line 371)
+# test_max (test_atoms.py line 429)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_max
@@ -266,7 +266,7 @@ test_that("max: axis/keepdims shapes (CVXPY test_max)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_min (test_atoms.py line 396)
+# test_min (test_atoms.py line 454)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_min
@@ -293,7 +293,7 @@ test_that("min: axis/keepdims shapes (CVXPY test_min)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_maximum_sign (test_atoms.py line 432)
+# test_maximum_sign (test_atoms.py line 490)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_maximum_sign
@@ -322,7 +322,7 @@ test_that("maximum: promotion shape (CVXPY test_maximum_sign)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_minimum_sign (test_atoms.py line 459)
+# test_minimum_sign (test_atoms.py line 517)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_minimum_sign
@@ -351,7 +351,7 @@ test_that("minimum: promotion shape (CVXPY test_minimum_sign)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_sum (test_atoms.py line 485)
+# test_sum (test_atoms.py line 543)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_sum
@@ -417,8 +417,26 @@ test_that("sum: sparse matrix input (CVXPY test_sum)", {
   expect_equal(as.numeric(value(SumEntries(Constant(A)))), 3)
 })
 
+## CVXPY's axis loop is None/0/-1 (plus np.int64 and () spellings) on a 0-D
+## Parameter; R has no 0-D, a scalar is (1,1), so the R axes are NULL/1/2 and
+## every sum stays (1,1). The rejected-axis half (1, -2, (0,), 0.0, False on a
+## 0-D array) has no R counterpart: both axes of a (1,1) scalar are valid.
+## @cvxpy test_atoms.py::TestAtoms::test_sum_scalar_axes
+test_that("sum: scalar Parameter over every axis (CVXPY test_sum_scalar_axes)", {
+  scalar <- Parameter(value = 2.0)
+  for (axis in list(NULL, 1L, 2L)) {
+    for (keepdims in c(FALSE, TRUE)) {
+      info <- paste("axis", deparse(axis), "keepdims", keepdims)
+      expr <- SumEntries(scalar, axis = axis, keepdims = keepdims)
+      expect_equal(expr@shape, c(1L, 1L), info = info)
+      expect_equal(as.numeric(value(expr)), 2.0, info = info)
+      expect_true(is_dpp(expr), info = info)
+    }
+  }
+})
+
 # ═══════════════════════════════════════════════════════════════════════
-# test_multiply (test_atoms.py line 525)
+# test_multiply (test_atoms.py line 583)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_multiply
@@ -465,7 +483,7 @@ test_that("multiply: promotion (CVXPY test_multiply)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_vstack (test_atoms.py line 548)
+# test_vstack (test_atoms.py line 619)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_vstack
@@ -507,7 +525,7 @@ test_that("vstack: validation (CVXPY test_vstack)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_hstack (test_atoms.py line 576)
+# test_hstack (test_atoms.py line 647)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_hstack
@@ -530,7 +548,7 @@ test_that("hstack: validation (CVXPY test_hstack)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_reshape (test_atoms.py line 644)
+# test_reshape (test_atoms.py line 715)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_reshape
@@ -574,7 +592,7 @@ test_that("reshape: C-order numeric (CVXPY test_reshape)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_vec (test_atoms.py line 754)
+# test_vec (test_atoms.py line 837)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_vec
@@ -608,7 +626,7 @@ test_that("vec: convex nonneg preserves (CVXPY test_vec)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_diag (test_atoms.py line 770)
+# test_diag (test_atoms.py line 853)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_diag
@@ -675,7 +693,7 @@ test_that("diag: PSD property (CVXPY test_diag)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_trace (test_atoms.py line 825)
+# test_trace (test_atoms.py line 908)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_trace
@@ -704,7 +722,7 @@ test_that("trace: PSD/NSD sign (CVXPY test_trace_sign_psd)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_upper_tri (test_atoms.py line 899)
+# test_upper_tri (test_atoms.py line 1061)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_upper_tri
@@ -732,7 +750,7 @@ test_that("upper_tri: numeric value row-major order", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_vec_to_upper_tri (test_atoms.py line 905)
+# test_vec_to_upper_tri (test_atoms.py line 1070)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_vec_to_upper_tri
@@ -776,7 +794,7 @@ test_that("vec_to_upper_tri: validation (CVXPY test_vec_to_upper_tri)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_huber (test_atoms.py line 951)
+# test_huber (test_atoms.py line 1116)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_huber
@@ -802,7 +820,7 @@ test_that("huber: numeric value (CVXPY test_huber)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_sum_largest (test_atoms.py line 1034)
+# test_sum_largest (test_atoms.py line 1199)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_sum_largest
@@ -835,7 +853,7 @@ test_that("sum_largest: numeric value (CVXPY test_sum_largest)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_sum_smallest (test_atoms.py line 1112)
+# test_sum_smallest (test_atoms.py line 1418)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_sum_smallest
@@ -852,7 +870,7 @@ test_that("sum_smallest: PWL property (CVXPY test_sum_smallest)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_kron_expr (test_atoms.py line 1292)
+# test_kron_expr (test_atoms.py line 1631)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_kron_expr
@@ -879,7 +897,7 @@ test_that("kron: validation (CVXPY test_kron_expr)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_conv (test_atoms.py line 1232)
+# test_conv (test_atoms.py line 1571)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_conv
@@ -905,12 +923,28 @@ test_that("conv: at least one arg must be constant (CVXPY test_conv)", {
   y <- Variable(2)
   ## Both variable → error
   expect_error(Convolve(x, y), "constant")
-  ## Variable + Constant → OK (CVXR is more permissive than CVXPY here)
+  ## Variable + Constant: CVXPY rejects ("The first argument to conv must be
+  ## constant.", conv.py:64-70); CVXR accepts the kernel in either slot
+  ## (conv.R:11-14, recorded in notes/audit/completeness_ledger.md finding 1).
+  ## MEASURED 2026-10-07 against CVXPY 1.9.3 (notes/audit/repro/10): the
+  ## kernel-second solve returns the kernel-first answer exactly, so the
+  ## divergence is in what is accepted, not in any number.
   expect_no_error(Convolve(x, Constant(-1)))
+  k <- c(1, 2, 1); t_ <- c(1, 4, 6, 4, 1)
+  y1 <- Variable(3)
+  v1 <- psolve(Problem(Minimize(sum_squares(conv(k, y1) - t_) + sum_squares(y1))),
+               solver = "CLARABEL")
+  y2 <- Variable(3)
+  v2 <- psolve(Problem(Minimize(sum_squares(conv(y2, k) - t_) + sum_squares(y2))),
+               solver = "CLARABEL")
+  expect_equal(v1, 5.416667, tolerance = 1e-5)   # CVXPY 1.9.3 kernel-first
+  expect_equal(v2, v1, tolerance = 1e-6)
+  expect_equal(as.numeric(value(y2)), as.numeric(value(y1)), tolerance = 1e-5)
+  expect_equal(as.numeric(value(y1)), c(1.04167, 1.66667, 1.04167), tolerance = 1e-4)
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_cumsum (test_atoms.py line 1267)
+# test_cumsum (test_atoms.py line 1606)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_cumsum
@@ -933,7 +967,7 @@ test_that("cumsum: numeric value matches R cumsum (CVXPY test_cumsum)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_diff (test_atoms.py line 1663)
+# test_diff (test_atoms.py line 2009)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_diff
@@ -970,7 +1004,7 @@ test_that("diff: higher-order diff (CVXPY test_diff)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_log1p (test_atoms.py line 889)
+# test_log1p (test_atoms.py line 1035)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_log1p
@@ -1196,7 +1230,7 @@ test_that("conv: numeric value (CVXPY numeric)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_upper_tri_to_full (test_atoms.py line 899)
+# test_upper_tri_to_full (test_atoms.py line 1109)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_upper_tri_to_full
@@ -1213,7 +1247,7 @@ test_that("upper_tri_to_full: produces symmetric matrix (CVXPY test_upper_tri_to
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_index: shape, sign, curvature (test_atoms.py line 1169)
+# test_index: shape, sign, curvature (test_atoms.py line 1504)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_index
@@ -1252,7 +1286,7 @@ test_that("index: sign preserved for nonneg variable (CVXPY test_index)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_nonnegative_variable (test_atoms.py line 1580)
+# test_nonnegative_variable (test_atoms.py line 1954)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_nonnegative_variable
@@ -1359,7 +1393,7 @@ test_that("test_conv_prob: conv(h, x) with random data is unbounded (CVXPY test_
   x <- Variable(c(N, 1))
   v <- conv(h, x)
   ## v has length N + 2 - 1 = N + 1. Slice v[1:N] (1-based).
-  obj <- Minimize(sum_entries(multiply(y, v[1:N, ])))
+  obj <- Minimize(sum_entries(y * v[1:N, ]))   ## CVXPY multiply(); deprecated alias in CVXR
   prob <- Problem(obj, list())
   result <- psolve(prob, solver = "CLARABEL")
 
@@ -1378,7 +1412,7 @@ test_that("test_conv_prob: conv with 1-D vectors is unbounded (CVXPY test_conv_p
   x <- Variable(N)
   v <- conv(h, x)
   ## v has length N + 2 - 1 = N + 1. Slice v[1:N] (1-based).
-  obj <- Minimize(sum_entries(multiply(y, v[1:N, ])))
+  obj <- Minimize(sum_entries(y * v[1:N, ]))   ## CVXPY multiply(); deprecated alias in CVXR
   prob <- Problem(obj, list())
   result <- psolve(prob, solver = "CLARABEL")
 
@@ -1477,8 +1511,27 @@ test_that("Prod: dense small matrix (overall product)", {
   expect_equal(as.numeric(value(prod_B)), 24.0, tolerance = 1e-10)
 })
 
+## @cvxpy test_constant.py::test_mutating_source_array_does_not_change_constant
+test_that("Constant: mutating the source array does not change value or cached sign", {
+  ## CVXPY 1.9.3 copies the source array (#3404). R is copy-on-modify, so the
+  ## mutation rebinds the source and never reaches the Constant.
+  a <- c(1.0, 2.0)
+  cst <- Constant(a)
+  expect_true(is_nonneg(cst))
+  a[1] <- -5.0
+  expect_equal(as.numeric(value(cst)), c(1.0, 2.0))
+  expect_true(is_nonneg(cst))
+
+  m <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(1.0, 2.0), dims = c(2, 2))
+  cs <- Constant(m)
+  expect_true(is_nonneg(cs))
+  m@x[1] <- -3.0
+  expect_equal(as.matrix(value(cs)), matrix(c(1.0, 0.0, 0.0, 2.0), 2, 2))
+  expect_true(is_nonneg(cs))
+})
+
 # ═══════════════════════════════════════════════════════════════════════
-# test_add_expr_copy (test_atoms.py line 54)
+# test_add_expr_copy (test_atoms.py line 55)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_add_expr_copy
@@ -1504,7 +1557,7 @@ test_that("AddExpression copy: same type, same args, new object", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_list_input (test_atoms.py line 96)
+# test_list_input (test_atoms.py line 97)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_list_input
@@ -1520,20 +1573,37 @@ test_that("list input rejected by atoms", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_norm_exceptions (test_atoms.py line 119)
+# test_norm_exceptions (test_atoms.py line 120)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_norm_exceptions
-test_that("norm(x, 'nuc') on non-matrix raises error", {
-  ## CVXPY: cp.norm(x, 'nuc') on vector -> "Unsupported norm option nuc for non-matrix."
-  ## In CVXR, cvxr_norm passes "nuc" to as.numeric which gives NA, causing an error.
-  ## We just check that an error is raised for nuclear norm on a vector.
+test_that("norm exceptions: 'nuc' on a vector, 'fro'/'nuc' with an axis", {
+  ## CVXPY: cp.norm(x, 'nuc') on a vector -> "Unsupported norm option nuc for
+  ## non-matrix." (an R vector is a matrix with one dimension equal to 1).
   x <- Variable(2)
-  expect_error(suppressWarnings(cvxr_norm(x, "nuc")))
+  expect_error(cvxr_norm(x, "nuc"), "Unsupported norm option nuc for non-matrix")
+
+  ## CVXPY v1.9.3 (#3501): a matrix norm has no meaning along one axis. CVXR
+  ## used to drop the axis for 'fro' and return the whole-matrix norm.
+  ## Python axes 0 / 1 -> R 2 / 1; Python's (0, 1) has no R axis analog.
+  X <- Variable(c(3, 4))
+  for (p in c("fro", "nuc", "Fro")) {
+    for (axis in c(2L, 1L)) {
+      expect_error(cvxr_norm(X, p, axis = axis), "not supported for the",
+                   info = paste(p, axis))
+    }
+  }
+
+  ## Without an axis both are matrix norms of the whole argument.
+  ## Python np.arange(12.).reshape(3, 4) (row-major).
+  A <- matrix(0:11, 3, 4, byrow = TRUE)
+  expect_equal(as.numeric(value(cvxr_norm(Constant(A), "fro"))), norm(A, "F"))
+  expect_equal(as.numeric(value(cvxr_norm(Constant(A), "nuc"))),
+               sum(svd(A)$d), tolerance = 1e-8)
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_harmonic_mean (test_atoms.py line 220)
+# test_harmonic_mean (test_atoms.py line 278)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_harmonic_mean
@@ -1549,7 +1619,7 @@ test_that("harmonic_mean: shape, curvature, sign", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_matrix_frac (test_atoms.py line 354)
+# test_matrix_frac (test_atoms.py line 412)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_matrix_frac
@@ -1572,7 +1642,7 @@ test_that("matrix_frac: shape, curvature, validation", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_concatenate (test_atoms.py line 604)
+# test_concatenate (test_atoms.py line 675)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_concatenate
@@ -1581,7 +1651,7 @@ test_that("Concatenate atom (stub — not in CVXR)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_squeeze (test_atoms.py line 736)
+# test_squeeze (test_atoms.py line 819)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_squeeze
@@ -1596,7 +1666,7 @@ test_that("Squeeze atom (N/A in CVXR's 2D shape system)", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_diag_offset (test_atoms.py line 809)
+# test_diag_offset (test_atoms.py line 892)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_diag_offset
@@ -1646,7 +1716,7 @@ test_that("DiagVec/DiagMat with k offset", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_Trace (test_atoms.py line 850)
+# test_Trace (test_atoms.py line 933)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_Trace
@@ -1658,7 +1728,7 @@ test_that("trace(A) resolves to Trace class", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_trace_complex2real (test_atoms.py line 875)
+# test_trace_complex2real (test_atoms.py line 1021)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_trace_complex2real
@@ -1670,7 +1740,7 @@ test_that("trace in complex problem", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_trace_dgp2dcp (test_atoms.py line 881)
+# test_trace_dgp2dcp (test_atoms.py line 1027)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_trace_dgp2dcp
@@ -1682,7 +1752,7 @@ test_that("trace in DGP problem", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_cvar (test_atoms.py line 1137)
+# test_cvar (test_atoms.py line 1443)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_cvar
@@ -1708,7 +1778,7 @@ test_that("CVaR atom evaluation and LP usage", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_bmat (test_atoms.py line 1219)
+# test_bmat (test_atoms.py line 1525)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_bmat
@@ -1730,8 +1800,42 @@ test_that("bmat block matrix construction", {
   expect_equal(as.matrix(value(expr)), expected, tolerance = 1e-10)
 })
 
+## CVXPY 1.9.3 #2328: bmat promotes scalars like numpy.block. R scalars are
+## already (1,1). Upstream's 1-D np.array([5.0, 6.0]) is written as a row
+## matrix here: R vectors are columns everywhere in CVXR, bmat included.
+## @cvxpy test_atoms.py::TestAtoms::test_bmat_promotes_scalars
+test_that("bmat promotes scalars (CVXPY test_bmat_promotes_scalars)", {
+  ## A scalar, a vector and a matrix (e.g. an LMI).
+  U <- matrix(c(10.0, 20.0), 2, 1)
+  expr <- bmat(list(list(4, t(U)), list(U, diag(2))))
+  ref <- rbind(c(4, t(U)), cbind(U, diag(2)))
+  expect_equal(expr@shape, c(3L, 3L))
+  expect_equal(as.matrix(value(expr)), ref, tolerance = 1e-10)
+
+  ## A scalar and a row on the same block row.
+  expr <- bmat(list(list(1, matrix(c(5.0, 6.0), 1))))
+  expect_equal(expr@shape, c(1L, 3L))
+  expect_equal(as.matrix(value(expr)), matrix(c(1.0, 5.0, 6.0), 1), tolerance = 1e-10)
+
+  ## Works with Variables and stays affine.
+  x <- Variable(c(2, 1))
+  expr <- bmat(list(list(4, t(x)), list(x, diag(2))))
+  expect_equal(expr@shape, c(3L, 3L))
+  expect_true(is_affine(expr))
+
+  ## A scalar Variable is promoted just like a scalar constant.
+  s <- Variable()
+  expr <- bmat(list(list(s, t(x)), list(x, diag(2))))
+  expect_equal(expr@shape, c(3L, 3L))
+  expect_true(is_affine(expr))
+  value(s) <- 7.0
+  value(x) <- matrix(c(10.0, 20.0), 2, 1)
+  ref <- rbind(c(7.0, t(value(x))), cbind(value(x), diag(2)))
+  expect_equal(as.matrix(value(expr)), ref, tolerance = 1e-10)
+})
+
 # ═══════════════════════════════════════════════════════════════════════
-# test_cumprod (test_atoms.py line 1279)
+# test_cumprod (test_atoms.py line 1618)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_cumprod
@@ -1761,7 +1865,7 @@ test_that("CumProd in DGP for both axes", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_convolve (test_atoms.py line 1308)
+# test_convolve (test_atoms.py line 1647)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_convolve
@@ -1788,7 +1892,7 @@ test_that("conv (convolve): sign propagation and errors", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_ptp (test_atoms.py line 1341)
+# test_ptp (test_atoms.py line 1680)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_ptp
@@ -1830,7 +1934,7 @@ test_that("ptp: peak-to-peak with axis and keepdims", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_stats (test_atoms.py line 1374)
+# test_stats (test_atoms.py line 1713)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_stats
@@ -1886,12 +1990,21 @@ test_that("mean/var/std with axis and keepdims", {
         }
       }
       expect_equal(as.numeric(value(expr_mean_ax)), expected_mean, tolerance = 1e-10)
+      expect_equal(dim(expr_mean_ax), expected_shape)
+
+      ## CVXPY v1.9.3 (#3496): var reduces along an axis too.
+      expr_var_ax <- cvxr_var(a, axis = r_axis, keepdims = keepdims)
+      pop_var <- function(v) mean((v - mean(v))^2)
+      expected_var <- apply(a, r_axis, pop_var)
+      expect_equal(as.numeric(value(expr_var_ax)), expected_var, tolerance = 1e-10)
+      expect_equal(dim(expr_var_ax), expected_shape)
+      expect_true(is_nonneg(expr_var_ax))
     }
   }
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_mixed_norm (test_atoms.py line 1617)
+# test_mixed_norm (test_atoms.py line 1963)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_mixed_norm
@@ -1906,7 +2019,7 @@ test_that("mixed_norm evaluation", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_indicator (test_atoms.py line 1641)
+# test_indicator (test_atoms.py line 1987)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_indicator
@@ -1924,8 +2037,26 @@ test_that("Indicator transform", {
   expect_equal(as.numeric(value(expr)), Inf)
 })
 
+## indicator.py:102-107: bounds (0, Inf). A bounded solver (HIGHS) reads them
+## through get_expr_bounds_if_supported when canonicalizing max(ind + x).
+## CVXPY 1.9.3 itself fails this solve on every solver (maximum_canon reads
+## expr.value before x has one); CVXR solves it, and CLARABEL gives the same 1.
+## @cvxpy NONE
+test_that("Indicator get_bounds is (0, Inf) and a bounded solver reads it", {
+  skip_if_not_installed("highs")
+  x <- Variable(2, nonneg = TRUE)
+  ind <- indicator(list(x >= 1))
+  b <- get_bounds(ind)
+  expect_equal(as.numeric(b[[1L]]), 0)
+  expect_equal(as.numeric(b[[2L]]), Inf)
+  expect_equal(dim(b[[1L]]), c(1L, 1L))
+  prob <- Problem(Minimize(max_entries(ind + x)), list(x <= 4))
+  expect_equal(psolve(prob, solver = "HIGHS"), 1, tolerance = 1e-6)
+  expect_equal(status(prob), "optimal")
+})
+
 # ═══════════════════════════════════════════════════════════════════════
-# test_vdot (test_atoms.py line 1742)
+# test_vdot (test_atoms.py line 2088)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_vdot
@@ -1961,7 +2092,7 @@ test_that("vdot / scalar_product", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_conj (test_atoms.py line 1807)
+# test_conj (test_atoms.py line 2153)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_conj
@@ -1976,7 +2107,7 @@ test_that("Conj atom in constraints", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_partial_trace (test_atoms.py line 1833)
+# test_partial_trace (test_atoms.py line 2179)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_partial_trace
@@ -2024,7 +2155,7 @@ test_that("partial_trace multi-subsystem", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_partial_trace_exceptions (test_atoms.py line 1873)
+# test_partial_trace_exceptions (test_atoms.py line 2219)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_partial_trace_exceptions
@@ -2041,7 +2172,7 @@ test_that("partial_trace exceptions", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_partial_transpose (test_atoms.py line 1888)
+# test_partial_transpose (test_atoms.py line 2234)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_partial_transpose
@@ -2081,7 +2212,7 @@ test_that("partial_transpose multi-subsystem", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_partial_transpose_exceptions (test_atoms.py line 1926)
+# test_partial_transpose_exceptions (test_atoms.py line 2272)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_partial_transpose_exceptions
@@ -2098,7 +2229,7 @@ test_that("partial_transpose exceptions", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_flatten (test_atoms.py line 1956)
+# test_flatten (test_atoms.py line 2368)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_flatten
@@ -2133,7 +2264,7 @@ test_that("vec/flatten with order", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# test_tr_inv (test_atoms.py line 1990)
+# test_tr_inv (test_atoms.py line 2402)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestAtoms::test_tr_inv
@@ -2155,7 +2286,7 @@ test_that("tr_inv in SDP", {
 })
 
 # ═══════════════════════════════════════════════════════════════════════
-# TestDotsort tests (test_atoms.py line 2035)
+# TestDotsort tests (test_atoms.py line 2738)
 # ═══════════════════════════════════════════════════════════════════════
 
 ## @cvxpy test_atoms.py::TestDotsort::test_sum_k_largest_equivalence
@@ -2256,19 +2387,59 @@ test_that("dotsort: parameter w", {
   expect_false(CVXR:::is_incr(expr, 1L))
   expect_false(CVXR:::is_decr(expr, 1L))
 
+  ## Upstream solves the SAME problem twice with enforce_dpp=True: W = w_p is
+  ## parameter-affine, so dotsort is DPP (dotsort.py:104-113) and the second
+  ## solve must see the new parameter value through the compiled tensor.
   prob <- Problem(Minimize(expr), list(x_var == x_val))
-  psolve(prob, solver = "CLARABEL")
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
   ## w_p = [1, 0] -> padded to [1, 0, 0, 0, 0]
   ## dotsort = sort(x_val) . sort(w_padded) = [-5,0,1,2,3] . [0,0,0,0,1]
   expected <- sort(x_val) %*% sort(c(1, 0, 0, 0, 0))
   expect_equal(as.numeric(value(objective(prob))), as.numeric(expected), tolerance = 1e-4)
 
-  ## Change parameter value and resolve
+  ## Change parameter value and re-solve the same problem
   value(w_p) <- matrix(c(-1, -1), ncol = 1)
-  prob2 <- Problem(Minimize(dotsort(x_var, w_p)), list(x_var == x_val))
-  psolve(prob2, solver = "CLARABEL")
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
   expected2 <- sort(x_val) %*% sort(c(-1, -1, 0, 0, 0))
-  expect_equal(as.numeric(value(objective(prob2))), as.numeric(expected2), tolerance = 1e-4)
+  expect_equal(as.numeric(value(objective(prob))), as.numeric(expected2), tolerance = 1e-4)
+
+  ## Parameter-affine W (2 * w_p): still DPP
+  w_p <- Parameter(2)
+  value(w_p) <- matrix(c(1, 0), ncol = 1)
+  expr <- dotsort(x_var, 2 * w_p)
+  prob <- Problem(Minimize(expr), list(x_var == x_val))
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
+  expect_equal(as.numeric(value(objective(prob))),
+               as.numeric(sort(x_val) %*% sort(c(2, 0, 0, 0, 0))), tolerance = 1e-4)
+  value(w_p) <- matrix(c(-1, -1), ncol = 1)
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
+  expect_equal(as.numeric(value(objective(prob))),
+               as.numeric(sort(x_val) %*% sort(c(-2, -2, 0, 0, 0))), tolerance = 1e-4)
+
+  ## Constant X with a non-parameter-affine W (p^2): DPP by the X.is_constant()
+  ## clause of dotsort.py:104-113
+  x_const <- c(1, 2, 3)
+  p <- Parameter()
+  value(p) <- 2
+  expr <- dotsort(x_const, p^2)
+  prob <- Problem(Minimize(expr))
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
+  expect_equal(as.numeric(value(expr)), 2^2 * 3, tolerance = 1e-4)
+  value(p) <- -1
+  psolve(prob, solver = "CLARABEL", enforce_dpp = TRUE)
+  expect_equal(as.numeric(value(expr)), (-1)^2 * 3, tolerance = 1e-4)
+
+  ## Variable X with p^2: NOT DPP -- warns and solves through EvalParams.
+  ## CVXR 1.9.2.9129 and earlier called this DPP and then aborted in
+  ## dotsort_canon ("Shape dimensions must be positive"): the parametric W
+  ## had been canonicalized into a Variable with no value.
+  x_val5 <- c(1, 2, 3, 4, 5)
+  p <- Parameter()
+  value(p) <- 2
+  expr <- dotsort(x_var, p^2)
+  prob <- Problem(Minimize(expr), list(x_var == x_val5))
+  expect_warning(psolve(prob, solver = "CLARABEL"), class = "DPPWarning")
+  expect_equal(as.numeric(value(expr)), 2^2 * 5, tolerance = 1e-4)
 })
 
 ## @cvxpy test_atoms.py::TestDotsort::test_non_fixed_x
@@ -2496,7 +2667,8 @@ test_that("power: approx=TRUE uses SOC, approx=FALSE uses power cones (CVXPY par
 
   ## approx=TRUE -> SOC cones, no power cones
   prob <- Problem(obj, list(power(x, 3.3, approx = TRUE) <= rep(1, 3)))
-  cc <- .get_cone_counts(prob, "CLARABEL")
+  expect_warning(cc <- .get_cone_counts(prob, "CLARABEL"),
+                 "approximated with rational")   ## CVXPY 1.9.3 warns too
   expect_gt(cc$soc, 0)
   expect_equal(cc$p3d, 0)
 
@@ -2529,7 +2701,14 @@ test_that("power: approx and exact give same answer for all p ranges (CVXPY pari
     }
     obj <- Minimize(x[1] + x[2] - x[3] + (x[2] + x[3])^2)
     prob <- Problem(obj, constr_a)
-    psolve(prob, solver = "CLARABEL")
+    ## Only p = 4.5 needs an approximating rational, so only it warns, as in
+    ## CVXPY 1.9.3.
+    if (p == 4.5) {
+      expect_warning(psolve(prob, solver = "CLARABEL"),
+                     "approximated with rational")
+    } else {
+      expect_no_warning(psolve(prob, solver = "CLARABEL"))
+    }
     x_approx <- as.numeric(value(x))
 
     if (direction == "<=") {
@@ -3062,4 +3241,30 @@ test_that("perspective: s=0 with recession function (CVXPY parity)", {
 
   expect_equal(as.numeric(value(x)), -1, tolerance = 1e-3)
   expect_equal(as.numeric(value(s)), 0, tolerance = 1e-3)
+})
+
+## RECORDED DIVERGENCE (ADR D_PORT.9, `better-in-r`): CVXPY 1.9.3 perspective.numeric
+## (perspective.py:61-93) multiplies the recession value by the ORIGINAL s, so it
+## returns ~0 at s = 0 and for 0 < s <= 1e-8 (np.isclose), where the exact value is
+## f_recession(x) resp. s f(x/s). Measured 2026-10-10 (claims audit C0242): CVXPY gives
+## 0 and 5e-9 for the norm2 case below, -0 for the upstream test's own f = x + 1 shape.
+## @cvxpy test_perspective.py::test_s_eq_0
+test_that("perspective numeric: recession value at and near s = 0 (decision 23, D_PORT.9)", {
+  x <- Variable(2)
+  s <- Variable(1, nonneg = TRUE)
+  p <- perspective(p_norm(x, 2), s, f_recession = p_norm(x, 2))
+  value(x) <- c(3, 4)
+  for (sv in c(1, 0.5, 1e-7, 1e-9, 0)) {
+    value(s) <- sv
+    expect_equal(as.numeric(value(p)), 5, tolerance = 1e-10, info = paste("s =", sv))
+  }
+  ## The upstream test's shape: f = x + 1, f_recession = x; the limit at s = 0 is x.
+  x1 <- Variable(1)
+  s1 <- Variable(1, nonneg = TRUE)
+  p1 <- perspective(x1 + 1, s1, f_recession = x1)
+  value(x1) <- -1
+  value(s1) <- 0
+  expect_equal(as.numeric(value(p1)), -1, tolerance = 1e-10)
+  value(s1) <- 1e-9
+  expect_equal(as.numeric(value(p1)), -1 + 1e-9, tolerance = 1e-10)
 })

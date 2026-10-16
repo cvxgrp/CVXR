@@ -127,6 +127,22 @@ test_that("PIQP QP with duals (sum_squares)", {
 })
 
 ## @cvxpy NONE
+test_that("PIQP solver_stats carries extra_stats$solution", {
+  ## piqp_qpif.py:48: attr[EXTRA_STATS] = {"solution": solution}. Claims-audit
+  ## row C0892, ported 1.9.2.9137.
+  skip_if_not_installed("piqp")
+  ## An LP, so the stuffed variable is x itself (a sum_squares objective would
+  ## add an auxiliary variable on the QP path and PIQP's x would have 4 entries).
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum_entries(x)), list(x >= 1))
+  psolve(prob, solver = "PIQP")
+  st <- solver_stats(prob)
+  expect_true(is.list(st@extra_stats))
+  expect_named(st@extra_stats, "solution")
+  expect_equal(as.numeric(st@extra_stats$solution$x), c(1, 1), tolerance = 1e-4)
+})
+
+## @cvxpy NONE
 test_that("PIQP QP (quadratic objective, no constraints)", {
   skip_if_not_installed("piqp")
   x <- Variable(2)

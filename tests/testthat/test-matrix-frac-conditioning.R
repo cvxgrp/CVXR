@@ -3,7 +3,7 @@
 ## `matrix_frac()` must return a value for an ILL-CONDITIONED second argument,
 ## as CVXPY does, and must say so.
 ##
-## Every inverse in matrix_frac.py -- numeric (:42,44), _grad (:68) and the
+## Every inverse in matrix_frac.py -- numeric (:42,44), _grad (:69) and the
 ## constructor shortcut (:149) -- is `numpy.linalg.inv`, which has no
 ## conditioning test and raises only on EXACT singularity. Base R's `solve()`
 ## applies `tol = .Machine$double.eps` against the reciprocal condition number

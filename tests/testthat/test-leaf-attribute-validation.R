@@ -7,13 +7,13 @@
 ## An attribute CVXR accepted but did not enforce does not announce itself --
 ## the problem solves, the status is "optimal", and the number is wrong.
 ##
-## CVXPY SOURCE: leaf.py:155-160 (dimension-reducing cardinality),
-## leaf.py:839-930 (_ensure_valid_bounds), leaf.py:350-414 (_bound_domain),
-## leaf.py:416-430 (domain), leaf.py:465-475 (project), leaf.py:670-671
+## CVXPY SOURCE: leaf.py:159-164 (dimension-reducing cardinality),
+## leaf.py:855-946 (_ensure_valid_bounds), leaf.py:366-430 (_bound_domain),
+## leaf.py:432-446 (domain), leaf.py:484-493 (project), leaf.py:687-688
 ## (the 'in bounds' arm of the attribute-name cascade).
 
 ## ---------------------------------------------------------------------------
-## At most ONE dimension-reducing attribute (CVXPY leaf.py:155-160)
+## At most ONE dimension-reducing attribute (CVXPY leaf.py:159-164)
 ##
 ## Pre-fix CVXR accepted every one of these and SILENTLY DROPPED the second
 ## attribute, because the reduction's `if (has_sym || has_psd || has_nsd)` /
@@ -30,6 +30,15 @@ test_that("more than one dimension-reducing attribute is rejected", {
   expect_error(Variable(c(2, 2), NSD = TRUE, diag = TRUE), "more than one")
   ## Parameters go through the same validator.
   expect_error(Parameter(c(2, 2), symmetric = TRUE, diag = TRUE), "more than one")
+})
+
+## leaf.py:704-706: Leaf.is_diag() reports the diag attribute.
+## @cvxpy NONE
+test_that("is_diag() reports the diag attribute of a leaf", {
+  expect_true(is_diag(Variable(c(3, 3), diag = TRUE)))
+  expect_false(is_diag(Variable(c(3, 3))))
+  expect_false(is_diag(Variable(c(3, 3), symmetric = TRUE)))
+  expect_true(is_diag(Parameter(c(2, 2), diag = TRUE)))
 })
 
 test_that("exactly one dimension-reducing attribute is still accepted", {
@@ -51,7 +60,7 @@ test_that("a single dimension-reducing attribute still lowers correctly", {
 
 ## ---------------------------------------------------------------------------
 ## Numeric array bounds must match the leaf's shape
-## (CVXPY leaf.py:909-921 -- `valid_array = ... and val.shape == self.shape`)
+## (CVXPY leaf.py:927-937 -- `valid_array = ... and val.shape == self.shape`)
 ##
 ## Pre-fix, an n x n bounds array survived onto the n(n+1)/2 upper-triangular
 ## variable that CvxAttr2Constr builds for a symmetric leaf, and
@@ -103,9 +112,9 @@ test_that("per-entry bounds on a symmetric variable agree across solvers", {
 
 ## ---------------------------------------------------------------------------
 ## project() reads the canonical index, not the raw attribute
-## (CVXPY leaf.py:465-475, indexing with self.boolean_idx / integer_idx)
+## (CVXPY leaf.py:484-493, indexing with self.boolean_idx / integer_idx)
 ##
-## `_validate_value` routes every `value<-` through project (leaf.py:608), so a
+## `_validate_value` routes every `value<-` through project (leaf.py:624), so a
 ## projection bug is a validation bug. Pre-fix, of CVXR's four documented
 ## spellings two broke in OPPOSITE directions: the coordinate-matrix form
 ## rounded the wrong entries (as.integer(cbind(c(1,2), c(1,2))) is 1,2,1,2) and
@@ -161,7 +170,7 @@ test_that("integer spellings project through the canonical index too", {
 })
 
 ## ---------------------------------------------------------------------------
-## domain(Leaf) -- the second caller of _bound_domain (CVXPY leaf.py:416-430)
+## domain(Leaf) -- the second caller of _bound_domain (CVXPY leaf.py:432-446)
 ## Pre-fix this was `function(x) list()`.
 ## ---------------------------------------------------------------------------
 
@@ -173,7 +182,7 @@ test_that("domain() of a leaf reports its attribute constraints", {
   expect_length(CVXR:::domain(Variable(2, neg = TRUE)), 1)
   ## lower and upper are separate constraints
   expect_length(CVXR:::domain(Variable(2, bounds = list(-1, 1))), 2)
-  ## semidefiniteness, CVXPY leaf.py:426-429
+  ## semidefiniteness, CVXPY leaf.py:442-445
   expect_length(CVXR:::domain(Variable(c(2, 2), PSD = TRUE)), 1)
   expect_length(CVXR:::domain(Variable(c(2, 2), NSD = TRUE)), 1)
   ## Parameters share the implementation; a Constant has no attributes.
@@ -214,7 +223,7 @@ test_that("domain() of a partial_optimize collects its leaves' constraints", {
 })
 
 ## ---------------------------------------------------------------------------
-## The attribute-name cascade (CVXPY leaf.py:653-676)
+## The attribute-name cascade (CVXPY leaf.py:669-690)
 ## Pre-fix an out-of-bounds assignment said "value must be real."
 ## ---------------------------------------------------------------------------
 

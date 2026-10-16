@@ -384,6 +384,36 @@ test_that("Dotsort: sorted-w placed at indices of sorted x", {
   expect_equal(as.numeric(g[[1L]]), c(1, 3, 2), tolerance = 1e-10)
 })
 
+## RECORDED DIVERGENCE (ADR D_PORT.10, `better-in-r`): CVXPY 1.9.3 dotsort._grad
+## (dotsort.py:65-82) flattens a matrix X in C order and places sorted w at the argsort
+## positions of THAT vector, while every other gradient (its own sum_largest and the
+## affine atoms included) is column-major. Measured 2026-10-10 (claims audit C0162): for
+## the X below CVXPY returns (1, 4, 3, 6, 2, 5), which matches a row-major finite
+## difference, not the column-major one its chain rule consumes. CVXR's column-major
+## gradient matches the column-major finite difference. Vectors are unaffected.
+## @cvxpy test_grad.py::TestMultiVarAtomGradients::test_multi_var_atom[dotsort]
+test_that("Dotsort: matrix argument gradient is column-major (decision 23, D_PORT.10)", {
+  X <- Variable(c(2, 3))   # .set_value() flattens to a column; set the matrix directly
+  value(X) <- matrix(c(1, 7, 3, 9, 2, 8), 2, 3, byrow = TRUE)
+  w <- 1:6
+  e <- dotsort(X, w)
+  expect_equal(as.numeric(value(e)), 136, tolerance = 1e-10)
+  g <- as.numeric(grad(e)[[1L]])
+  ## order(as.numeric(X)) = order(c(1, 9, 7, 2, 3, 8)) = c(1, 4, 5, 3, 6, 2); g[that] = 1:6.
+  expect_equal(g, c(1, 6, 4, 2, 3, 5), tolerance = 1e-10)
+  ## Column-major finite difference of the atom's own numeric.
+  base <- value(X)
+  f0 <- as.numeric(value(e))
+  fd <- numeric(0)
+  for (j in 1:3) for (i in 1:2) {
+    Xp <- base
+    Xp[i, j] <- Xp[i, j] + 1e-6
+    value(X) <- Xp
+    fd <- c(fd, (as.numeric(value(e)) - f0) / 1e-6)
+  }
+  expect_equal(g, fd, tolerance = 1e-5)
+})
+
 ## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[cummax]
 test_that("Cummax: zero-fiber-Jacobian (CVXPY skip_reason: 'subdifferential issues')", {
   ## CVXPY's cummax._grad is buggy for 1D inputs and skipped in
@@ -589,13 +619,144 @@ test_that("MatrixFrac: dX = (P^-1 + P^-T) X, dP = -(P^-1 X X^T P^-1)^T", {
                tolerance = 1e-7)
 })
 
-## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[lambda_sum_largest]
-test_that("LambdaSumLargest: NULL (CVXPY's NotImplementedError)", {
-  ## CVXPY skip_reason="_grad raises NotImplementedError".
+## ---------------------------------------------------------------------
+## Complex arguments (claims-audit decision 15: C0219/C0234/C0250/C0253/C0254)
+## ---------------------------------------------------------------------
+## The five atoms that allow complex arguments return a complex Jacobian in
+## CVXPY; CVXR dropped the imaginary part (`as.numeric`) and used `t(v)` where
+## numpy's svd returns V^H. Expected values are CVXPY 1.9.3 printed to 12
+## digits (notes/audit/claims_audit_item1.md, Decision 15). A complex Jacobian
+## is a dense base complex matrix, because Matrix has no complex sparse class.
+
+.cx_X <- function() {
+  X <- Variable(c(2, 2), complex = TRUE)
+  value(X) <- matrix(c(1 + 2i, 0.5i, 3 - 1i, 2 + 0i), 2, 2)
+  X
+}
+
+.expect_complex_equal <- function(got, want, tolerance = 1e-10) {
+  expect_true(is.complex(got))
+  expect_equal(Re(as.vector(got)), Re(want), tolerance = tolerance)
+  expect_equal(Im(as.vector(got)), Im(want), tolerance = tolerance)
+}
+
+## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[norm_nuc]
+test_that("NormNuc: complex X keeps the complex U V^H Jacobian (C0234)", {
+  X <- .cx_X()
+  expect_no_warning(g <- grad(norm_nuc(X)))
+  .expect_complex_equal(g[[as.character(X@id)]],
+    c(0.405142890617 + 0.741797143258i, -0.136977275951 - 0.516559253436i,
+      0.5134201326 - 0.148310498208i, 0.844530100221 - 0.034244318988i))
+  ## A complex-declared Variable holding a real value stays real and sparse,
+  ## as CVXPY's float64 csc_array does.
+  Xr <- Variable(c(2, 2), complex = TRUE)
+  value(Xr) <- matrix(c(1, 3, 2, 4), 2, 2)
+  gr <- grad(norm_nuc(Xr))[[as.character(Xr@id)]]
+  expect_false(is.complex(gr))
+  expect_true(inherits(gr, "dgCMatrix"))
+  expect_equal(as.numeric(gr),
+               c(-0.514495755428, 0.857492925713, 0.857492925713, 0.514495755428),
+               tolerance = 1e-10)
+})
+
+## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[sigma_max]
+test_that("SigmaMax: complex X keeps the complex u_1 v_1^H Jacobian (C0254)", {
+  X <- .cx_X()
+  expect_no_warning(g <- grad(sigma_max(X)))
+  .expect_complex_equal(g[[as.character(X@id)]],
+    c(0.198614318223 + 0.409800897646i, 0.025144522399 + 0.231315901707i,
+      0.724708631965 - 0.245760297722i, 0.390942505846 + 0.0062861306i))
+})
+
+## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[quad_form]
+test_that("QuadForm: complex x keeps the complex (P + P^H) x Jacobian (C0250)", {
+  x <- Variable(2, complex = TRUE)
+  value(x) <- c(1 + 1i, 2 - 0.5i)
+  P <- matrix(c(2, 1 + 1i, 1 - 1i, 3), 2, 2)
+  expect_no_warning(g <- grad(quad_form(x, P)))
+  .expect_complex_equal(g[[as.character(x@id)]], c(7 - 1i, 12 + 1i))
+  ## A 1x1 Jacobian collapses to a complex scalar, as CVXPY's D[0, 0].
+  xs <- Variable(1, complex = TRUE)
+  value(xs) <- 1 + 1i
+  gs <- grad(quad_form(xs, matrix(2)))[[as.character(xs@id)]]
+  expect_true(is.complex(gs))
+  expect_length(gs, 1L)
+  expect_null(dim(gs))
+  expect_equal(gs, 4 + 4i)
+})
+
+## @cvxpy test_grad.py::TestMultiVarAtomGradients::test_multi_var_atom[quad_over_lin]
+test_that("QuadOverLin: complex X gives complex DX and Dy = -sum|X|^2 / y^2 (C0253)", {
+  X <- .cx_X()
+  y <- Variable()
+  value(y) <- 2
+  expect_no_warning(g <- grad(quad_over_lin(X, y)))
+  .expect_complex_equal(g[[as.character(X@id)]], c(1 + 2i, 0.5i, 3 - 1i, 2 + 0i))
+  gy <- g[[as.character(y@id)]]
+  expect_false(is.complex(gy))
+  expect_equal(as.numeric(gy), -4.8125)
+})
+
+## @cvxpy NONE (as the real MatrixFrac test above: test_grad.py has no
+##   matrix_frac config and no complex gradient test; pinned to CVXPY 1.9.3.)
+test_that("MatrixFrac: complex X keeps complex DX and DP with CVXPY's plain transposes (C0219)", {
+  x <- Variable(2, complex = TRUE)
+  value(x) <- c(1 + 1i, 2 - 0.5i)
+  Pv <- Variable(c(2, 2), symmetric = TRUE)
+  value(Pv) <- matrix(c(2, 0.5, 0.5, 1), 2, 2)
+  expect_no_warning(g <- grad(matrix_frac(x, Pv)))
+  .expect_complex_equal(g[[as.character(x@id)]],
+    c(0 + 1.428571428571i, 4 - 1.714285714286i))
+  .expect_complex_equal(g[[as.character(Pv@id)]],
+    c(0.510204081633 + 0i, -0.612244897959 - 1.428571428571i,
+      -0.612244897959 - 1.428571428571i, -3.265306122449 + 3.428571428571i))
+  ## Hermitian constant P: CVXPY uses P^-T, not P^-H (matrix_frac.py:75).
+  P <- matrix(c(2, 1 + 1i, 1 - 1i, 3), 2, 2)
+  gh <- grad(matrix_frac(x, P))[[as.character(x@id)]]
+  .expect_complex_equal(gh, c(0.75 + 2.75i, 2 - 1.5i))
+})
+
+## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[norm_nuc] test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[sigma_max]
+test_that("grad walker composes and sums complex Jacobians with real sparse ones", {
+  X <- .cx_X()
+  ## A real sparse child Jacobian (X + X, which is 2 I) times a complex atom
+  ## Jacobian. (Not `2 * X`: Multiply's own .grad still coerces a complex
+  ## operand with as.numeric, a separate finding recorded at decision 15.)
+  .expect_complex_equal(grad(norm_nuc(X + X))[[as.character(X@id)]],
+    c(0.810285781233 + 1.483594286516i, -0.273954551903 - 1.033118506872i,
+      1.026840265199 - 0.296620996416i, 1.689060200442 - 0.068488637976i))
+  ## Two complex Jacobians summed through AddExpression.
+  .expect_complex_equal(grad(norm_nuc(X) + sigma_max(X))[[as.character(X@id)]],
+    c(0.60375720884 + 1.151598040904i, -0.111832753552 - 0.285243351729i,
+      1.238128764565 - 0.39407079593i, 1.235472606068 - 0.027958188388i))
+})
+
+## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[lambda_sum_largest] test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[lambda_sum_largest_frac]
+test_that("LambdaSumLargest: gradient is the sum of top-k eigenvector outer products", {
+  ## CVXPY lambda_sum_largest._grad_matrices (lambda_sum_largest.py:63-81), real
+  ## since 1.9.0; CVXR returned NULL until 1.9.2.9135 (claims-audit row C0214).
+  ## Expected values measured against pinned CVXPY 1.9.3
+  ## (notes/audit/repro/19_lambda_sum_largest_grad.py); A has eigenvalues 1, 3, 6
+  ## with eigenvectors that are not axis-aligned, so the gradient is dense.
+  Q <- qr.Q(qr(matrix(c(1, 0, 1, 2, 1, 0, 0, 3, 1), 3, 3)))
+  A <- Q %*% diag(c(1, 3, 6)) %*% t(Q)
+  A <- (A + t(A)) / 2
   X <- Variable(c(3, 3), symmetric = TRUE)
-  value(X) <- diag(c(3, 2, 1))
-  g <- grad(lambda_sum_largest(X, 2))
-  expect_null(g[[as.character(X@id)]])
+  value(X) <- A
+
+  ## k = 2: v6 v6^T + v3 v3^T.
+  g2 <- grad(lambda_sum_largest(X, 2))[[as.character(X@id)]]
+  expect_equal(dim(g2), c(9L, 1L))
+  expect_equal(as.numeric(as.matrix(g2)),
+               c(0.5, 0, -0.5, 0, 1, 0, -0.5, 0, 0.5),
+               tolerance = 1e-6)
+
+  ## k = 1.5: v6 v6^T + 0.5 * v3 v3^T.
+  g15 <- grad(lambda_sum_largest(X, 1.5))[[as.character(X@id)]]
+  expect_equal(dim(g15), c(9L, 1L))
+  expect_equal(as.numeric(as.matrix(g15)),
+               c(1/3, -1/6, -1/3, -1/6, 5/6, 1/6, -1/3, 1/6, 1/3),
+               tolerance = 1e-6)
 })
 
 ## @cvxpy test_grad.py::TestSingleVarAtomGradients::test_single_var_atom[eye_minus_inv]

@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/reductions/solvers/solving_chain.py:199-204
+## @cvxpy cvxpy/reductions/solvers/solving_chain.py:202-207
 ##
 ## CVXPY warns when a PARAMETERIZED problem is not DPP, and raises only under
 ## enforce_dpp:

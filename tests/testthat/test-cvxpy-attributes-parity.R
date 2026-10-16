@@ -607,6 +607,22 @@ test_that("Nonneg variable with bounds: both constraints apply (CVXPY parity)", 
   expect_equal(as.numeric(value(x)), 2, tolerance = 1e-3)
 })
 
+## @cvxpy test_attributes.py::TestMultipleAttributes::test_sparse_bounded_variable
+test_that("Sparse variable with a sparse lower bound solves to the bound (CVXPY parity)", {
+  ## CVXPY: lb_sparse = coo_array([-1.5, -2.5] at (0,0), (1,1)), bounds [lb, 10],
+  ## min sum(x) -> -4 with x = diag(-1.5, -2.5). Expected values from
+  ## test_attributes.py (CVXPY 1.9.3).
+  lb_sparse <- Matrix::sparseMatrix(i = c(1L, 2L), j = c(1L, 2L),
+                                    x = c(-1.5, -2.5), dims = c(2L, 2L))
+  x <- Variable(c(2L, 2L), sparsity = cbind(c(1L, 2L), c(1L, 2L)),
+                bounds = list(lb_sparse, 10))
+  prob <- Problem(Minimize(sum_entries(x)))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, -4, tolerance = 1e-5)
+  expect_equal(as.matrix(value(x)), matrix(c(-1.5, 0, 0, -2.5), 2L, 2L), tolerance = 1e-5)
+})
+
 ## @cvxpy NONE
 test_that("Boolean variable in mixed-integer LP (CVXPY parity)", {
   ## Boolean + integer variables as separate variables in same problem
@@ -680,7 +696,7 @@ test_that("Variable sign queries reflect attributes (CVXPY parity)", {
   expect_true(is_nonpos(x_np))
   expect_false(is_nonneg(x_np))
 
-  ## boolean implies nonneg (CVXPY leaf.py lines 262-269)
+  ## boolean implies nonneg (CVXPY leaf.py lines 299-304)
   x_bool <- Variable(boolean = TRUE)
   expect_true(is_nonneg(x_bool))
 

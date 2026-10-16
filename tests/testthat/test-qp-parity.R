@@ -372,7 +372,7 @@ test_that("Gurobi custom environment (N/A in R: gurobi pkg lacks env support)", 
   ## CVXPY creates a gurobipy.Env() with custom params (MIPGap, AggFill,
   ## PerturbValue) and passes it via env= kwarg. The R gurobi package
   ## does not expose an equivalent mechanism. If this becomes available,
-  ## implement the test following CVXPY test_qp_solvers.py lines 822-854.
+  ## implement the test following CVXPY test_qp_solvers.py lines 869-901.
 })
 
 # ── TestQp::test_highs_cvar ──────────────────────────────────────────────────

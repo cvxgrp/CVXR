@@ -48,7 +48,7 @@ test_that("QuadForm is canonicalized under DGP, not copied verbatim", {
 })
 
 # ===================================================================
-# log1p bounds are those of log(1 + x)  (elementwise/log1p.py:43-47)
+# log1p bounds are those of log(1 + x)  (elementwise/log1p.py:43-46)
 # ===================================================================
 
 ## @cvxpy test_bounds.py::TestBoundsPropagation::test_log1p_bounds
@@ -140,7 +140,7 @@ test_that("atanh reports a two-constraint domain instead of aborting", {
 
 # ===================================================================
 # partial_trace / partial_transpose propagate DCP attributes
-# (affine/partial_trace.py:87-93, affine/partial_transpose.py:88-94)
+# (affine/partial_trace.py:87-93, affine/partial_transpose.py:90-94)
 # ===================================================================
 
 ## @cvxpy test_atoms.py::TestAtoms::test_partial_trace_dcp_attributes

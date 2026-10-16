@@ -1,5 +1,5 @@
-## @cvxpy cvxpy/reductions/dqcp2dcp/inverse.py:56,92-98
-## @cvxpy cvxpy/reductions/dqcp2dcp/sets.py:152-167,176,192
+## @cvxpy cvxpy/reductions/dqcp2dcp/inverse.py:56,92-99
+## @cvxpy cvxpy/reductions/dqcp2dcp/sets.py:152-167,176,189
 ##
 ## DQCP dispatch keys on the ELEMENTWISE `multiply` atom, never on a matrix
 ## product. Upstream uses narrow tests at every site:
@@ -7,9 +7,9 @@
 ##   inverse.py:56   type(expr) == atoms.multiply          (exact type)
 ##   inverse.py:93   isinstance(expr, atoms.multiply)      (narrow class)
 ##   sets.py:176     SUBLEVEL_SETS[type(expr)]             (exact type)
-##   sets.py:192     SUPERLEVEL_SETS[type(expr)]           (exact type)
+##   sets.py:189     SUPERLEVEL_SETS[type(expr)]           (exact type)
 ##
-## CVXR's Multiply EXTENDS MulExpression (binary_operators.R:190), so testing
+## CVXR's Multiply EXTENDS MulExpression (binary_operators.R:194), so testing
 ## the parent swept genuine matrix products in. `.dqcp_inverse(A %*% x)` then
 ## returned `function(t) DivExpression(t, A)` -- elementwise division by the
 ## matrix, where the true inverse of a matrix product needs a solve. Likewise

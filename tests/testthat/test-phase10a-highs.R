@@ -405,6 +405,32 @@ test_that("HiGHS solver_stats populated", {
   stats <- solver_stats(prob)
   expect_true(!is.null(stats))
   expect_equal(stats@solver_name, "HIGHS")
+  ## highs_qpif.py:76-79: SOLVE_TIME = run_time, EXTRA_STATS = info;
+  ## :108-114 NUM_ITERS summed in the solution branch. Claims-audit row C0863,
+  ## ported 1.9.2.9137 (this QP goes through HiGHS_QP_Solver).
+  expect_true(is.numeric(stats@solve_time))
+  expect_gte(stats@solve_time, 0)
+  expect_true(is.list(stats@extra_stats))
+  expect_true("objective_function_value" %in% names(stats@extra_stats))
+  expect_true(is.numeric(stats@num_iters))
+})
+
+## @cvxpy NONE
+test_that("HiGHS conic-path solver_stats populated (integer LP)", {
+  ## highs_conif.py:164-167 and :194-200, same fields as the QP path. Claims-
+  ## audit row C0863, ported 1.9.2.9137 (an integer LP goes through
+  ## HiGHS_Conic_Solver).
+  xi <- Variable(2L, integer = TRUE)
+  prob <- Problem(Minimize(sum_entries(xi)), list(xi >= 1.5))
+  val <- psolve(prob, solver = HIGHS_SOLVER, verbose = FALSE)
+  expect_equal(val, 4, tolerance = 1e-6)
+  stats <- solver_stats(prob)
+  expect_equal(stats@solver_name, "HIGHS")
+  expect_true(is.numeric(stats@solve_time))
+  expect_gte(stats@solve_time, 0)
+  expect_true(is.list(stats@extra_stats))
+  expect_true("mip_node_count" %in% names(stats@extra_stats))
+  expect_true(is.numeric(stats@num_iters))
 })
 
 # ── Solver constant exported ────────────────────────────────────────────────
@@ -444,4 +470,39 @@ test_that("HiGHS handles nonneg attribute", {
   result <- psolve(prob, solver = HIGHS_SOLVER, verbose = FALSE)
   expect_equal(status(prob), "optimal")
   expect_equal(result, 1.0, tolerance = 1e-5)
+})
+
+# ── Status map ───────────────────────────────────────────────────────────────
+
+## @cvxpy highs_conif.py::HIGHS::STATUS_MAP highs_qpif.py::HIGHS::STATUS_MAP
+test_that("HiGHS solution limit maps to user_limit, as kSolutionLimit upstream", {
+  ## R highs returns HighsModelStatus as an integer: 16 is kSolutionLimit
+  ## ("Solution limit reached", hit by mip_max_improving_sols), 15 is kUnknown.
+  ## CVXPY 1.9.3 highs_conif.py:118-131 maps kSolutionLimit to USER_LIMIT and
+  ## returns the incumbent; kUnknown is not in the map. Until 1.9.2.9145 CVXR
+  ## had the two codes swapped, so a solution-limit stop aborted with
+  ## "Solver HIGHS failed" (claims-audit row C0776).
+  skip_if_not_installed("highs", minimum_version = "1.14")
+  expect_identical(HIGHS_STATUS_MAP[["16"]], USER_LIMIT)
+  expect_null(HIGHS_STATUS_MAP[["15"]])
+
+  set.seed(1)
+  n <- 60L
+  w <- runif(n, 1, 10)
+  v <- runif(n, 1, 10)
+  cap <- sum(w) / 3
+  x <- Variable(n, boolean = TRUE)
+  prob <- Problem(Maximize(sum(v * x)), list(sum(w * x) <= cap))
+  ## USER_LIMIT is in INACCURATE on both sides (settings.py:66-67), so the
+  ## "Solution may be inaccurate" warning is expected, as problem.py:1444-1449.
+  expect_warning(
+    val <- psolve(prob, solver = HIGHS_SOLVER, verbose = FALSE,
+                  mip_max_improving_sols = 1L),
+    "inaccurate")
+  expect_equal(status(prob), "user_limit")
+  expect_true(is.finite(val))
+  xv <- as.numeric(value(x))
+  expect_equal(xv, round(xv), tolerance = 1e-6)
+  expect_lte(sum(w * xv), cap + 1e-5)
+  expect_equal(sum(v * xv), val, tolerance = 1e-6)
 })

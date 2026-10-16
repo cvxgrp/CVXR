@@ -597,6 +597,32 @@ test_that("LambdaSumLargest: k=n equals trace", {
   expect_equal(as.numeric(val), 10, tolerance = 1e-10)
 })
 
+## @cvxpy test_atoms.py::TestAtoms::test_sum_largest
+test_that("LambdaSumLargest: fractional k weights the next eigenvalue", {
+  ## CVXPY lambda_sum_largest.py:40-54; `as.integer(k)` used to truncate 1.5 to 1
+  ## silently (claims-audit row C0214, repro notes/audit/repro/19_*).
+  A <- matrix(c(2, 0, 0, 1), 2, 2)  # Eigenvalues: 2, 1
+  e <- lambda_sum_largest(Constant(A), 1.5)
+  expect_equal(e@k, 1.5)
+  expect_equal(as.numeric(value(e)), 2 + 0.5 * 1, tolerance = 1e-10)
+  e2 <- lambda_sum_smallest(Constant(A), 1.3)
+  expect_equal(as.numeric(value(e2)), 1 + 0.3 * 2, tolerance = 1e-10)
+  ## k past n: the fractional part has no eigenvalue to weight (CVXPY :52).
+  e3 <- lambda_sum_largest(Constant(A), 2.5)
+  expect_equal(as.numeric(value(e3)), 3, tolerance = 1e-10)
+})
+
+## @cvxpy NONE
+test_that("LambdaSumLargest: fractional k solves through the canonicalization", {
+  ## minimize S_1.5(Y) s.t. diag(Y) >= (3, 4, 5), Y PSD  ->  5 + 0.5 * 4 = 7
+  ## (CVXPY 1.9.3 SCS: 7.0000, notes/audit/repro/19_lambda_sum_largest_grad.py).
+  Y <- Variable(c(3, 3), PSD = TRUE)
+  prob <- Problem(Minimize(lambda_sum_largest(Y, 1.5)), list(diag(Y) >= c(3, 4, 5)))
+  val <- psolve(prob, solver = "SCS", eps = 1e-8)
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, 7, tolerance = 1e-4)
+})
+
 # ═══════════════════════════════════════════════════════════════════
 # lambda_sum_smallest — unit tests
 # ═══════════════════════════════════════════════════════════════════

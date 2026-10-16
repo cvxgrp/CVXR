@@ -95,7 +95,7 @@ test_that("log-log concavity of atoms: log is log-log concave", {
 test_that("Affine atoms log-log curvature (CVXPY-aligned)", {
   p <- Variable(3, pos = TRUE)
 
-  ## SumEntries: convex but NOT concave (CVXPY sum.py lines 69-75)
+  ## SumEntries: convex but NOT concave (CVXPY sum.py lines 71-77)
   s <- sum_entries(p)
   expect_true(is_atom_log_log_convex(s))
   expect_false(is_atom_log_log_concave(s))

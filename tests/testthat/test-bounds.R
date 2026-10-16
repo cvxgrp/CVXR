@@ -125,7 +125,7 @@ test_that("parametric bounds solve and re-solve through lowered constraints", {
   expect_equal(as.numeric(value(x)), 3, tolerance = 1e-5)
 })
 
-## @cvxpy matrix_stuffing.py:48-52,84-88
+## @cvxpy matrix_stuffing.py:49-53,85-89
 test_that("HiGHS keeps sparse bounds on lowered constraints", {
   skip_if_not_installed("highs")
 
@@ -176,7 +176,7 @@ test_that("HiGHS parametric bound tensors support exact 2D shapes", {
   expect_equal(as.numeric(value(X)), c(1, 2, 3, 4), tolerance = 1e-5)
 })
 
-## @cvxpy leaf.py:607-648 (#3087)
+## @cvxpy leaf.py:626-667 (#3087)
 test_that("Parameter values may contain matching infinities", {
   p <- Parameter(2)
   value(p) <- c(-Inf, Inf)
@@ -360,6 +360,113 @@ test_that("bounds utility functions mirror CVXPY 1.9", {
                list(c(0, 0), c(3, 4)))
   expect_equal(bp(refine_bounds_from_sign(c(-1, -2), c(3, 4), FALSE, TRUE)),
                list(c(-1, -2), c(0, 0)))
+})
+
+## @cvxpy test_bounds.py::TestBoundsUtilityFunctions::test_matmul_bounds_constant_left test_bounds.py::TestBoundsUtilityFunctions::test_matmul_bounds_both_intervals
+test_that("matmul_bounds and coords_equal point tests are exact, not all.equal (C1002/C1004)", {
+  ## bounds.py:774-778 `_is_point` is np.array_equal. The split formula is only
+  ## valid for lb == ub, so a tolerance test yields unsound (too tight) bounds.
+  ## Claims-audit decision 14 (notes/audit/claims_audit_item1.md); expected
+  ## values are CVXPY 1.9.3.
+  ones <- matrix(1, 2, 1)
+
+  ## (a) a narrow interval that all.equal() calls equal is still an interval
+  lb3 <- matrix(c(1, 1), 1, 2)
+  ub3 <- matrix(c(1 + 1e-9, 1), 1, 2)
+  expect_true(isTRUE(all.equal(lb3, ub3)))      # the trap this test guards against
+  r <- matmul_bounds(lb3, ub3, ones, ones)
+  expect_equal(as.numeric(r[[1L]]), 2)
+  expect_equal(as.numeric(r[[2L]]), 2 + 1e-9, tolerance = 1e-12)
+  expect_true(r[[2L]] > r[[1L]])
+
+  ## (b) two narrow intervals: no point operand, so unbounded (CVXPY gives
+  ## +-Inf; the tolerance test returned finite bounds near 1e16)
+  lb2 <- matrix(c(1e8 - 1, 1e8), 2, 1)
+  ub2 <- matrix(1e8, 2, 1)
+  expect_true(isTRUE(all.equal(lb2, ub2)))
+  r <- matmul_bounds(lb2, ub2, t(lb2), t(ub2))
+  expect_true(all(is.infinite(r[[1L]]) & r[[1L]] < 0))
+  expect_true(all(is.infinite(r[[2L]]) & r[[2L]] > 0))
+
+  ## (c) the same through the expression tree
+  y1 <- Variable(c(2, 1), bounds = list(lb2, ub2))
+  y2 <- Variable(c(1, 2), bounds = list(t(lb2), t(ub2)))
+  g <- get_bounds(y1 %*% y2)
+  expect_true(all(is.infinite(g[[1L]])))
+  expect_true(all(is.infinite(g[[2L]])))
+  z <- Variable(c(1, 2), bounds = list(lb3, ub3))
+  g <- get_bounds(z %*% ones)
+  expect_equal(as.numeric(g[[2L]]), 2 + 1e-9, tolerance = 1e-12)
+
+  ## (d) a genuine point operand still takes the exact split formula; a NaN
+  ## entry is never a point (np.array_equal), so the result is unbounded
+  A <- matrix(c(1, 3, -2, 4), 2, 2)
+  r <- matmul_bounds(A, A, matrix(c(-1, 0), 2, 1), matrix(c(1, 2), 2, 1))
+  expect_equal(as.numeric(r[[1L]]), c(-5, -3))
+  expect_equal(as.numeric(r[[2L]]), c(1, 11))
+  An <- A
+  An[1L, 1L] <- NaN
+  r <- matmul_bounds(An, An, matrix(c(-1, 0), 2, 1), matrix(c(1, 2), 2, 1))
+  expect_true(all(is.infinite(r[[1L]]) & r[[1L]] < 0))
+  expect_true(all(is.infinite(r[[2L]]) & r[[2L]] > 0))
+
+  ## (e) coords_equal (bounds.py:859-876) is exact per coordinate vector
+  c1 <- list(c(100000000L, 100000001L), c(0L, 1L))
+  c2 <- list(c(100000000L, 100000000L), c(0L, 1L))
+  expect_true(isTRUE(all.equal(c1[[1L]], c2[[1L]])))
+  expect_false(coords_equal(c1, c2))
+  expect_true(coords_equal(c1, c1))
+  expect_true(coords_equal(list(c(1L, 2L)), list(c(1, 2))))
+  expect_false(coords_equal(c1, list(0L)))
+  expect_false(coords_equal(list(c(1L, 2L)), list(c(1L, 2L, 3L))))
+})
+
+## @cvxpy test_bounds.py::TestBoundsUtilityFunctions::test_maximum_bounds test_bounds.py::TestBoundsUtilityFunctions::test_minimum_bounds test_bounds.py::TestBoundsUtilityFunctions::test_broadcast_bounds
+test_that("maximum/minimum/broadcast bounds broadcast numpy-style across shapes", {
+  ## bounds.py:398-402 / 420-424 fold with np.maximum / np.minimum, and
+  ## bounds.py:677-683 uses np.broadcast_to: a (1, n) row repeats down the rows
+  ## and an (m, 1) column repeats across the columns. R's pmin/pmax and
+  ## array() recycle column-major instead, which permutes a row operand.
+  ## Claims-audit row C0984 / C0994 (notes/audit/claims_audit_item1.md, repro 16).
+  row <- matrix(c(1, 2, 3), 1, 3)
+  col <- matrix(c(1, 2), 2, 1)
+  row_full <- matrix(c(1, 2, 3), 2, 3, byrow = TRUE)   # [1 2 3; 1 2 3]
+  col_full <- matrix(c(1, 2), 2, 3)                    # [1 1 1; 2 2 2]
+  lo <- matrix(0, 2, 3)
+  hi <- matrix(10, 2, 3)
+
+  ## direct helpers, both operand orders (np.minimum broadcasts either way)
+  b <- minimum_bounds(list(list(lo, hi), list(row, row)))
+  expect_equal(b[[1L]], lo)
+  expect_equal(b[[2L]], row_full)
+  b <- minimum_bounds(list(list(row, row), list(lo, hi)))
+  expect_equal(dim(b[[2L]]), c(2L, 3L))
+  expect_equal(b[[2L]], row_full)
+  b <- maximum_bounds(list(list(lo, hi), list(row, row)))
+  expect_equal(b[[1L]], row_full)
+  expect_equal(b[[2L]], hi)
+  b <- minimum_bounds(list(list(lo, hi), list(col, col)))
+  expect_equal(b[[2L]], col_full)
+
+  bb <- broadcast_bounds(row, row, c(2L, 3L))
+  expect_equal(bb[[1L]], row_full)
+  expect_equal(bb[[2L]], row_full)
+  bb <- broadcast_bounds(col, col, c(2L, 3L))
+  expect_equal(bb[[1L]], col_full)
+  bb <- broadcast_bounds(1, 2, c(3L, 4L))
+  expect_equal(bb[[1L]], matrix(1, 3, 4))
+  expect_equal(bb[[2L]], matrix(2, 3, 4))
+
+  ## through the atoms (the path a user reaches)
+  x <- Variable(c(2L, 3L), bounds = list(lo, hi))
+  b <- get_bounds(min_elemwise(x, row))
+  expect_equal(b[[1L]], lo)
+  expect_equal(b[[2L]], row_full)
+  b <- get_bounds(max_elemwise(x, row))
+  expect_equal(b[[1L]], row_full)
+  expect_equal(b[[2L]], hi)
+  b <- get_bounds(min_elemwise(x, col))
+  expect_equal(b[[2L]], col_full)
 })
 
 ## @cvxpy test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_scalar_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_nonneg_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_nonpos_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_combined_nonneg_and_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_combined_nonpos_and_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_matrix_bounds test_bounds.py::TestHIGHSBoundsPropagation::test_get_problem_data_multiple_variables

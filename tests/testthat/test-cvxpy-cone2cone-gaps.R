@@ -287,7 +287,7 @@ test_that("cone2cone gap: PowND pcp_3 axis=1", {
 
   ## Same problem but transposed: axis=1 (CVXPY axis=1 -> R axis=1)
   ## ConeMatrixStuffing now transposes PowConeND(axis=1) -> PowConeND(axis=2)
-  ## before extracting alpha columns (matching CVXPY lines 382-388).
+  ## before extracting alpha columns (matching CVXPY lines 413-419).
   x <- Variable(3)
   expect_x <- c(0.06393515, 0.78320961, 2.30571048)
   hypos <- Variable(2)
@@ -485,6 +485,65 @@ test_that("EXACT_CONE_CONVERSIONS is a DAG (no cone reaches itself)", {
     expect_false(any(vapply(reach[[i]], identical, logical(1L), srcs[[i]])),
                  info = "cycle detected in EXACT_CONE_CONVERSIONS")
   }
+})
+
+## `expand_cones` is CVXPY's set algebra over cone CLASSES (solver.py:26-67)
+## spelled out over lists of S7 class objects.  Membership goes by class name
+## (1.9.2.9143); these pin the set semantics that the name comparison must
+## reproduce: unsupported-but-convertible cones are replaced by their targets
+## and reported, supported cones are left alone, duplicates are not introduced.
+## @cvxpy solver.py::expand_cones
+test_that("expand_cones replaces convertible cones and reports the targets", {
+  nm <- function(lst) sort(vapply(lst, function(c) attr(c, "name"), character(1L)))
+  svec_solver <- list(Zero, NonNeg, SOC, ExpCone, PowCone3D, SvecPSD, PowConeND)
+
+  ## PSD -> SvecPSD for a packed-triangle solver; SOC untouched.
+  out <- expand_cones(list(SOC, PSD), svec_solver)
+  expect_equal(nm(out$cones), c("SOC", "SvecPSD"))
+  expect_equal(nm(out$exact_targets), "PSD")
+  expect_length(out$approx_targets, 0L)
+
+  ## Nothing to convert: the input survives unchanged and nothing is reported.
+  out <- expand_cones(list(SOC, ExpCone), svec_solver)
+  expect_equal(nm(out$cones), c("ExpCone", "SOC"))
+  expect_length(out$exact_targets, 0L)
+
+  ## PowConeND -> PowCone3D for a solver without the N-D cone; a target already
+  ## in the cone list is not duplicated.
+  pow3_solver <- list(Zero, NonNeg, SOC, PowCone3D)
+  out <- expand_cones(list(PowConeND, PowCone3D), pow3_solver)
+  expect_equal(nm(out$cones), "PowCone3D")
+  expect_equal(nm(out$exact_targets), "PowConeND")
+
+  ## A solver that supports the cone natively never has it expanded, and a
+  ## cone the solver neither supports nor can reach is left in place for the
+  ## caller to reject.
+  full_psd_solver <- list(Zero, NonNeg, SOC, PSD)
+  out <- expand_cones(list(PSD, ExpCone), full_psd_solver)
+  expect_equal(nm(out$cones), c("ExpCone", "PSD"))
+  expect_length(out$exact_targets, 0L)
+
+  ## Empty input.
+  out <- expand_cones(list(), svec_solver)
+  expect_length(out$cones, 0L)
+  expect_length(out$exact_targets, 0L)
+})
+
+## @cvxpy solving_chain.py::construct_solving_chain
+test_that(".solver_supports_cones accepts a cone an exact conversion reaches", {
+  clar <- SOLVER_MAP_CONIC[["CLARABEL"]]
+  res <- .solver_supports_cones(clar, list(SOC, PSD))
+  expect_true(res$ok)
+  expect_length(res$unsupported, 0L)
+  expect_equal(vapply(res$exact_targets, function(c) attr(c, "name"), ""), "PSD")
+
+  ## A QP-only cone set for a conic solver that lacks the cone: refused, and the
+  ## offending cone is named.
+  fake <- clar
+  fake@SUPPORTED_CONSTRAINTS <- list(Zero, NonNeg, SOC)
+  res <- .solver_supports_cones(fake, list(SOC, ExpCone))
+  expect_false(res$ok)
+  expect_equal(vapply(res$unsupported, function(c) attr(c, "name"), ""), "ExpCone")
 })
 
 ## @cvxpy test_cone2cone.py::TestExactApproxCone2Cone::test_exact_cone2cone_target_cones_filtering

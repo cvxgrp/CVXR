@@ -50,6 +50,66 @@ test_that("PowerApprox: irrational exponent has approx_error", {
   expect_true(pa@approx_error > 0)
 })
 
+## CVXPY power.py:194, 199, 219, 227, 281, 404-407, 438 read the exponent as
+## written (self.p.value / _p_orig); only monotonicity, quadratic/PWL and the
+## gradient read the approximation p_used. Expected values measured on CVXPY
+## 1.9.3 (notes/audit/repro/38_power_exponent_as_written.py).
+## @cvxpy NONE
+test_that("PowerApprox: sign, curvature, domain, value and name use the exponent as written", {
+  x <- Variable(name = "x")
+  g <- power(x, 1.0001)                     # p_used rounds to 1
+  expect_equal(as.numeric(g@p_used), 1)
+  expect_true(is_nonneg(g))
+  expect_false(is_nonpos(g))
+  expect_equal(curvature(g), "CONVEX")
+  expect_length(CVXR:::atom_domain(g), 1L)
+  expect_equal(CVXR:::expr_name(g), "PowerApprox(x, 1.0001)")
+  expect_equal(format_labeled(g), "PowerApprox(x, 1.0001)")
+  value(x) <- 2
+  expect_equal(as.numeric(value(g)), 2.000138634240753, tolerance = 1e-12)
+
+  y <- Variable(name = "y")
+  g0 <- power(y, 0.0004)                    # p_used rounds to 0
+  expect_equal(as.numeric(g0@p_used), 0)
+  expect_equal(curvature(g0), "CONCAVE")
+  expect_false(is_constant(g0))
+  g2 <- power(y, 2.0000001)                 # p_used rounds to 2
+  expect_length(CVXR:::atom_domain(g2), 1L)
+  expect_equal(CVXR:::expr_name(g2), "PowerApprox(y, 2.0000001)")
+
+  ## The rounded exponent no longer makes these DCP (CVXPY: is_dcp False).
+  expect_false(is_dcp(Problem(Maximize(power(y, 1.0001)), list(y <= 1))))
+  expect_false(is_dcp(Problem(Minimize(0), list(power(y, 1.0001) == 0.5))))
+})
+
+## @cvxpy NONE
+test_that("Power: a Parameter exponent's sign, domain and monotonicity follow its value", {
+  xn <- Variable(name = "xn", nonpos = TRUE)
+  p <- Parameter(name = "p")
+  g <- power(xn, p)
+  expect_error(CVXR:::atom_domain(g), "parameter value is unspecified")
+  ## Fresh atoms per value: sign is computed once per atom on both sides.
+  value(p) <- 1
+  g1 <- power(xn, p)
+  expect_false(is_nonneg(g1))
+  expect_true(is_nonpos(g1))
+  expect_equal(CVXR:::expr_name(g1), "PowerApprox(xn, 1)")
+  value(p) <- 2
+  expect_true(is_nonneg(power(xn, p)))
+
+  xp <- Variable(name = "xp", nonneg = TRUE)
+  xf <- Variable(name = "xf")
+  pnn <- Parameter(name = "pnn", nonneg = TRUE)
+  pnp <- Parameter(name = "pnp", nonpos = TRUE)
+  expect_true(is_incr(power(xp, pnn), 1L))
+  expect_false(is_decr(power(xp, pnn), 1L))
+  expect_false(is_incr(power(xf, pnn), 1L))
+  expect_true(is_decr(power(xp, pnp), 1L))
+  expect_false(is_incr(power(xp, pnp), 1L))
+  expect_false(is_decr(power(xf, pnp), 1L))
+  expect_false(is_incr(power(xp, Parameter()), 1L))
+})
+
 ## @cvxpy NONE
 test_that("Power (exact) vs PowerApprox: factory dispatch", {
   x <- Variable(3)

@@ -556,6 +556,49 @@ test_that("Gurobi parity: socp_2", {
   expect_equal(as.numeric(value(x_var)), sth$expect_x, tolerance = 1e-3)
 })
 
+## SOC duals: 1.9.3 plan defect 0.3. CVXR wrote the SOC coupling rows as
+## [-A | -I][x; aux] = -b where CVXPY writes [A | I][x; aux] = b
+## (gurobi_conif.py add_model_soc_constrs); the primal is the same, but
+## Gurobi's Pi flips with the row, so every SOC dual came back negated.
+## The tests above check objective/primal only, which is how it survived.
+.gurobi_check_duals <- function(sth, tol) {
+  for (i in seq_along(sth$con_duals)) {
+    expected <- sth$con_duals[[i]]
+    if (is.null(expected)) next
+    actual <- dual_value(sth$prob@constraints[[i]])
+    if (is.list(expected)) {
+      for (k in seq_along(expected)) {
+        expect_equal(as.numeric(actual[[k]]), as.numeric(expected[[k]]),
+                     tolerance = tol, info = paste("constraint", i, "part", k))
+      }
+    } else {
+      expect_equal(as.numeric(actual), as.numeric(expected), tolerance = tol,
+                   info = paste("constraint", i))
+    }
+  }
+}
+
+## @cvxpy test_conic_solvers.py::TestGUROBI::test_gurobi_socp_4
+test_that("Gurobi parity: socp_4 (three SOC blocks + equality) with duals", {
+  skip_if_not_installed("gurobi")
+  sth <- sth_socp_4()
+  val <- psolve(sth$prob, solver = "GUROBI")
+  expect_equal(val, sth$expect_obj, tolerance = 1e-4)
+  x_var <- variables(sth$prob)[[1]]
+  expect_equal(as.numeric(value(x_var)), sth$expect_x, tolerance = 1e-4)
+  .gurobi_check_duals(sth, 1e-3)
+})
+
+## @cvxpy NONE
+test_that("Gurobi SOC duals agree with the reference values on socp_1 and socp_2", {
+  skip_if_not_installed("gurobi")
+  for (make in list(sth_socp_1, sth_socp_2)) {
+    sth <- make()
+    psolve(sth$prob, solver = "GUROBI")
+    .gurobi_check_duals(sth, 1e-3)
+  }
+})
+
 ## @cvxpy test_conic_solvers.py::TestGUROBI::test_gurobi_socp_3
 test_that("Gurobi parity: socp_3 axis 0", {
   skip_if_not_installed("gurobi")
@@ -614,4 +657,73 @@ test_that("Gurobi parity: mi_socp_2", {
   sth <- sth_mi_socp_2()
   val <- psolve(sth$prob, solver = "GUROBI")
   expect_equal(val, sth$expect_obj, tolerance = 1e-4)
+})
+
+## Upstream reads each variable's VType back from the gurobipy model. The R gurobi
+## result carries no model, so the types are read from the LP file written through
+## save_file: its Binaries and Generals sections list the B and I columns.
+## @cvxpy test_conic_solvers.py::TestGUROBI::test_gurobi_mixed_integer_types
+test_that("Gurobi: boolean, integer and continuous variables in one conic problem", {
+  skip_if_not_installed("gurobi")
+  z <- Variable(3, boolean = TRUE)
+  w <- Variable(2, integer = TRUE)
+  y <- Variable(2)
+  objective <- Minimize(w[1] + 2 * w[2] - (3 * z[1] + 2 * z[2] + z[3]) + p_norm(y, 2))
+  prob <- Problem(objective,
+                  list(w >= -4, w <= 4, sum(z) <= 2, y >= 1, sum(w) >= -5))
+  lp_file <- tempfile(fileext = ".lp")
+  on.exit(unlink(lp_file), add = TRUE)
+  val <- psolve(prob, solver = "GUROBI", save_file = lp_file)
+  expect_equal(status(prob), "optimal")
+
+  expect_equal(as.numeric(value(z)), c(1, 1, 0), tolerance = 1e-4)
+  expect_equal(as.numeric(value(w)), c(-1, -4), tolerance = 1e-4)
+  expect_equal(as.numeric(value(y)), c(1, 1), tolerance = 1e-4)
+  expect_equal(val, -14 + sqrt(2), tolerance = 1e-5)
+
+  ## Each variable must reach Gurobi with the right type.
+  lp <- trimws(readLines(lp_file))
+  section <- function(name) {
+    start <- match(name, lp)
+    stop_at <- which(lp %in% c("Bounds", "Binaries", "Generals", "End"))
+    stop_at <- min(stop_at[stop_at > start])
+    unlist(strsplit(lp[seq.int(start + 1L, length.out = stop_at - start - 1L)], " +"))
+  }
+  expect_length(section("Binaries"), 3L)
+  expect_length(section("Generals"), 2L)
+})
+
+## Gurobi minimizes x'Qx + c'x over the FULL Q. CVXR passed tril(P / 2), which
+## counted every cross term P_ij x_i x_j once instead of twice, so a quad_form
+## with an off-diagonal P solved a different problem and reported "optimal"
+## (-0.612 here instead of -0.667). CVXPY passes the full 0.5 * P
+## (gurobi_qpif.py:211-212). tril() also made a triangular dtCMatrix that the
+## gurobi package then coerced back to dgCMatrix through a Matrix-deprecated
+## route; the full matrix needs no coercion.
+## @cvxpy NONE
+test_that("Gurobi QP: off-diagonal quad_form matches the analytic optimum", {
+  skip_if_not_installed("gurobi")
+  old_opt <- options(Matrix.warnDeprecatedCoerce = 2L); on.exit(options(old_opt), add = TRUE)
+  P <- matrix(c(2, 1.5, 1.5, 3), 2L)
+  q <- c(-1, -2)
+  x <- Variable(2)
+  prob <- Problem(Minimize(0.5 * quad_form(x, P) + sum_entries(q * x)))
+  ## Unconstrained minimizer x* = -P^{-1} q = (0, 2/3), optimum 0.5 q'x* = -2/3.
+  x_star <- -solve(P, q)
+  val <- psolve(prob, solver = "GUROBI")
+  expect_equal(val, 0.5 * sum(q * x_star), tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), x_star, tolerance = 1e-5)
+  ## With x >= 0 binding: q2 = (1, -2) puts the unconstrained minimizer at
+  ## (-1.6, 22/15), so the optimum is (0, 2/3) with dual (2, 0) on x >= 0.
+  ## (With q, x1 >= 0 is active with a zero dual -- a degenerate point where
+  ## interior-point x converges slowly; CVXPY + Gurobi gives the same x there.)
+  q2 <- c(1, -2)
+  x2 <- Variable(2)
+  p2 <- Problem(Minimize(0.5 * quad_form(x2, P) + sum_entries(q2 * x2)), list(x2 >= 0))
+  ref <- psolve(p2, solver = "CLARABEL")
+  x3 <- Variable(2)
+  p3 <- Problem(Minimize(0.5 * quad_form(x3, P) + sum_entries(q2 * x3)), list(x3 >= 0))
+  expect_equal(psolve(p3, solver = "GUROBI"), ref, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x3)), c(0, 2 / 3), tolerance = 1e-5)
+  expect_equal(as.numeric(dual_value(constraints(p3)[[1L]])), c(2, 0), tolerance = 1e-5)
 })

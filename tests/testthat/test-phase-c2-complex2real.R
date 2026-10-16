@@ -282,3 +282,41 @@ test_that("C2R canonicalization S7 methods are registered", {
   ## Default returns FALSE for unregistered types
   expect_false(has_c2r_canon(Minimize(Variable())))
 })
+
+# ── partial_optimize under Complex2Real (decision 23, D_PORT.11) ──
+
+## RECORDED DIVERGENCE (ADR D_PORT.11, `better-in-r`): CVXPY 1.9.3
+## Complex2Real.canonicalize_tree (complex2real.py:389-390) raises a bare
+## NotImplementedError for ANY partial_problem node, even when the inner problem is
+## real. CVXR's PartialProblem is an argument-less leaf copied by the default path, so
+## a real inner problem in a complex outer problem solves. Measured 2026-10-10 (claims
+## audit C0582): CVXPY NotImplementedError, CVXR 3.41421356 (exact 2 + sqrt(2)).
+## @cvxpy NONE
+test_that("Complex2Real: real partial_optimize inside a complex problem solves (D_PORT.11)", {
+  skip_if_not_installed("clarabel")
+  x <- Variable(2)
+  t <- Variable(2)
+  z <- Variable(1, complex = TRUE)
+  inner <- Problem(Minimize(sum_entries(t)), list(-t <= x, x <= t))
+  f <- partial_optimize(inner, opt_vars = list(t))
+  prob <- Problem(Minimize(f + abs(z)), list(x == 1, Re(z) >= 1, Im(z) >= 1))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, 2 + sqrt(2), tolerance = 1e-6)
+})
+
+## A COMPLEX inner problem fails on both sides. CVXPY: the same NotImplementedError.
+## CVXR before 9157: a late "Inequality constraints cannot be complex" from Dcp2Cone,
+## after the partial problem had been expanded. Now Complex2Real aborts at the
+## PartialProblem node with a message that names the construct.
+## @cvxpy NONE
+test_that("Complex2Real: complex inner problem of partial_optimize aborts clearly (D_PORT.11)", {
+  skip_if_not_installed("clarabel")
+  zz <- Variable(1, complex = TRUE)
+  t2 <- Variable(1)
+  inner <- Problem(Minimize(t2), list(abs(zz) <= t2))
+  f <- partial_optimize(inner, opt_vars = list(t2))
+  prob <- Problem(Minimize(f), list(Re(zz) >= 1, Im(zz) >= 1))
+  expect_error(psolve(prob, solver = "CLARABEL"),
+               "inner problem itself has complex variables, parameters or constants")
+})

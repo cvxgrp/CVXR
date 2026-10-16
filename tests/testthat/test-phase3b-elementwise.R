@@ -419,7 +419,7 @@ test_that("neg(x) creates negation of Minimum(x, 0)", {
 test_that("inv_pos(x) creates PowerApprox with p=-1 (SOC path, as CVXPY)", {
   x <- Variable(3)
   ip <- inv_pos(x)
-  ## inv_pos.py:7 is `power(x, -1)` -- the WRAPPER, whose `approx = TRUE`
+  ## inv_pos.py:23 is `power(x, -1)` -- the WRAPPER, whose `approx = TRUE`
   ## default yields PowerApprox (SOC).  This test previously asserted the bare
   ## `Power` class, pinning a defect: constructing Power directly emits
   ## PowCone3D, which locks out every SOC-only solver.  PowerApprox extends

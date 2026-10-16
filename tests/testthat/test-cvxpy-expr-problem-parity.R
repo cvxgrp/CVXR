@@ -493,6 +493,57 @@ test_that("Comprehensive curvature composition tests (CVXPY parity)", {
   expect_false(is_log_log_concave(posy))
 })
 
+## The upstream test verbatim, on the curvatures() accessor (expression.py:272-290).
+## @cvxpy test_expressions.py::TestExpressions::test_curvatures
+test_that("curvatures() lists every curvature that holds (CVXPY parity)", {
+  mat <- matrix(c(1, -1), 1, 2)
+  expect_identical(curvatures(sum(mat %*% square(Variable(2)))), "UNKNOWN")
+
+  y <- Constant(42)
+  expect_true("CONSTANT" %in% curvatures(y))
+
+  x <- Variable(pos = TRUE)
+  expect_identical(curvatures(x),
+                   c("AFFINE", "CONVEX", "CONCAVE",
+                     "LOG-LOG AFFINE", "LOG-LOG CONVEX", "LOG-LOG CONCAVE",
+                     "QUASILINEAR", "QUASICONVEX", "QUASICONCAVE"))
+
+  monomial <- x * x * x
+  expect_identical(curvatures(monomial),
+                   c("LOG-LOG AFFINE", "LOG-LOG CONVEX", "LOG-LOG CONCAVE"))
+
+  posynomial <- x * x * x + x
+  expect_identical(curvatures(posynomial), "LOG-LOG CONVEX")
+
+  llcv <- 1 / (x * x * x + x)
+  expect_identical(curvatures(llcv), "LOG-LOG CONCAVE")
+})
+
+## The upstream asserts verbatim on curvature() (expression.py:292-318), plus the
+## quasi branch of the same property, measured on CVXPY 1.9.3.
+## @cvxpy test_expressions.py::TestExpressions::test_log_log_curvature
+test_that("curvature() names log-log and quasi curvature (CVXPY parity)", {
+  x <- Variable(pos = TRUE)
+  expect_identical(curvature(x * x * x), "LOG-LOG AFFINE")
+  expect_identical(curvature(x * x * x + x), "LOG-LOG CONVEX")
+  expect_identical(curvature(1 / (x * x * x + x)), "LOG-LOG CONCAVE")
+  expect_identical(curvature(ceiling(Variable())), "QUASILINEAR")
+  expect_identical(curvature(sum(matrix(c(1, -1), 1, 2) %*% square(Variable(2)))),
+                   "UNKNOWN")
+})
+
+## log_log_curvature() (expression.py:321-334), on the expressions of upstream's
+## test_log_log_curvature (whose .curvature asserts are the curvature() test above).
+## @cvxpy NONE
+test_that("log_log_curvature() names the strongest log-log curvature", {
+  x <- Variable(pos = TRUE)
+  expect_identical(log_log_curvature(Constant(2)), "LOG-LOG CONSTANT")
+  expect_identical(log_log_curvature(x * x * x), "LOG-LOG AFFINE")
+  expect_identical(log_log_curvature(x * x * x + x), "LOG-LOG CONVEX")
+  expect_identical(log_log_curvature(1 / (x * x * x + x)), "LOG-LOG CONCAVE")
+  expect_identical(log_log_curvature(Variable(1)), "UNKNOWN")
+})
+
 
 # ====================================================================
 # PROBLEM TESTS (11 critical)
@@ -508,7 +559,7 @@ test_that("Error when param has no value (CVXPY parity)", {
   param <- Parameter(name = "lambda")
   x <- Variable(name = "x")
   problem <- Problem(Minimize(param + x), list(x >= 0))
-  expect_error(psolve(problem, solver = "SCS"), "unspecified")
+  expect_error(psolve(problem, solver = "SCS"), class = "ParameterError")
 })
 
 # ── 2. test_get_problem_data ────────────────────────────────────────
@@ -576,7 +627,7 @@ test_that("Solving with parameters (CVXPY parity)", {
 
   ## Unset parameter should error
   value(p1) <- NULL
-  expect_error(psolve(prob, solver = "SCS", reltol = 1e-6), "unspecified")
+  expect_error(psolve(prob, solver = "SCS", reltol = 1e-6), class = "ParameterError")
 })
 
 # ── 5. test_parameter_expressions ───────────────────────────────────
@@ -1898,6 +1949,22 @@ test_that("quadratic: has_quadratic_term detection (CVXPY parity)", {
   expect_true(CVXR:::has_quadratic_term(matrix_frac(y^3, P)))
   P2 <- Parameter(c(2, 2), PSD = TRUE)
   expect_true(CVXR:::has_quadratic_term(matrix_frac(y^3, P2)))
+})
+
+## binary_operators.py:559-567: a quotient is quadratic / has a quadratic term /
+## is QPWA only when the divisor is constant. Expected values measured on
+## cvxpy 1.9.3 (x / y, x^2 / y and abs(x) / y differ from the AffAtom defaults).
+## @cvxpy NONE
+test_that("quadratic: DivExpression quadratic predicates require a constant divisor", {
+  x <- Variable(1)
+  y <- Variable(1)
+  qd <- function(e) c(CVXR:::is_quadratic(e), CVXR:::has_quadratic_term(e), CVXR:::is_qpwa(e))
+  expect_identical(qd(x / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(square(x) / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(square(x) / 2), c(TRUE, TRUE, TRUE))
+  expect_identical(qd(x / 2), c(TRUE, FALSE, TRUE))
+  expect_identical(qd(abs(x) / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(abs(x) / 2), c(FALSE, FALSE, TRUE))
 })
 
 # ── test_composite_quad_over_lin ──────────────────────────────────

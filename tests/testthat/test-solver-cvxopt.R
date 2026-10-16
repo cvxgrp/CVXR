@@ -233,6 +233,47 @@ test_that("CVXOPT dual values (LP)", {
   expect_equal(d[2], 1.0, tolerance = 1e-3)
 })
 
+## CVXPY 1.9.3 (#3390) fixed the inequality compression its CVXOPT presolve runs
+## when the equalities are redundant. CVXR's CVXOPT is backed by cccp, which has no
+## presolve, so these guard the same problems end to end.
+## @cvxpy test_conic_solvers.py::TestCVXOPT::test_cvxopt_presolve_opposite_inequalities
+test_that("CVXOPT keeps opposite inequalities z <= 1, z >= 1 (redundant equalities)", {
+  skip_if_not_installed("cccp")
+  x <- Variable(); y <- Variable(); z <- Variable()
+  prob <- Problem(Minimize(z),
+                  list(x + y == 1, 2 * x + 2 * y == 2, z <= 1, z >= 1, x >= 0, y >= 0))
+  val <- psolve(prob, solver = "CVXOPT")
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, 1.0, tolerance = 1e-7)
+})
+
+## Upstream asserts stationarity, not a split: cccp returns 0.5/0.5 and 0.2/0.4,
+## CVXPY 1.9.3 returns 1.0/0.0. Both are valid duals.
+## @cvxpy test_conic_solvers.py::TestCVXOPT::test_cvxopt_presolve_merged_inequality_duals
+test_that("CVXOPT duals of duplicate inequalities satisfy stationarity", {
+  skip_if_not_installed("cccp")
+  x <- Variable(); y <- Variable(); z <- Variable()
+  c1 <- z >= 1
+  c2 <- z >= 1
+  prob <- Problem(Minimize(z),
+                  list(x + y == 1, 2 * x + 2 * y == 2, c1, c2, x >= 0, y >= 0))
+  val <- psolve(prob, solver = "CVXOPT")
+  expect_equal(val, 1.0, tolerance = 1e-7)
+  ## Stationarity in z: 1 - c1.dual - c2.dual == 0.
+  expect_equal(as.numeric(dual_value(c1) + dual_value(c2)), 1.0, tolerance = 1e-7)
+
+  ## Scaled duplicate: 2z <= 2 alongside z <= 1.
+  x <- Variable(); y <- Variable(); z <- Variable()
+  c1 <- z <= 1
+  c2 <- 2 * z <= 2
+  prob <- Problem(Maximize(z),
+                  list(x + y == 1, 2 * x + 2 * y == 2, c1, c2, x >= 0, y >= 0))
+  val <- psolve(prob, solver = "CVXOPT")
+  expect_equal(val, 1.0, tolerance = 1e-7)
+  ## Stationarity in z: 1 - c1.dual - 2 * c2.dual == 0.
+  expect_equal(as.numeric(dual_value(c1) + 2 * dual_value(c2)), 1.0, tolerance = 1e-7)
+})
+
 # ══════════════════════════════════════════════════════════════════
 # CVXOPT solver options + standard params
 # ══════════════════════════════════════════════════════════════════
@@ -353,4 +394,44 @@ test_that("CVXOPT vs Clarabel: larger LP (n=10)", {
 
   expect_equal(val1, val2, tolerance = 1e-3)
   expect_equal(as.numeric(value(x1)), as.numeric(value(x2)), tolerance = 1e-2)
+})
+
+# ══════════════════════════════════════════════════════════════════
+# No inequality cones / rank-deficient [G; A]
+# ══════════════════════════════════════════════════════════════════
+## With no cone constraint, cccp solves a standard-form LP and adds x >= 0;
+## with a rank-deficient [G; A] it returns an approximate "optimal". CVXPY's
+## cvxopt solves the equality-only problems and fails (SolverError) on the
+## rank-deficient ones; measured against cvxpy 1.9.3 + cvxopt 1.3.3
+## (docsreg_9204/cvxopt_eq_probe.*, cvxopt_rank_probe.*).
+
+## @cvxpy NONE
+test_that("CVXOPT solves equality-only LPs without adding x >= 0", {
+  skip_if_not_installed("cccp")
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum(x)), list(x == c(-1, -2)))
+  expect_equal(psolve(prob, solver = "CVXOPT"), -3, tolerance = 1e-6)
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.numeric(value(x)), c(-1, -2), tolerance = 1e-6)
+
+  y <- Variable(2)
+  prob2 <- Problem(Minimize(2 * y[1] - y[2]),
+                   list(y[1] + y[2] == -1, y[1] - y[2] == 3))
+  expect_equal(psolve(prob2, solver = "CVXOPT"), 4, tolerance = 1e-6)
+  expect_equal(status(prob2), "optimal")
+  expect_equal(as.numeric(value(y)), c(1, -2), tolerance = 1e-6)
+})
+
+## @cvxpy NONE
+test_that("CVXOPT fails rather than report optimal when [G; A] is rank-deficient", {
+  skip_if_not_installed("cccp")
+  x <- Variable(2)
+  ## unconstrained and unbounded
+  expect_error(psolve(Problem(Minimize(sum(x))), solver = "CVXOPT"),
+               class = "SolverError")
+  ## unbounded in x[2], which no constraint touches
+  y <- Variable(2)
+  expect_error(psolve(Problem(Minimize(y[1] - y[2]), list(y[1] >= 1)),
+                      solver = "CVXOPT"),
+               class = "SolverError")
 })

@@ -16,7 +16,7 @@ Named list of \code{\link{Variable}} objects, keyed by name.
 }
 \description{
 Mirrors CVXPY's \code{Problem.var_dict} property
-(\code{cvxpy/problems/problem.py:267-271}): returns a named list keyed by
+(\code{cvxpy/problems/problem.py:264-269}): returns a named list keyed by
 each variable's name, where the value is the \code{\link{Variable}}
 object itself.
 }

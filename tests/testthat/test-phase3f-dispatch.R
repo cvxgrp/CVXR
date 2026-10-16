@@ -42,7 +42,7 @@ test_that("log(x) creates Log atom via Math dispatch", {
 test_that("sqrt(x) creates PowerApprox(x, 0.5) via Math dispatch", {
   x <- Variable(3)
   s <- sqrt(x)
-  ## sqrt.py:19 is `power(x, Fraction(1, 2))` -- the WRAPPER, whose
+  ## sqrt.py:24 is `power(x, Fraction(1, 2))` -- the WRAPPER, whose
   ## `approx = TRUE` default yields PowerApprox (SOC).  The old assertion
   ## named the bare `Power` class and so pinned the PowCone3D defect; because
   ## PowerApprox extends Power it could never have caught it.

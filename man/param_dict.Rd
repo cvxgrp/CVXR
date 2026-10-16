@@ -16,7 +16,7 @@ Named list of \code{\link{Parameter}} objects, keyed by name.
 }
 \description{
 Mirrors CVXPY's \code{Problem.param_dict} property
-(\code{cvxpy/problems/problem.py:260-264}): returns a named list keyed by
+(\code{cvxpy/problems/problem.py:257-262}): returns a named list keyed by
 each parameter's name, where the value is the \code{\link{Parameter}}
 object itself.
 }

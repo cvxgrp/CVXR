@@ -163,3 +163,28 @@ test_that("ConeMatrixStuffing constant offset", {
   expect_equal(data$c, 1.0)
   expect_equal(as.numeric(data$offset), 10.0)
 })
+
+## CVXPY 1.9.3 (#3446) fixed its Python backends, which kept one entry of A per
+## parameter when stuffing (A @ p) @ x. CVXR stuffs through the C++ backend, which
+## was already right; this guards it. Upstream's cp.broadcast_to(q, (2, 2)) has no
+## R atom (atoms/affine/broadcast_to.R), so ones(2, 1) %*% t(q) builds the same
+## matrix, with q duplicated across rows.
+## @cvxpy test_python_backends.py::test_matmul_with_parametric_expression_lhs
+test_that("ConeMatrixStuffing keeps every entry of A in a parametric matmul LHS", {
+  p <- Parameter(3)
+  value(p) <- c(1, 2, 3)
+  x <- Variable(3)
+  A <- matrix(1, 3, 3)
+  A[upper.tri(A)] <- 0
+  prob <- Problem(Minimize(t(A %*% p) %*% x + sum_squares(x)))
+  c_vec <- problem_data(prob, solver = "CLARABEL")$data$c
+  expect_equal(as.numeric(c_vec)[1:3], as.numeric(A %*% value(p)))
+
+  ## Entries duplicated by broadcasting the parameter must also be kept.
+  q <- Parameter(2)
+  value(q) <- c(1, 2)
+  y <- Variable(2)
+  prob <- Problem(Minimize(sum((matrix(1, 2, 1) %*% t(q)) %*% y) + sum_squares(y)))
+  c_vec <- problem_data(prob, solver = "CLARABEL")$data$c
+  expect_equal(as.numeric(c_vec)[1:2], as.numeric(2 * value(q)))
+})

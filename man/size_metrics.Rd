@@ -12,10 +12,10 @@ size_metrics(x, ...)
 \item{...}{Not used.}
 }
 \value{
-A \code{SizeMetrics} object with seven numeric fields.
+A \code{SizeMetrics} object with six numeric fields.
 }
 \description{
 Mirrors CVXPY's \code{Problem.size_metrics} property
-(\code{cvxpy/problems/problem.py:486-490}, class at lines 1690-1752):
-returns a \code{SizeMetrics} object summarising the problem's scale.
+(\code{cvxpy/problems/problem.py:515-521}, class at lines 1592-1654):
+returns a \code{SizeMetrics} object summarizing the problem's scale.
 }

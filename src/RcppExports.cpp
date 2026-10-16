@@ -606,6 +606,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ProblemData__get_tensor
+Rcpp::List ProblemData__get_tensor(SEXP xp, Rcpp::IntegerVector param_ids, Rcpp::IntegerVector param_sizes, Rcpp::IntegerVector col_offsets, int constr_length);
+RcppExport SEXP _CVXR_ProblemData__get_tensor(SEXP xpSEXP, SEXP param_idsSEXP, SEXP param_sizesSEXP, SEXP col_offsetsSEXP, SEXP constr_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type param_ids(param_idsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type param_sizes(param_sizesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_offsets(col_offsetsSEXP);
+    Rcpp::traits::input_parameter< int >::type constr_length(constr_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_tensor(xp, param_ids, param_sizes, col_offsets, constr_length));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_build_matrix_0", (DL_FUNC) &_CVXR_build_matrix_0, 4},
@@ -659,6 +674,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_ProblemData__getJ", (DL_FUNC) &_CVXR_ProblemData__getJ, 1},
     {"_CVXR_ProblemData__get_param_ids", (DL_FUNC) &_CVXR_ProblemData__get_param_ids, 1},
     {"_CVXR_ProblemData__get_num_vecs", (DL_FUNC) &_CVXR_ProblemData__get_num_vecs, 2},
+    {"_CVXR_ProblemData__get_tensor", (DL_FUNC) &_CVXR_ProblemData__get_tensor, 5},
     {NULL, NULL, 0}
 };
 

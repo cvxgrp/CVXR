@@ -1,5 +1,5 @@
 ## CVXPY 1.9.0 PR #3180 parity tests (multi-bug "robustness" PR)
-## Ported from: cvxpy/tests (CVXPY 1.9.0, worktree ~/GitHub/cvxpy-1.9)
+## Ported from: cvxpy/tests (CVXPY 1.9.0, tag v1.9.0)
 ##
 ## #3180 is a multi-bug PR; each fix landed a small new test in a different
 ## CVXPY test file. CVXR already carried several of these behaviors (ported
@@ -178,7 +178,8 @@ test_that("CVXPY 1.9 parity (#3180): power(b, x) with constant/parametric base b
   value(b) <- 2.0
   expect_false(is.null(power(b, x)))
   prob3 <- Problem(Minimize(power(b, x)), list(x >= 1, x <= 3))
-  psolve(prob3, solver = "CLARABEL")
+  ## Not DPP; CVXPY 1.9.3 gives the same warning.
+  expect_warning(psolve(prob3, solver = "CLARABEL"), "not DPP")
   expect_equal(as.numeric(value(x)), 1.0, tolerance = 1e-3)
 })
 

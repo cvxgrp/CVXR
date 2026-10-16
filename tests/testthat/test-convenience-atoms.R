@@ -111,9 +111,20 @@ test_that("cvxr_var: full reduction is convex", {
 })
 
 ## @cvxpy NONE
-test_that("cvxr_var: axis not supported yet", {
+test_that("cvxr_var: axis reduction (CVXPY 1.9.3, #3496)", {
+  ## Was an error until CVXPY 1.9.3 added axis support to var.
+  skip_if_not_installed("clarabel")
+  ## Per-column variance, ddof = 0: minimize it with fixed column sums.
   x <- Variable(c(3, 2))
-  expect_error(cvxr_var(x, axis = 2L), "does not yet support")
+  v <- cvxr_var(x, axis = 2L)
+  expect_equal(dim(v), c(1L, 2L))
+  prob <- Problem(Minimize(sum(v)),
+                  list(sum_entries(x, axis = 2L) == matrix(c(3, 6), 1L),
+                       x[1, ] == matrix(0, 1L, 2L)))
+  ## Column 1: (0, a, 3-a) -> min at a = 1.5, var = 0.5; column 2: (0, 3, 3)
+  ## -> var = 2. Total 2.5.
+  expect_equal(psolve(prob, solver = "CLARABEL"), 2.5, tolerance = 1e-5)
+  expect_error(cvxr_var(x, axis = 3L), "only supports axis")
 })
 
 ## @cvxpy NONE

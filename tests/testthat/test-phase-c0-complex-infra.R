@@ -84,7 +84,7 @@ test_that("intf_is_hermitian rejects non-Hermitian complex matrices", {
 test_that("intf_is_hermitian: complex-symmetric is NOT symmetric (CVXPY convention)", {
   ## CVXPY convention: "symmetric" always means "real symmetric".
   ## Complex matrices NEVER have is_symmetric=TRUE, even if A == A^T.
-  ## CVXPY SOURCE: interface/matrix_utilities.py lines 278-284
+  ## CVXPY SOURCE: interface/matrix_utilities.py lines 280-292
   CS <- matrix(c(1+0i, 2+3i, 2+3i, 4+0i), 2, 2)
   res <- intf_is_hermitian(CS)
   expect_false(res$is_symmetric)   # complex → always FALSE

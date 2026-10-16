@@ -1,3 +1,205 @@
+# CVXR 1.9.3
+
+## Changed results
+
+These fix wrong answers, so code that relied on the old results will see
+different numbers.
+
+* GUROBI solved quadratic objectives with cross terms (e.g.
+  `quad_form(w, Sigma)`) with every cross term halved. Gurobi now receives
+  the full matrix, as in CVXPY. Present in 1.9.2.
+* CVXOPT returned wrong answers on problems with no inequality constraints
+  (feasible equality-constrained problems were reported infeasible) and
+  reported unbounded problems as optimal. These now solve correctly or fail
+  with a solver error, as in CVXPY.
+* GUROBI second-order-cone dual values had the wrong sign; they now agree
+  with CVXPY and with every other solver.
+* `cvxr_norm(X, p)` and `norm(X, type)` now agree with base R's `norm()` and
+  CVXPY on matrices: with no `axis`, `p = 1`, `2` and `Inf` are the maximum
+  absolute column sum, the largest singular value and the maximum absolute
+  row sum. They were entrywise; use `cvxr_norm(X, "fro")` or `norm1(X)` for
+  those.
+  - A row vector is a 1 x n matrix, as in base R, so its 1- and Inf-norms
+    are the other way round from before.
+  - Any other `p` on a matrix or row vector is now an error, "Unsupported
+    matrix norm.", as in CVXPY; use `p_norm(x, p)` for the entrywise norm.
+  - `norm()` on an expression accepts every base R type (`"O"`, `"M"` and
+    `"E"` failed, and `"I"` was the largest absolute entry).
+* `gmatmul(A, X)` with a `Parameter` in both `A` and `X` gave a wrong answer
+  under `gp = TRUE`, and parameter substitution rebuilt it with `A` and `X`
+  swapped. Both fixed (CVXPY 1.9.3 still has the swap).
+* The cached DGP, DQCP and problem-level curvature queries ignored whether a
+  DPP check was running, so a DGP problem with parameters could be reported
+  DPP and solved with wrong solver data. All caches are now keyed on the DPP
+  scope, as CVXPY's are.
+* `perspective()` of a function of a `symmetric`, `PSD` or `NSD` matrix
+  variable of size 3 or more returned a wrong optimum.
+* `matrix_trace(A * B)` returned the trace of the matrix product (CVXPY
+  1.9.3, #3492).
+* `cumsum(X)` of a matrix is now a column of `length(X)` entries in
+  column-major order, as base R's `cumsum()` returns; `value()` and the
+  solver used to disagree.
+* `lambda_sum_largest(X, k)` accepts a fractional `k`, as CVXPY does; `k`
+  was silently truncated.
+* Bounds through `min_elemwise()` and `max_elemwise()` with operands of
+  different shapes now broadcast as NumPy does; a row operand was permuted.
+* `derivative()` and `backward()` through a Hermitian variable or parameter
+  of size 4 or more had imaginary entries transposed.
+* `backward()` through a `sparsity` variable returned garbage, and on the NLP
+  path the bounds of a `sparsity` variable were dropped. A recovered
+  variable value is now projected onto its attribute (a `nonneg` -1e-9 reads
+  back as 0), as in CVXPY.
+* `psolve(solver = "CLARABEL", warm_start = TRUE)` re-solves from scratch
+  when the cones changed (e.g. a parametric power-cone exponent), instead of
+  returning the previous optimum. CVXPY 1.9.3 still has this defect.
+* A complex variable declared `PSD`/`NSD` lost its cone (#3342), and one
+  declared `diag` or with a `sparsity` pattern solved as dense (CVXPY 1.9.3
+  still ignores those). Both are now enforced.
+
+## New features
+
+* `geo_mean()` accepts an argument of any shape and gains `axis` and
+  `keepdims` (CVXPY 1.9.3, #3493).
+* `cvxr_var()` supports `axis` and `keepdims`, like `cvxr_mean()` and
+  `cvxr_std()` (#3496).
+* `cvxr_norm(X, "nuc")` returns the nuclear norm (it errored).
+* Exact `geo_mean(x, approx = FALSE)`, and any `PowConeND` constraint, now
+  solve on SCS and MOSEK, not just Clarabel. `PowConeND()` with a row-vector
+  `z`, or a 1 x n `W` with `axis = 1`, now works and has correct duals.
+* `perspective(f, s)` where `f` needs a positive semidefinite cone (for
+  example `lambda_max()` or `sigma_max()`) now solves on Clarabel, SCS and
+  MOSEK.
+* `grad()` works for `partial_optimize()` expressions and
+  `lambda_sum_largest()`, and is correct for complex arguments of
+  `norm_nuc()`, `sigma_max()`, `quad_form()`, `quad_over_lin()` and
+  `matrix_frac()`.
+* `indicator()` and `partial_optimize()` expressions now have bounds, as in
+  CVXPY: `(0, Inf)` for an indicator and unbounded for a partial problem.
+* A quadratic objective over a `symmetric`, `PSD`, `NSD`, `diag` or
+  `sparsity` variable now solves on QP-capable solvers (#3384), and
+  `quad_over_lin()` / `sum_squares()` with an `axis` take the QP path, so
+  OSQP accepts them.
+* DNLP (`psolve(..., nlp = TRUE)`) now needs `sparsediff (>= 0.6.1)`
+  and consequences thereof. It also accepts `NonNeg()`, `NonPos()` and
+  `Zero()` constraints, which it used to abort on.
+* New `curvatures()`, `log_log_curvature()` and `is_diag()`, as CVXPY's
+  `Expression.curvatures`, `Expression.log_log_curvature` and
+  `Leaf.is_diag()`.
+* `curvature()` now reports log-log and quasi curvature (e.g.
+  `"LOG-LOG CONVEX"`, `"QUASILINEAR"`) instead of `"UNKNOWN"`, as in CVXPY.
+
+## DPP, DGP and DQCP
+
+* `psolve()` now checks that every `Parameter` has a value before it starts
+  any solve, as CVXPY does.
+* `psolve(gp = TRUE)` now checks variable bounds when deciding whether a
+  parameterized problem is DPP, as CVXPY does, and requires a conic solver.
+* `is_dpp()` is now one DCP pass inside the DPP scope, as in CVXPY, instead of
+  that pass plus a recursion over every argument.
+* These are no longer DPP, as in CVXPY: `quad_over_lin(x, p)` with a
+  `Parameter` denominator (#2433), a `PowCone3D()`/`PowConeND()` with a
+  `Parameter` exponent, and `dotsort(x, W)` with a non-affine parametric
+  `W`. `gmatmul(A, X)` requires a parametric `A` to be the `Parameter`
+  itself. `cumsum()` of a `Parameter` is DPP (#3398).
+* `psolve(requires_grad = TRUE)` checks match CVXPY: a non-DPP problem is a
+  `DPPError`, `qcp = TRUE` is refused, and `solver = "SCS"` routes to
+  DIFFCP.
+* DQCP bisection now follows CVXPY: no extra solve at the upper end of an
+  automatically found interval, sub-solve warnings reach the user, a failed
+  query point warns and bisection continues, and its aborts carry class
+  `SolverError`.
+
+## Solvers
+
+* Solver selection now follows CVXPY 1.9: the solver is chosen from the
+  problem's structure first, and its interface (QP or conic) follows. The
+  commercial-first default covers QPs and mixed-integer QPs, SCIP solves
+  mixed-integer QPs, a named HiGHS, Gurobi, CPLEX or Xpress solves an LP
+  through its conic interface, and falling back to a non-default solver
+  warns. ECOS_BB is never chosen unless named.
+* When no installed (or non-excluded) solver can be used, the error now reads
+  "No installed solver could handle this problem.", as in CVXPY.
+* `psolve(solver_path = ...)` forwards every `psolve()` argument to each
+  attempt (`enforce_dpp`, `ignore_dpp` and `nlp` were dropped), and only a
+  `SolverError` moves on to the next solver, as in CVXPY. The conditions
+  CVXPY raises as `SolverError` now carry that class in R too.
+* MOSEK: the status comes from the solution status, as in CVXPY, so a
+  termination code such as an iteration or time limit is no longer an error
+  by itself. The simplex optimizers work, and `bfs = TRUE` and
+  `save_file = <path>` are accepted.
+* HiGHS: options may be nested in a `highs_options` list, as in CVXPY, and
+  an option HiGHS rejects is an error instead of being dropped. A stop on
+  `mip_max_improving_sols` returns the incumbent with status `user_limit`.
+* Gurobi: `warm_start = TRUE` seeds the start point from the variables'
+  values, `save_file` writes the model, and `env` is rejected, as in CVXPY.
+  `solver_stats(prob)@num_iters` is 0 instead of `NULL` when presolve
+  finished the problem.
+* CPLEX: `reoptimize = TRUE` re-solves with presolve off on "infeasible or
+  unbounded", as in CVXPY; `solve_time` is set; unknown options abort. A
+  continuous problem with a second-order cone now returns dual values (all
+  were missing), as in CVXPY.
+* SCS: an infeasible solve exposes the infeasibility certificate through
+  `dual_value()` (#3197), and `extra_stats` is the full SCS result.
+* `solver_stats(prob)@extra_stats` now carries the raw solver result for
+  OSQP, ECOS, ECOS_BB, Gurobi, DIFFCP, HiGHS and PIQP, as CVXPY does, and
+  `solution(prob)` holds only the problem's own variables.
+* PIQP: `backend = "dense"` builds a dense model (it was silently sparse).
+
+## Errors, warnings and other changes
+
+* `power(x, p)` now takes its sign, curvature, domain, value and printed name
+  from `p` as written, as CVXPY does, rather than from the rational
+  approximation used to solve it.
+* Calling `NonPos(expr)` explicitly now warns, once per session, that it is
+  deprecated in favor of operator overloading (`expr <= 0`) or
+  `NonNeg(-expr)`, in CVXPY's words and with class
+  `CvxpyDeprecationWarning`.
+* Now errors, as in CVXPY: a negative `axis`; an `axis` with
+  `cvxr_norm(X, "fro")` or `"nuc"` (#3501); a complex variable declared
+  `nonneg`, `nonpos`, `pos`, `neg` or with `bounds`, which were silently
+  ignored (#3342); `partial_optimize()` of a complex inner problem.
+* Whether a constant matrix is symmetric, Hermitian or skew-symmetric is now
+  decided with NumPy's `allclose` tolerance (relative 1e-5, absolute 1e-8), as
+  in CVXPY; `quad_form(x, P)` used to reject a `P` that CVXPY accepts.
+* Smaller alignments with CVXPY 1.9.3 in `get_bounds()`, `grad()` and
+  `domain()` of several atoms, `dual_cone()`, `is_symmetric()` of `Re(X)`,
+  `constr_size()`, `is_dpp()` with an unsupported context, interval
+  bounds of matrix products, and `is_quadratic()` of `x / y` with a
+  non-constant `y` (now `FALSE`). `value(constraint, tolerance = )` exposes the
+  violation tolerance.
+* `visualize()` no longer errors on a problem containing `sqrt()`,
+  `inv_pos()` or a fractional `power()` (broken in 1.9.2).
+* Problems with no constraint rows no longer trigger the Matrix deprecation
+  warning `as(<ngCMatrix>, "dgCMatrix") is deprecated`, and Gurobi QPs no
+  longer trigger the `dtCMatrix` one.
+* Internal: a conic solver's `reduction_accepts()` now refuses a
+  mixed-integer problem when the solver is not MIP-capable, as CVXPY's
+  `ConicSolver.accepts` does. `psolve()` already refused such a solve while
+  choosing the solver, so no solve changes. `constr_expr()` returns
+  `lhs - rhs` for `==`, `<=` and `>=`, as CVXPY's `.expr` does.
+
+## Performance
+
+* The first solve of a parametric (DPP) problem compiles about twice as fast
+  and allocates a small fraction of the memory it did: at 500 variables with
+  CLARABEL, `sum_squares(w - q)` goes from 21 ms / 24 MB to 11 ms / 0.9 MB, an
+  SOC problem from 17.5 ms / 12.7 MB to 12 ms / 0.9 MB, an LP with a 100 x 500
+  dense matrix from 55 ms / 23 MB to 50 ms / 8 MB.
+* A DPP problem whose objective is quadratic in the variables and depends on
+  parameters (`sum_squares(y - q)`, `quad_form(y, P) + t(q) %*% y`, ...) now
+  keeps its parameter program across solves, as in CVXPY.
+* The compiled-chain cache is keyed as CVXPY's is, on the solver, `gp`,
+  `ignore_dpp` and `use_quad_obj`; `enforce_dpp` no longer takes part.
+* DQCP bisections are 7 percent and medium LPs 4 percent faster than in
+  CVXR 1.9.2.
+* `psolve(nlp = TRUE)` hands a dense constant matrix with at least 5 percent
+  nonzeros to the derivative engine as dense, as CVXPY does: 1.7 to 2.6 times
+  faster for a dense 1000 x 1000 `A`. Pass a sparse `Matrix` to keep the
+  sparse form for a structured matrix.
+* `psolve(nlp = TRUE)` no longer makes dense copies of a sparse constant
+  matrix while building the problem: a solve with a 3000 x 3000 one allocated
+  208 MB and now allocates 2 MB.
+
 # CVXR 1.9.2
 
 This release tracks CVXPY 1.9.2. It is chiefly a correctness release: a number

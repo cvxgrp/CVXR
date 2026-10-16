@@ -81,7 +81,7 @@ test_that("unset standard params never warn", {
 
 ## @cvxpy NONE -- CVXR's own portable-name layer; MSK_* names chosen from
 ## the same families as CVXPY's MOSEK.tolerance_params()
-## (mosek_conif.py:713-739).
+## (mosek_conif.py:713-738).
 test_that("MOSEK and HiGHS standard params translate to real native names", {
   p <- .build_solver_params("MOSEK",
                             solver_opts(feastol = 1e-9, reltol = 1e-7,
@@ -124,7 +124,7 @@ test_that("MOSEK solver parameters reach Rmosek instead of crashing", {
                mosek_params = list(MSK_DPAR_INTPNT_CO_TOL_PFEAS = 1e-9))
   expect_equal(v3, 2, tolerance = 1e-6)
 
-  ## unknown options raise, as upstream (mosek_conif.py:674-676)
+  ## unknown options raise, as upstream (mosek_conif.py:672-674)
   prob4 <- Problem(Minimize(sum_entries(x)), list(x >= 1))
   expect_error(psolve(prob4, solver = "MOSEK", not_an_option = 1),
                "Invalid option")

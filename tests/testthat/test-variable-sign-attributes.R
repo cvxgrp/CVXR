@@ -13,10 +13,10 @@
 ## 1.8.2.9512, 1.9.1 (CRAN) and 1.9.1.9031 -- long-standing, not a regression.
 ##
 ## Nothing caught it because the attribute IS honored everywhere except the
-## emitted cone program: `is_nonneg()` returns TRUE (leaf.py:287 does the same),
+## emitted cone program: `is_nonneg()` returns TRUE (leaf.py:303-304 does the same),
 ## so every sign, curvature and DCP assertion passed.
 ##
-## CVXPY SOURCE: leaf.py:358-361 -- `nonneg or pos` => term >= 0, and
+## CVXPY SOURCE: leaf.py:374-377 -- `nonneg or pos` => term >= 0, and
 ## `nonpos or neg` => term <= 0; cvx_attr2constr.py:32-52 lists all four sign
 ## attributes in CONVEX_ATTRIBUTES and BOUND_ATTRIBUTES.
 

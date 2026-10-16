@@ -9,7 +9,7 @@
 ## accepts the constant in EITHER position -- the constructor only requires that
 ## one of them be constant, and graph_implementation and is_dpp both locate it --
 ## so the monotonicity methods have to locate it too, the way Kron already does
-## (kron.R:38-45, mirroring kron.py:77-87, for the atom where upstream itself
+## (kron.R:44-54, mirroring kron.py:76-86, for the atom where upstream itself
 ## permits either order).
 ##
 ## Before the fix, `conv(convex_expr, negative_kernel)` reported is_incr = TRUE,

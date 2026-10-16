@@ -51,6 +51,52 @@ test_that("DPP: conv with parameter kernel is NOT DPP", {
   expect_false(is_dpp(prob))
 })
 
+## dotsort.py:104-113 -- under a DPP scope dotsort is convex iff X is constant
+## or W is parameter-affine. Measured against CVXPY 1.9.3:
+## notes/audit/repro/13_dotsort_param_w.{py,R}.
+## @cvxpy NONE
+test_that("DPP: dotsort with a parameter-affine W is DPP, with exp(param) W is not", {
+  x <- Variable(3)
+  p <- Parameter(2, nonneg = TRUE, value = c(1, 1))
+  expect_true(is_dpp(Problem(Minimize(dotsort(x, p)), list(x >= c(1, 2, 3)))))
+  expect_true(is_dpp(Problem(Minimize(dotsort(x, 2 * p)), list(x >= c(1, 2, 3)))))
+  q <- Parameter(2, value = c(0, 0))
+  expect_false(is_dpp(Problem(Minimize(dotsort(x, exp(q))), list(x >= c(1, 2, 3)))))
+  ## X constant: DPP regardless of W
+  r <- Parameter(value = 2)
+  expect_true(is_dpp(Problem(Minimize(dotsort(Constant(c(1, 2, 3)), r^2)))))
+})
+
+## dotsort_canon.py:30-33 -- a non-Constant W stays symbolic so the compiled
+## tensor depends on the parameter and the DPP fast path is used.
+## @cvxpy NONE
+test_that("DPP: dotsort with a Parameter W caches the tensor and re-solves", {
+  x <- Variable(3)
+  p <- Parameter(2, nonneg = TRUE, value = c(1, 1))
+  prob <- Problem(Minimize(dotsort(x, p)), list(x >= c(1, 2, 3)))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 5, tolerance = 1e-5)
+  expect_false(is.null(prob@.cache$param_prog))
+  value(p) <- c(1, 0.5)
+  expect_equal(psolve(prob, solver = "CLARABEL"), 4, tolerance = 1e-5)
+  value(p) <- c(0, 0)
+  expect_equal(psolve(prob, solver = "CLARABEL"), 0, tolerance = 1e-5)
+})
+
+## The warning is emitted when the solving chain is built; CVXPY 1.9.3 caches
+## the chain and warns ONCE per problem (measured: 1, 0, 0 warnings over three
+## solves). CVXR's chain cache behaves the same, so only the first solve warns.
+## @cvxpy NONE
+test_that("DPP: dotsort with exp(param) W solves through EvalParams", {
+  x <- Variable(3)
+  q <- Parameter(2, value = c(0, 0))
+  prob <- Problem(Minimize(dotsort(x, exp(q))), list(x >= c(1, 2, 3)))
+  expect_warning(v1 <- psolve(prob, solver = "CLARABEL"), class = "DPPWarning")
+  expect_equal(v1, 5, tolerance = 1e-5)
+  value(q) <- c(0, log(0.5))
+  expect_no_warning(v2 <- psolve(prob, solver = "CLARABEL"))
+  expect_equal(v2, 4, tolerance = 1e-5)
+})
+
 # ── DPP re-solve (fast path) ─────────────────────────────────────
 
 ## @cvxpy NONE
@@ -175,7 +221,7 @@ test_that("DPP: unset parameter errors with informative message", {
   p <- Parameter()
   x <- Variable()
   prob <- Problem(Minimize(p * x), list(x >= 0))
-  expect_error(psolve(prob), "unspecified parameter")
+  expect_error(psolve(prob), class = "ParameterError")
 })
 
 ## @cvxpy NONE

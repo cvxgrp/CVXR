@@ -1,5 +1,5 @@
 ## DQCP CVXPY 1.9.0 parity tests
-## Ported from: cvxpy/tests/test_dqcp.py (CVXPY 1.9.0, worktree ~/GitHub/cvxpy-1.9)
+## Ported from: cvxpy/tests/test_dqcp.py (CVXPY 1.9.0, tag v1.9.0)
 ##
 ## Closes the 6 test_dqcp.py gaps new in CVXPY 1.9.0 not covered by
 ## test-dqcp-cvxpy-parity.R / test-dqcp-parity.R / test-dqcp-properties.R:
@@ -100,4 +100,24 @@ test_that("CVXPY 1.9 parity: dist_ratio_verbose — verbose=TRUE must not crash"
   result <- psolve(problem, solver = "CLARABEL", qcp = TRUE, verbose = TRUE)
   expect_equal(status(problem), "optimal")
   expect_equal(as.numeric(result), 0.0, tolerance = 1e-3)
+})
+
+# =====================================================================
+# Lazy closures with the bisection parameter unset
+# =====================================================================
+## The guards themselves (sets.py:90-91, :104-105, :119-120 and dist_ratio_sub's
+## `t.value is None or t.value > 1`, CVXPY v1.9.0 fix #3256): each closure
+## returns FALSE when t has no value. No public CVXR path calls a closure
+## before t is set, so this calls them directly. CVXPY 1.9.3 returns False
+## for all four.
+## @cvxpy NONE
+test_that("DQCP lazy sublevel/superlevel closures return FALSE when t is unset", {
+  t <- Parameter()
+  x <- Variable()
+  xv <- Variable(5)
+  x2 <- Variable(2)
+  expect_false(.sign_sub(sign(x), t)[[1L]]())
+  expect_false(.sign_sup(sign(x), t)[[1L]]())
+  expect_false(.length_sub(length_expr(xv), t)[[1L]]())
+  expect_false(.dist_ratio_sub(dist_ratio(x2, c(0, 0), c(3, 0)), t)[[1L]]())
 })

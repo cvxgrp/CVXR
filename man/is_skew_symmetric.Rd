@@ -16,6 +16,6 @@ Logical scalar.
 }
 \description{
 Tests whether \code{X + t(X) == 0} (real matrices only).
-CVXPY SOURCE: expression.py line 470-473
+CVXPY SOURCE: expression.py line 515-518
 }
 \keyword{internal}

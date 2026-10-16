@@ -130,9 +130,49 @@ if (!dir.exists(test_src)) {
     cat(sprintf("Copying all %d test files (development mode)\n", length(test_files)))
   }
 
-  for (f in test_files) {
-    file.copy(file.path(test_src, f), file.path(test_dst, f))
+  ## CRAN only: drop top-level test_that() blocks whose body starts with a bare
+  ## skip(). They can never run, so on CRAN they only add SKIP lines to the log.
+  ## Conditional skips (skip_if_not_installed() etc.) are kept. Dev builds copy
+  ## every block unchanged.
+  drop_skip_blocks <- function(path) {
+    lines <- readLines(path)
+    exprs <- parse(text = lines, keep.source = TRUE)
+    refs <- attr(exprs, "srcref")
+    drop <- logical(length(lines))
+    n <- 0L
+    for (i in seq_along(exprs)) {
+      e <- exprs[[i]]
+      if (!(is.call(e) && identical(e[[1L]], as.name("test_that")) && length(e) >= 3L))
+        next
+      body <- e[[3L]]
+      if (!(is.call(body) && identical(body[[1L]], as.name("{")) && length(body) >= 2L))
+        next
+      first <- body[[2L]]
+      if (!(is.call(first) && identical(first[[1L]], as.name("skip"))))
+        next
+      from <- refs[[i]][1L]
+      ## Take the block's own "##" comment lines (## @cvxpy, ## @not-targeted and
+      ## their continuation lines); a blank line or a "# ===" banner stops it.
+      while (from > 1L && grepl("^\\s*##", lines[from - 1L])) from <- from - 1L
+      drop[from:refs[[i]][3L]] <- TRUE
+      n <- n + 1L
+    }
+    list(lines = lines[!drop], n = n)
   }
+
+  n_dropped <- 0L
+  for (f in test_files) {
+    if (cran_build) {
+      res <- drop_skip_blocks(file.path(test_src, f))
+      writeLines(res$lines, file.path(test_dst, f))
+      if (res$n > 0L) cat(sprintf("  %s: dropped %d unconditionally skipped test(s)\n", f, res$n))
+      n_dropped <- n_dropped + res$n
+    } else {
+      file.copy(file.path(test_src, f), file.path(test_dst, f))
+    }
+  }
+  if (cran_build)
+    cat(sprintf("CRAN_BUILD=true: dropped %d unconditionally skipped test(s) in total\n", n_dropped))
 
   ## Copy _problems/ subdirectory if it exists and we're in dev mode
   problems_src <- file.path(test_src, "_problems")

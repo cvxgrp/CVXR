@@ -853,11 +853,6 @@ Tensor get_mul_mat(LinOp &lin, int arg_idx) {
 			}
 		}
 
-		/* For scalars, just return the tensor directly */
-		if (block_rows == 1 && block_cols == 1) {
-			return mul_ten;
-		}
-
 		/* Block-diagonalize all matrices in the tensor
 		 * (matches CVXPY lines 960-1005) */
 		for (auto it = mul_ten.begin(); it != mul_ten.end(); ++it) {
@@ -923,11 +918,6 @@ Tensor get_mul_mat(LinOp &lin, int arg_idx) {
 	Matrix block = get_constant_data(lin, false);
 	int block_rows = block.rows();
 	int block_cols = block.cols();
-
-	// Don't replicate scalars
-	if(block_rows == 1 && block_cols == 1){
-		return build_tensor(block);
-	}
 
 	int num_blocks = lin.size[1];
 	Matrix coeffs (num_blocks * block_rows, num_blocks * block_cols);

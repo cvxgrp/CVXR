@@ -109,7 +109,12 @@ directly.
 \item{\code{sum(x)}}{Sum all entries (affine)}
 \item{\code{max(x)}}{Maximum entry (convex)}
 \item{\code{min(x)}}{Minimum entry (concave)}
+\item{\code{prod(x)}}{Product of entries}
 }
+Each also takes \code{axis} and \code{keepdims}, as in CVXPY:
+\code{sum(x, axis = 2)} is \code{\link{sum_entries}(x, axis = 2)}, and
+likewise \code{\link{max_entries}}, \code{\link{min_entries}} and
+\code{\link{prod_entries}}.
 }
 
 \section{S3 generic methods}{

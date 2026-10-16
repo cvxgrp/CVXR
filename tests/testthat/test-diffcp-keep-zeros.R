@@ -95,6 +95,7 @@ test_that("problem_data() for DIFFCP keeps parameter-driven zeros in A", {
 
 test_that("A_mapping_nonzero_rows finds the parameter-driven rows", {
   ## CVXPY SOURCE: canonInterface.py:170-180. Unit-level, no solve.
+  skip_if_not_installed("diffcp")
   h <- .kz_problem(0)
   pd <- problem_data(h$prob, solver = "DIFFCP")
   pp <- pd$data[["param_prob"]]

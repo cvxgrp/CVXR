@@ -190,6 +190,33 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
 
 .cvxr_Summary_handler <- function(..., na.rm = FALSE) {
   args <- list(...)
+  nms <- names(args)
+  if (!is.null(nms) && any(nzchar(nms)) &&
+      .Generic %in% c("sum", "max", "min", "prod")) {
+    ## CVXPY: sum/max/min/prod(x, axis, keepdims) reduce along axis
+    ## (atoms/affine/sum.py:166-175, max.py:39, min.py:39, prod.py:141).
+    ## Without this, a named axis was summed in as one more operand.
+    bad <- setdiff(nms[nzchar(nms)], c("axis", "keepdims"))
+    if (length(bad) > 0L) {
+      cli_abort(c(
+        "{.fn {(.Generic)}} on a CVXR expression does not take argument{?s} {.arg {bad}}.",
+        "i" = "Use {.arg axis} and {.arg keepdims} to reduce along an axis."
+      ))
+    }
+    axis <- args[["axis"]]
+    keepdims <- if (is.null(args[["keepdims"]])) FALSE else args[["keepdims"]]
+    operands <- args[!nzchar(nms)]
+    if (length(operands) != 1L) {
+      cli_abort("{.arg axis} and {.arg keepdims} in {.fn {(.Generic)}} take a single expression.")
+    }
+    x <- operands[[1L]]
+    return(switch(.Generic,
+      "sum"  = SumEntries(x, axis = axis, keepdims = keepdims),
+      "max"  = MaxEntries(x, axis = axis, keepdims = keepdims),
+      "min"  = MinEntries(x, axis = axis, keepdims = keepdims),
+      "prod" = Prod(x, axis = axis, keepdims = keepdims)
+    ))
+  }
   x <- args[[1L]]
   switch(.Generic,
     "sum"   = {

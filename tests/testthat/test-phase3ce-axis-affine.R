@@ -61,6 +61,22 @@ test_that("SumEntries: axis=1 numeric value", {
 })
 
 ## @cvxpy NONE
+test_that("SumEntries: axis=2 on a one-row variable solves correctly", {
+  ## axis=2 on a 1 x n argument is ones(1, 1) %*% y, a MUL_EXPR with 1 x 1
+  ## data. The C++ backend must still replicate it into n blocks; returning
+  ## the 1 x 1 block read past the matrix (Inf here, a segfault at n = 5).
+  for (n in 2:3) {
+    u <- matrix(seq_len(n) / 4, 1L, n)
+    y <- Variable(c(1L, n))
+    prob <- Problem(Maximize(sum_entries(y)),
+                    list(sum_entries(y, axis = 2L) <= u, y >= -10))
+    expect_equal(psolve(prob, solver = "CLARABEL"), sum(u),
+                 tolerance = 1e-6, info = paste("n =", n))
+    expect_equal(value(y), u, tolerance = 1e-6, info = paste("n =", n))
+  }
+})
+
+## @cvxpy NONE
 test_that("SumEntries: is affine", {
   x <- Variable(c(2, 3))
   s <- SumEntries(x)

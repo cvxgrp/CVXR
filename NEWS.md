@@ -34,6 +34,13 @@ different numbers.
   scope, as CVXPY's are.
 * `perspective()` of a function of a `symmetric`, `PSD` or `NSD` matrix
   variable of size 3 or more returned a wrong optimum.
+* `sum_entries(x, axis = 2)` of a one-row expression, and any product of a
+  1 x 1 constant with a multi-column expression, gave wrong results or
+  crashed R. Present in 1.9.2.
+* `sum()`, `max()`, `min()` and `prod()` of an expression now honor `axis`
+  and `keepdims`, as in CVXPY. A named `axis` was taken as one more operand,
+  so `sum(x, axis = 2)` returned `sum(x + 2)`; other named arguments are
+  now an error.
 * `matrix_trace(A * B)` returned the trace of the matrix product (CVXPY
   1.9.3, #3492).
 * `cumsum(X)` of a matrix is now a column of `length(X)` entries in

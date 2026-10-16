@@ -148,8 +148,26 @@ method(solve_via_data, OSQP_QP_Solver) <- function(x, data, warm_start = FALSE, 
     old_data   <- cached$data
     old_result <- cached$result
 
-    ## Dimension check: if n or m changed, fall through to cold path
-    if (length(q_vec) == length(old_data$q) && nrow(A) == nrow(old_data$A)) {
+    ## Dimension check: if n or m changed, fall through to cold path.
+    ##
+    ## Sparsity-pattern check (R-specific guard, as the PIQP interface does at
+    ## piqp_qpif.R:143-167): an entry whose parameter is currently 0 leaves A
+    ## (.dpp_contract_reshape), and `Update(Ax = ...)` writes values into the
+    ## model's old pattern. With an equal nnz that was a silent wrong answer
+    ## (measured: p = (1, 0) -> (0, 1) in p1 x1 + p2 x2 <= 1 gave 4.75 for
+    ## 5.74, status optimal); with a changed nnz osqp_update_data_mat failed
+    ## with error code 2 instead of the cold path taking over. CVXPY's data
+    ## comparison is the same as the one below (osqp_qpif.py:124-132); it is
+    ## safe there because its A keeps a fixed pattern (ReducedMat,
+    ## reductions/utilities.py:113-140).
+    same_pattern <- function(new, old) {
+      identical(dim(new), dim(old)) && length(new@x) == length(old@x) &&
+        identical(new@i, old@i) && identical(new@p, old@p)
+    }
+    P_pattern_ok <- is.null(P) || is.null(old_data$P) ||
+      same_pattern(P, old_data$P)
+    if (length(q_vec) == length(old_data$q) && nrow(A) == nrow(old_data$A) &&
+        same_pattern(A, old_data$A) && P_pattern_ok) {
       new_args <- list()
 
       ## Compare q, l, u -- only send changed vectors

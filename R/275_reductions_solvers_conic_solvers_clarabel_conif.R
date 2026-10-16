@@ -296,9 +296,27 @@ method(solve_via_data, Clarabel_Solver) <- function(x, data, warm_start = FALSE,
     ## notes/audit/repro/17_powcone_param_alpha.*, wrong 4.898979 for 5.532647
     ## on both sides). Clarabel's update API has no cone argument, so a changed
     ## cone list needs a fresh solver: fall through to the cold path.
+    ##
+    ## A changed sparsity pattern needs a fresh solver too (R-specific guard,
+    ## as the PIQP interface does at piqp_qpif.R:143-167). An entry whose
+    ## parameter is currently 0 leaves A (.dpp_contract_reshape), and R
+    ## clarabel's solver_update() writes the new values into the solver's old
+    ## pattern without checking it; with an equal nnz that is a silent wrong
+    ## answer (measured: p = (1, 0) -> (0, 1) in p1 x1 + p2 x2 <= 1 gave 5
+    ## for 6, status optimal). CVXPY never meets this case: its A keeps a
+    ## fixed pattern (ReducedMat, reductions/utilities.py:113-140) and Python
+    ## clarabel's update() raises on a mismatch (clarabel_conif.py:253-259).
+    same_pattern <- function(new, old) {
+      length(new@x) == length(old@x) &&
+        identical(new@i, old@i) && identical(new@p, old@p)
+    }
+    P_pattern_ok <- is.null(data[[SD_P]]) || is.null(old_data$P) ||
+      (identical(dim(P), dim(old_data$P)) && same_pattern(P, old_data$P))
     if (length(q) == length(old_data$q) &&
         nrow(A) == nrow(old_data$A) &&
         ncol(A) == ncol(old_data$A) &&
+        same_pattern(A, old_data$A) &&
+        P_pattern_ok &&
         identical(cones, old_data$cones)) {
 
       ## Determine what changed and build update args

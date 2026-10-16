@@ -28,6 +28,28 @@ different numbers.
 * `gmatmul(A, X)` with a `Parameter` in both `A` and `X` gave a wrong answer
   under `gp = TRUE`, and parameter substitution rebuilt it with `A` and `X`
   swapped. Both fixed (CVXPY 1.9.3 still has the swap).
+* `x / A` with a matrix or vector `A` divided every entry of `x` by `A[1, 1]`.
+  It now divides entrywise, as in CVXPY. Division by a scalar is unchanged.
+  Present in 1.9.2.
+* Constants built from Matrix classes other than `dgCMatrix` gave wrong
+  answers or errors: a unit `Diagonal(n)` was read as all zeros, so
+  `quad_form(x, Diagonal(n))` was unbounded, and symmetric, triangular,
+  triplet, pattern and logical sparse matrices failed in canonicalization.
+  Every sparse input is now stored as a general double `dgCMatrix`, as in
+  CVXPY, and a logical matrix constant keeps its shape instead of becoming a
+  column. Present in 1.9.2.
+* A sparse `bounds` matrix was applied only at its stored entries, so a
+  symmetric (`dsCMatrix`) bound on a dense variable left half the entries
+  unbounded and a triplet matrix with repeated entries used the first copy.
+  As in CVXPY, a sparse bound is now accepted only on a `sparsity` variable
+  with the same pattern, and repeated entries are summed. Solvers that take
+  variable bounds natively (HiGHS, GUROBI, SCIP, XPRESS) now receive such
+  bounds as bounds rather than as constraints. Present in 1.9.2.
+* A warm re-solve with CLARABEL or OSQP after a parameter became zero (or
+  nonzero) pushed the new coefficients into the solver's old sparsity pattern,
+  returning the previous optimum with status optimal, or an OSQP error. Both
+  now start a fresh solver when the pattern changes, as PIQP already did.
+  Present in 1.9.2.
 * The cached DGP, DQCP and problem-level curvature queries ignored whether a
   DPP check was running, so a DGP problem with parameters could be reported
   DPP and solved with wrong solver data. All caches are now keyed on the DPP

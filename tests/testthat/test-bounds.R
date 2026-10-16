@@ -63,9 +63,14 @@ test_that("get_bounds is shaped (column-major) for matrix variables", {
 # ── Deferred to Wave 2 (written now, dormant) ────────────────────────
 ## @cvxpy test_bounds.py::TestSparseBounds::test_sparse_variable_with_matching_sparse_bounds
 test_that("get_bounds preserves sparse bounds", {
+  ## leaf.py:746-772: a sparse bound is accepted only on a sparsity variable
+  ## with the same pattern, so the variable carries `sparsity` as upstream's
+  ## test does.
   lb <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(-1, -2), dims = c(2, 2))
   ub <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(3, 4), dims = c(2, 2))
-  x <- Variable(c(2, 2), bounds = list(lb, ub))
+  x <- Variable(c(2, 2), sparsity = cbind(c(1, 2), c(1, 2)), bounds = list(lb, ub))
+  expect_s4_class(x@attributes$bounds[[1]], "dgCMatrix")
+  expect_s4_class(x@attributes$bounds[[2]], "dgCMatrix")
   b <- get_bounds(x)
   expect_s4_class(b[[1]], "sparseMatrix")
   expect_s4_class(b[[2]], "sparseMatrix")
@@ -125,17 +130,23 @@ test_that("parametric bounds solve and re-solve through lowered constraints", {
   expect_equal(as.numeric(value(x)), 3, tolerance = 1e-5)
 })
 
-## @cvxpy matrix_stuffing.py:49-53,85-89
-test_that("HiGHS keeps sparse bounds on lowered constraints", {
+## @cvxpy matrix_stuffing.py:49-53,85-89 cvx_attr2constr.py:229-247 test_bounds.py::TestSparseBounds::test_1d_sparse_variable_with_sparse_bounds
+test_that("HiGHS receives a sparsity variable's sparse bound through the reduced variable", {
   skip_if_not_installed("highs")
 
+  ## CVXPY 1.9.3: Variable(2, sparsity=([0],), bounds=(coo([-1] at 0), 5));
+  ## get_problem_data("HIGHS") -> lower_bounds [-1], upper_bounds [5],
+  ## dims.nonneg 0, one column; solve -> -1. The sparse bound becomes the
+  ## reduced variable's dense bound (cvx_attr2constr.py:229-247).
   lb <- Matrix::sparseMatrix(i = 1, j = 1, x = -1, dims = c(2, 1))
-  sx <- Variable(2, bounds = list(lb, 5))
+  sx <- Variable(2, sparsity = 1L, bounds = list(lb, 5))
   sprob <- Problem(Minimize(sum_entries(sx)), list())
   sdata <- problem_data(sprob, HIGHS_SOLVER)$data
-  expect_null(sdata[[LOWER_BOUNDS]])
-  expect_null(sdata[[UPPER_BOUNDS]])
-  expect_true(sdata[[SD_DIMS]]@nonneg >= 2L)
+  expect_equal(as.numeric(sdata[[LOWER_BOUNDS]]), -1)
+  expect_equal(as.numeric(sdata[[UPPER_BOUNDS]]), 5)
+  expect_equal(sdata[[SD_DIMS]]@nonneg, 0L)
+  expect_equal(length(sdata[[SD_C]]), 1L)
+  expect_equal(psolve(sprob, solver = HIGHS_SOLVER), -1, tolerance = 1e-6)
 })
 
 ## @cvxpy matrix_stuffing.py::extract_bounds_tensor test_parametric_bounds.py::TestParametricBoundsSolving::test_bounded_solver_basic test_parametric_bounds.py::TestParametricBoundsSolving::test_bounded_solver_re_solve
@@ -641,4 +652,89 @@ test_that("diagonal variables validate and solve scalar bounds", {
   xd <- Variable(c(3, 3), diag = TRUE, bounds = list(-1, 2))
   prob <- Problem(Minimize(matrix_trace(xd)), list())
   expect_equal(psolve(prob, solver = "CLARABEL"), -3, tolerance = 1e-5)
+})
+
+# ── Sparse bounds are validated against the variable's pattern ────────
+## leaf.py:746-772 _validate_sparse_bound: a sparse bound is accepted only on a
+## sparsity variable, with the variable's shape, and with the canonical (COO,
+## duplicates summed) coordinates equal to sparse_idx. Measured on CVXPY 1.9.3
+## (scratch probes c5_cvxpy.py / c5_cvxpy2.py, 2026-10-16). Before the port a
+## sparse bound on a dense variable was accepted and silently left every
+## unstored entry unbounded (min sum -> -Inf).
+
+## @cvxpy test_bounds.py::TestSparseBounds::test_sparse_variable_rejects_mismatched_sparse_bounds
+test_that("a sparse bound is rejected on a dense or diag variable and off the variable's pattern", {
+  lbd <- matrix(c(-1, -3, -3, -2), 2, 2)
+  lbs <- Matrix::Matrix(lbd, sparse = TRUE)              # dsCMatrix
+  expect_s4_class(lbs, "dsCMatrix")
+  expect_error(Variable(c(2, 2), bounds = list(lbs, 5)),
+               "only supported for sparse variables")
+  expect_error(Variable(c(2, 2), bounds = list(as(lbs, "generalMatrix"), 5)),
+               "only supported for sparse variables")
+  expect_error(Variable(c(2, 2), bounds = list(-5, Matrix::sparseMatrix(
+                 i = c(1, 2), j = c(1, 2), x = c(1, 2), dims = c(2, 2)))),
+               "only supported for sparse variables")
+  expect_error(Variable(c(2, 2), bounds = list(-Matrix::Diagonal(2), 5)),
+               "only supported for sparse variables")
+  expect_error(Variable(c(2, 2), diag = TRUE, bounds = list(-Matrix::Diagonal(2), 5)),
+               "only supported for sparse variables")
+
+  pattern <- cbind(c(1, 2), c(1, 2))
+  lb_sub <- Matrix::sparseMatrix(i = 1, j = 1, x = -4, dims = c(2, 2))
+  expect_error(Variable(c(2, 2), sparsity = pattern, bounds = list(lb_sub, 5)),
+               "same sparsity pattern")
+  lb_big <- Matrix::sparseMatrix(i = 1, j = 1, x = -1, dims = c(3, 3))
+  expect_error(Variable(c(2, 2), sparsity = pattern, bounds = list(lb_big, 5)),
+               "same shape as the variable")
+  expect_error(Variable(c(2, 2), sparsity = pattern, bounds = list(
+                 Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(1, 1), dims = c(2, 2)),
+                 Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(0, 2), dims = c(2, 2)))),
+               "upper bounds are less")
+})
+
+## @cvxpy leaf.py::Leaf._validate_sparse_bound leaf.py::Leaf._promote_bounds test_bounds.py::TestSparseBounds::test_sparse_variable_with_matching_sparse_bounds
+test_that("a sparse bound is stored in canonical CSC form with duplicate triplets summed", {
+  ## CVXPY 1.9.3: coo lb with entries -4, -2, -4 at (0,0), (1,1), (0,0) on the
+  ## diagonal pattern; min sum(x) -> -10 with x = diag(-8, -2) on CLARABEL
+  ## and HIGHS. Before the port CVXR read the first duplicate only (-6).
+  skip_if_not_installed("highs")
+  pattern <- cbind(c(1, 2), c(1, 2))
+  lb_dup <- Matrix::sparseMatrix(i = c(1, 2, 1), j = c(1, 2, 1), x = c(-4, -2, -4),
+                                 dims = c(2, 2), repr = "T")
+  expect_s4_class(lb_dup, "dgTMatrix")
+  x <- Variable(c(2, 2), sparsity = pattern, bounds = list(lb_dup, 5))
+  b <- x@attributes$bounds[[1]]
+  expect_s4_class(b, "dgCMatrix")
+  expect_equal(b@x, c(-8, -2))
+  for (s in c("CLARABEL", "HIGHS")) {
+    xs <- Variable(c(2, 2), sparsity = pattern, bounds = list(lb_dup, 5))
+    prob <- Problem(Minimize(sum_entries(xs)))
+    expect_equal(psolve(prob, solver = s), -10, tolerance = 1e-5)
+    expect_equal(as.matrix(value(xs)), matrix(c(-8, 0, 0, -2), 2, 2), tolerance = 1e-5)
+  }
+
+  ## An explicit zero is a stored entry, so it counts toward the pattern.
+  lb0 <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(0, -2), dims = c(2, 2))
+  expect_equal(length(lb0@x), 2L)
+  z <- Variable(c(2, 2), sparsity = pattern, bounds = list(lb0, 5))
+  expect_equal(psolve(Problem(Minimize(sum_entries(z))), solver = "CLARABEL"), -2,
+               tolerance = 1e-5)
+})
+
+## @cvxpy test_bounds.py::TestSparseBounds::test_sparse_variable_with_matching_sparse_bounds
+test_that("a one-triangle (dsC) bound on a full-pattern sparsity variable is expanded", {
+  ## CVXPY 1.9.3: sparsity = all four entries, csc of [[-1,-3],[-3,-2]] as lb,
+  ## ub 5; min sum -> -9 on CLARABEL and HIGHS. Before the port the dsC's
+  ## stored triangle was read as the whole bound (-Inf on a dense variable).
+  skip_if_not_installed("highs")
+  lbd <- matrix(c(-1, -3, -3, -2), 2, 2)
+  lbs <- Matrix::Matrix(lbd, sparse = TRUE)
+  expect_s4_class(lbs, "dsCMatrix")
+  full <- cbind(c(1, 2, 1, 2), c(1, 1, 2, 2))
+  for (s in c("CLARABEL", "HIGHS")) {
+    V <- Variable(c(2, 2), sparsity = full, bounds = list(lbs, 5))
+    expect_s4_class(V@attributes$bounds[[1]], "dgCMatrix")
+    expect_equal(psolve(Problem(Minimize(sum_entries(V))), solver = s), -9, tolerance = 1e-5)
+    expect_equal(as.matrix(value(V)), lbd, tolerance = 1e-5)
+  }
 })

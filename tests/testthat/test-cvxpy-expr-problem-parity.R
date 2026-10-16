@@ -291,6 +291,38 @@ test_that("Division, shape, sign, curvature (CVXPY parity)", {
   expect_equal(expr_sign(rho), "NONNEGATIVE")
   expect_equal(expr_sign(Constant(2)), "NONNEGATIVE")
   expect_true(is_nonneg(rho / 2))
+
+  ## Broadcasting (test_expressions.py:999-1006): a (3, 3) variable divided
+  ## by a (3, 1) column; the column is broadcast across the columns of x.
+  x33 <- Variable(c(3, 3))
+  cc <- matrix(1:3, 3, 1)
+  expr <- x33 / cc
+  expect_equal(expr@shape, c(3L, 3L))
+  value(x33) <- matrix(1, 3, 3)
+  expect_equal(as.matrix(value(expr)), matrix(1, 3, 3) / as.vector(cc),
+               tolerance = 1e-10)
+})
+
+## Division by a non-scalar constant through the compiled canonicalization.
+## The divisor LinOp data is the full constant (a scalar divisor is promoted
+## and constant-folded first), and the C++ side must divide entrywise
+## (cvxcore/src/LinOpOperations.cpp:1054-1071 builds diag(1 / vec(A))).
+## Measured before the fix: both solves divided by A[1, 1] only.
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division by a matrix or vector constant solves entrywise", {
+  A <- matrix(c(2, 3, 5, 7), 2, 2)
+  X <- Variable(c(2, 2))
+  prob <- Problem(Minimize(sum(X)), list(X / A == 1))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.matrix(value(X)), A, tolerance = 1e-6)
+  expect_equal(val, sum(A), tolerance = 1e-6)
+
+  y <- Variable(3)
+  d <- c(2, 4, 8)
+  prob2 <- Problem(Minimize(sum(y)), list(y / d == 1))
+  psolve(prob2, solver = "CLARABEL")
+  expect_equal(as.numeric(value(y)), d, tolerance = 1e-6)
 })
 
 # ── 9. test_neg_expression ───────────────────────────────────────────
@@ -1201,6 +1233,22 @@ test_that("quad_form with sparse matrix (CVXPY parity)", {
   result <- psolve(prob, solver = "OSQP")
   ## 1^2 + 2^2 = 5
   expect_equal(result, 5, tolerance = 1e-2)
+
+  ## Second half of the upstream test (test_quad_form.py:184-196): a Constant
+  ## built from a sparse identity, with x left free. The pinned solve above
+  ## cannot see a wrong P (psolve re-evaluates the objective from x); this one
+  ## can. CVXPY 1.9.3: -1, x = 0.5 (measured). Before the fix CVXR reported
+  ## -Inf / unbounded: the unit diagonal's empty @x made P all zeros.
+  A <- Constant(Matrix::Diagonal(4))
+  cc <- matrix(1, 1, 4)
+  x4 <- Variable(4)
+  fn <- quad_form(x4, A) - cc %*% x4
+  prob4 <- Problem(Minimize(fn))
+  val4 <- psolve(prob4, solver = "OSQP")
+  expect_equal(status(prob4), "optimal")
+  expect_equal(val4, -1, tolerance = 1e-3)
+  expect_equal(as.numeric(value(x4)), rep(0.5, 4), tolerance = 1e-3)
+  expect_equal(length(value(fn)), 1L)
 })
 
 # ── Zero matrix quad form ──────────────────────────────────────────

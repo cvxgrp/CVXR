@@ -10,61 +10,60 @@
 
 #' Convert a value to a numeric matrix or sparse matrix
 #'
-#' Normalizes R values so the rest of CVXR can assume a consistent type.
-#' Scalars -> 1x1 matrix, vectors -> column matrix, logical -> numeric.
-#' Sparse matrices are kept sparse.
+#' Normalizes R values so the rest of CVXR can assume a consistent type, as
+#' CVXPY's `Constant()` does through `const_to_matrix` (constant.py:51-54;
+#' numpy_interface/sparse_matrix_interface.py:40-51, ndarray_interface.py):
+#' every sparse input becomes a double CSC matrix, bool and int are cast to
+#' double, the shape is kept and explicit zeros are kept.
 #'
-#' @param val A numeric scalar, vector, matrix, or Matrix object
-#' @returns A matrix or dgCMatrix
+#' Here any `sparseMatrix` or `sparseVector` becomes a general double
+#' `dgCMatrix` (symmetric, triangular, diagonal, triplet, row-compressed,
+#' pattern and logical classes included); a dense `Matrix` becomes a base
+#' matrix; a base logical, integer, double or complex value is stored as
+#' double (complex kept), a scalar or vector as a column.
+#'
+#' @param val A logical, integer, double or complex scalar, vector or matrix,
+#'   or a Matrix object
+#' @returns A base matrix or a dgCMatrix
 #' @keywords internal
 intf_convert <- function(val) {
   if (inherits(val, "sparseVector")) {
-    ## Convert sparseVector to sparse column matrix
+    ## Sparse column; normalized by the sparseMatrix branch below.
     n <- length(val)
     idx <- val@i
-    vals <- val@x
-    return(Matrix::sparseMatrix(i = idx, j = rep(1L, length(idx)),
-                                x = vals, dims = c(n, 1L)))
+    x <- if (.hasSlot(val, "x")) val@x else rep(1, length(idx))   # pattern vector
+    val <- Matrix::sparseMatrix(i = idx, j = rep(1L, length(idx)), x = x,
+                                dims = c(n, 1L))
   }
   if (inherits(val, "sparseMatrix")) {
-    ## Keep sparse matrices sparse, but ensure numeric (not logical)
-    if (is.logical(val@x)) {
-      val <- as(val, "dgCMatrix")
-    }
-    return(val)
-  }
-  if (is.logical(val)) {
-    val <- as.numeric(val)
-  }
-  ## Complex values: preserve complex type (do NOT coerce to double)
-  if (is.complex(val)) {
-    if (!is.matrix(val)) {
-      if (length(val) == 1L) {
-        val <- matrix(val, 1L, 1L)
-      } else {
-        val <- matrix(val, ncol = 1L)
-      }
-    }
-    return(val)
-  }
-  if (is.numeric(val) && !is.matrix(val)) {
-    if (length(val) == 1L) {
-      val <- matrix(val, 1L, 1L)
-    } else {
-      ## Vector -> column matrix (Fortran-order, matching CVXPY)
-      val <- matrix(val, ncol = 1L)
-    }
-  }
-  if (is.matrix(val)) {
-    if (!is.numeric(val)) {
-      storage.mode(val) <- "double"
+    ## General double CSC. The three-step chain is Matrix's own replacement
+    ## for the deprecated as(., "dgCMatrix") on logical and pattern classes;
+    ## it expands one-triangle (dsC, dtC) and diagonal storage, materializes
+    ## a unit diagonal's ones, and sums duplicate triplets. No drop0: CVXPY
+    ## keeps explicit zeros.
+    if (!inherits(val, "dgCMatrix")) {
+      val <- as(as(as(val, "dMatrix"), "generalMatrix"), "CsparseMatrix")
     }
     return(val)
   }
   if (inherits(val, "Matrix")) {
-    return(as.matrix(val))
+    ## Dense Matrix class (dgeMatrix, lgeMatrix, ...): a base matrix, then
+    ## the storage cast below.
+    val <- as.matrix(val)
   }
-  cli_abort("Cannot convert object of class {.cls {class(val)}} to a CVXR matrix.")
+  if (!(is.numeric(val) || is.logical(val) || is.complex(val)) || is.null(val)) {
+    cli_abort("Cannot convert object of class {.cls {class(val)}} to a CVXR matrix.")
+  }
+  ## Logical and integer become double; `storage.mode<-` keeps the dim.
+  if (!is.complex(val)) storage.mode(val) <- "double"
+  d <- dim(val)
+  if (is.null(d) || length(d) == 1L) {
+    ## Scalar -> 1 x 1, vector or 1-d array -> column (Fortran order, as CVXPY).
+    dim(val) <- c(length(val), 1L)
+  } else if (length(d) != 2L) {
+    cli_abort("Cannot convert an array with {length(d)} dimensions to a CVXR matrix; constants are at most two-dimensional.")
+  }
+  val
 }
 
 # -- Shape of a value --------------------------------------------------
@@ -128,7 +127,9 @@ intf_sign <- function(val) {
 #' @returns Logical
 #' @keywords internal
 intf_is_sparse <- function(val) {
-  inherits(val, "sparseMatrix")
+  ## sp.issparse: a sparseVector is sparse too (intf_convert stores it as a
+  ## sparse column), so Constant()'s .sparse flag matches its stored value.
+  inherits(val, "sparseMatrix") || inherits(val, "sparseVector")
 }
 
 # -- Hermitian / symmetric check ---------------------------------------

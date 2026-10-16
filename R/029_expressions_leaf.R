@@ -116,6 +116,13 @@
     has_structural_zeros <- .attr_set(sparsity) || isTRUE(diag)
     n_elem <- prod(shape)
 
+    ## CVXPY SOURCE: leaf.py:905-911 -- a non-scalar, non-sparse bound is
+    ## `np.asarray(val)`: a dense Matrix class (dgeMatrix, ...) is a base
+    ## matrix from here on, so the dense-array rules below apply to it.
+    for (i in 1:2) {
+      if (inherits(bounds[[i]], "denseMatrix")) bounds[[i]] <- as.matrix(bounds[[i]])
+    }
+
     if (has_structural_zeros) {
       if (!is.null(bounds[[1L]]) && !.s7_is(bounds[[1L]], Expression) &&
           !inherits(bounds[[1L]], "Matrix")) {
@@ -161,20 +168,24 @@
           }
         } else if (is.null(b)) {
           bounds[[i]] <- none_defaults[[i]]
+        } else if (inherits(b, "sparseMatrix")) {
+          ## CVXPY SOURCE: leaf.py:896-904 -- beside an Expression bound only
+          ## None, scalars and ndarrays of the leaf's shape are accepted; a
+          ## sparse matrix is none of those.
+          cli_abort("Bounds should be NULL, scalars, arrays, or CVXR Expressions with matching dimensions.")
         } else if (length(b) == 1L) {
           bounds[[i]] <- as.numeric(b)
-        } else if (inherits(b, "Matrix")) {
-          if (!identical(as.integer(dim(b)), as.integer(shape))) {
-            cli_abort("Bounds should be NULL, scalars, arrays, or CVXR Expressions with matching dimensions.")
-          }
         } else if (!identical(as.integer(dim(as.array(b))), as.integer(shape)) &&
                    length(b) != n_elem) {
           cli_abort("Bounds should be NULL, scalars, arrays, or CVXR Expressions with matching dimensions.")
         }
       }
     } else {
-      ## Promote NULL to -Inf/Inf, scalars to arrays matching shape. Sparse
-      ## Matrix bounds stay sparse, matching CVXPY's COO-preserving path.
+      ## Promote NULL to -Inf/Inf, scalars to arrays matching shape. A sparse
+      ## Matrix bound goes through `.validate_sparse_bound` (leaf.py:746-772:
+      ## sparsity variables only, same shape, same pattern) and is stored in
+      ## canonical dgCMatrix form, CVXR's counterpart of upstream's
+      ## `coo_array` + `sum_duplicates()`.
       ##
       ## The DENSE non-scalar arm below is the one that was missing. Upstream's
       ## numeric path (leaf.py:926-937) computes
@@ -205,8 +216,8 @@
         b <- bounds[[i]]
         if (is.null(b)) {
           bounds[[i]] <- rep(none_defaults[[i]], n_elem)
-        } else if (inherits(b, "Matrix")) {
-          if (!identical(as.integer(dim(b)), as.integer(shape))) cli_abort(bad_shape)
+        } else if (inherits(b, "sparseMatrix")) {
+          bounds[[i]] <- .validate_sparse_bound(b, shape, sparsity)
         } else if (length(b) == 1L) {
           bounds[[i]] <- rep(b, n_elem)
         } else if (!is.null(dim(b))) {
@@ -364,6 +375,44 @@
     cli_abort("{.arg {what}} indices must be unique; {.val {idx[anyDuplicated(idx)]}} is repeated.")
   }
   sort(idx)
+}
+
+# -- .validate_sparse_bound -------------------------------------------
+## CVXPY SOURCE: leaf.py:746-772 _validate_sparse_bound, plus the sparse arm of
+## _promote_bounds (leaf.py:786-787, `sp.coo_array(val)`).
+##
+## A sparse bound is accepted only on a `sparsity` variable, with the
+## variable's shape, and with canonical coordinates (COO, duplicates summed)
+## equal to `sparse_idx`; the same three checks, in the same order, with
+## upstream's messages. CVXR's canonical sparse form is the general double
+## dgCMatrix, built with the chain `intf_convert` uses: one-triangle (dsC,
+## dtC), diagonal, triplet, pattern and logical classes are expanded,
+## duplicate triplets are summed, explicit zeros are kept (as
+## `sum_duplicates()` keeps them, so they count toward the pattern). CSC is
+## sorted by column then row, so its column-major flat index is already in
+## `.mip_idx` order. The canonical matrix is what gets STORED, so get_bounds,
+## .leaf_bound_domain and .cvxattr_sparse_bound_attr all read a dgC.
+##
+## Before this, any `Matrix` bound was shape-checked only: a dsC on a dense
+## variable bounded one triangle and left the rest unbounded (min sum -> -Inf),
+## a dgT with a duplicate triplet bounded by the first copy instead of the sum,
+## and a pattern that was a strict subset of the variable's was accepted.
+.validate_sparse_bound <- function(b, shape, sparsity) {
+  if (!identical(as.integer(dim(b)), as.integer(shape))) {
+    cli_abort("Sparse bounds must have the same shape as the variable.")
+  }
+  if (!.attr_set(sparsity)) {
+    cli_abort("Sparse bounds are only supported for sparse variables.")
+  }
+  if (!inherits(b, "dgCMatrix")) {
+    b <- as(as(as(b, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+  }
+  nr <- as.integer(shape[1L])
+  flat <- b@i + 1L + rep.int(seq_len(ncol(b)) - 1L, diff(b@p)) * nr
+  if (!identical(as.integer(flat), .mip_idx(sparsity, shape, "sparsity"))) {
+    cli_abort("Sparse bounds must have the same sparsity pattern as the sparse variable.")
+  }
+  b
 }
 
 # -- .reject_partial_mip_idx ------------------------------------------

@@ -57,6 +57,21 @@ you wrote.
 * `psolve(solver = "CLARABEL", warm_start = TRUE)` returned the previous
   optimum when the cones had changed.
 * A complex variable declared `PSD` or `NSD` lost its cone.
+* A matrix product by a 1 x 1 constant, as in `sum_entries(x, axis = 2)` of
+  a one-row expression, gave wrong answers or crashed R. Present in 1.9.2.
+* `sum()`, `max()`, `min()` and `prod()` of an expression took a named `axis`
+  as one more operand, so `sum(x, axis = 2)` was `sum(x + 2)`. They now
+  honor `axis` and `keepdims`.
+* `x / A` with a matrix or vector `A` divided every entry of `x` by
+  `A[1, 1]`. It is now entrywise, as in CVXPY. Present in 1.9.2.
+* Constants from Matrix classes other than `dgCMatrix` were misread: a unit
+  `Diagonal(n)` was all zeros, so `quad_form(x, Diagonal(n))` was unbounded.
+  Present in 1.9.2.
+* A sparse `bounds` matrix bound only its stored entries. As in CVXPY, it is
+  now accepted only on a `sparsity` variable with the same pattern. Present
+  in 1.9.2.
+* A CLARABEL or OSQP warm re-solve after a parameter became zero, or
+  nonzero, returned the previous optimum as optimal. Present in 1.9.2.
 
 ## Matrix norms follow base R
 

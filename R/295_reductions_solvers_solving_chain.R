@@ -161,21 +161,21 @@ method(print, SolvingChain) <- function(x, ...) {
 ## CVXPY SOURCE: solving_chain.py:227-228 wires
 ## `CvxAttr2Constr(reduce_bounds = not solver_instance.BOUNDED_VARIABLES)`.
 ##
-## CVXPY SOURCE: matrix_stuffing.py:48-52,84-88 rejects sparse bounds that
-## reach matrix stuffing, and cone_matrix_stuffing.py:448-456 handles
-## parametric bounds through dedicated tensors. CVXR supports that tensor path
-## for its 2D scalar-or-exact-shape bound model; sparse bounds still lower to
-## constraints.
+## The solver's BOUNDED_VARIABLES flag alone decides, as upstream. A sparse
+## bound can only sit on a sparsity variable (leaf.py:746-772, ported in
+## leaf.R `.validate_sparse_bound`), and CvxAttr2Constr turns it into the
+## reduced variable's dense bound (cvx_attr2constr.py:229-247,
+## `.cvxattr_sparse_bound_attr`), so matrix stuffing never sees a Matrix bound
+## (matrix_stuffing.py:48-52,84-88 treats one as an internal error).
+##
+## Until 1.9.3 this scanned the problem and returned FALSE when any variable
+## carried a Matrix bound, lowering EVERY bound to constraints -- a leftover
+## from when CVXR accepted sparse bounds on dense variables. Measured on
+## HiGHS with Variable(2, sparsity = 1, bounds = list(<sparse -1>, 5)): CVXPY
+## 1.9.3 passes lower_bounds [-1], upper_bounds [5], no nonneg rows; the scan
+## gave NULL tensors and three nonneg rows.
 .preserve_variable_bounds <- function(problem, solver_inst) {
-  if (!isTRUE(solver_inst@BOUNDED_VARIABLES)) return(FALSE)
-  for (v in variables(problem)) {
-    b <- v@attributes$bounds
-    if (is.null(b) || !is.list(b)) next
-    if (any(vapply(b, function(x) inherits(x, "Matrix"), logical(1L)))) {
-      return(FALSE)
-    }
-  }
-  TRUE
+  isTRUE(solver_inst@BOUNDED_VARIABLES)
 }
 
 # -- .lookup_by_name() --------------------------------------------

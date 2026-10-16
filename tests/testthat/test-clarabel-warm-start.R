@@ -293,3 +293,33 @@ test_that("Clarabel warm-start re-solves when a power-cone exponent changes", {
   expect_equal(status(prob), "optimal")
   expect_equal(r2, 2 * 2^0.2 * 3^0.8, tolerance = 1e-4)
 })
+
+# ── Sparsity-pattern change between warm solves ─────────────────────────────
+
+## @cvxpy NONE
+test_that("Clarabel warm-start re-solves when the pattern of A changes", {
+  ## A parameter that becomes 0 leaves the pattern of A, and R clarabel's
+  ## solver_update() writes the new values into the old pattern without
+  ## checking it (CVXPY keeps a fixed pattern through ReducedMat and Python
+  ## clarabel raises, so it never sees this). With p = (1, 0) -> (0, 1) the
+  ## nnz is unchanged and the warm path returned 5 (the first optimum) for 6.
+  x <- Variable(2)
+  p1 <- Parameter()
+  p2 <- Parameter()
+  prob <- Problem(Maximize(x[1] + x[2]),
+                  list(p1 * x[1] + p2 * x[2] <= 1, x >= 0, x <= 5))
+
+  value(p1) <- 1
+  value(p2) <- 0
+  r1 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r1, 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(1, 5), tolerance = 1e-5)
+
+  value(p1) <- 0
+  value(p2) <- 1
+  r2 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r2, 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(5, 1), tolerance = 1e-5)
+})

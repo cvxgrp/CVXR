@@ -53,7 +53,7 @@ Enhances:
     Rmosek,
     gurobi (>= 13.0),
     Rglpk (>= 0.6),
-    ECOSolveR (>= 0.6),
+    ECOSolveR (>= 0.6.2),
     Rcplex (>= 0.3),
     cccp (>= 0.3),
     piqp (>= 0.6),

@@ -215,21 +215,19 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
 .cvxr_Summary_handler <- function(..., na.rm = FALSE) {
   args <- list(...)
   nms <- names(args)
-  if (!is.null(nms) && any(nzchar(nms)) &&
-      .Generic %in% c("sum", "max", "min", "prod")) {
-    ## CVXPY: sum/max/min/prod(x, axis, keepdims) reduce along axis
-    ## (atoms/affine/sum.py:166-175, max.py:39, min.py:39, prod.py:141).
-    ## Without this, a named axis was summed in as one more operand.
-    bad <- setdiff(nms[nzchar(nms)], c("axis", "keepdims"))
-    if (length(bad) > 0L) {
-      cli_abort(c(
-        "{.fn {(.Generic)}} on a CVXR expression does not take argument{?s} {.arg {bad}}.",
-        "i" = "Use {.arg axis} and {.arg keepdims} to reduce along an axis."
-      ))
-    }
+  ## CVXPY: sum/max/min/prod(x, axis, keepdims) reduce along axis
+  ## (atoms/affine/sum.py:166-175, max.py:39, min.py:39, prod.py:141); any
+  ## other keyword is a TypeError there. R's variadic convention differs: a
+  ## name on a `...` entry labels an operand (sum(a = 1:3) is 6,
+  ## do.call(sum, split(...))), and `na.rm` is the formal. So `axis` and
+  ## `keepdims` are the options and every other entry, named or not, is an
+  ## operand whose name is dropped. Recorded deviation, better-in-r.
+  is_opt <- nms %in% c("axis", "keepdims") &
+    .Generic %in% c("sum", "max", "min", "prod")
+  if (any(is_opt)) {
     axis <- args[["axis"]]
     keepdims <- if (is.null(args[["keepdims"]])) FALSE else args[["keepdims"]]
-    operands <- args[!nzchar(nms)]
+    operands <- args[!is_opt]
     if (length(operands) != 1L) {
       cli_abort("{.arg axis} and {.arg keepdims} in {.fn {(.Generic)}} take a single expression.")
     }
@@ -241,63 +239,33 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
       "prod" = Prod(x, axis = axis, keepdims = keepdims)
     ))
   }
-  x <- args[[1L]]
-  switch(.Generic,
-    "sum"   = {
-      if (length(args) == 1L) {
-        SumEntries(x)
-      } else {
-        ## sum(x, y, ...) -> SumEntries of addition
-        result <- as_expr(args[[1L]])
-        for (i in seq_along(args)[-1L]) {
-          ai <- as_expr(args[[i]])
-          bcast <- broadcast_args(result, ai)
-          result <- AddExpression(list(bcast[[1L]], bcast[[2L]]))
-        }
-        SumEntries(result)
-      }
-    },
-    "max"   = {
-      if (length(args) == 1L) {
-        MaxEntries(x)
-      } else {
-        ## max(x, y, ...) -> nested MaxEntries of add? No: max of multiple -> max_elemwise
-        ## Actually, base::max(x, y) finds the max across all values, so
-        ## we should construct MaxEntries of the concatenated expression.
-        ## For simplicity with Expression objects, use pairwise max_elemwise
-        result <- as_expr(args[[1L]])
-        for (i in seq_along(args)[-1L]) {
-          result <- Maximum(result, as_expr(args[[i]]))
-        }
-        result
-      }
-    },
-    "min"   = {
-      if (length(args) == 1L) {
-        MinEntries(x)
-      } else {
-        result <- as_expr(args[[1L]])
-        for (i in seq_along(args)[-1L]) {
-          result <- Minimum(result, as_expr(args[[i]]))
-        }
-        result
-      }
-    },
-    "prod"  = {
-      if (length(args) == 1L) {
-        Prod(x)
-      } else {
-        result <- as_expr(args[[1L]])
-        for (i in seq_along(args)[-1L]) {
-          result <- result * as_expr(args[[i]])
-        }
-        Prod(result)
-      }
-    },
+  args <- unname(args)
+  ## base R: sum(x, y, ...) is the sum of all the values present in all the
+  ## arguments (?sum), max/min the largest/smallest of them (?max), prod their
+  ## product; operands need not conform and the result has length 1. The
+  ## elementwise forms are pmax/pmin, here max_elemwise/min_elemwise. So each
+  ## operand is reduced on its own and the scalars are combined. (Until 1.9.3,
+  ## sum(x, y) was sum(x + y) with broadcasting, prod(x, y) was prod(x * y),
+  ## and max/min(x, y) were the elementwise Maximum/Minimum.)
+  reduce <- switch(.Generic,
+    "sum"   = SumEntries,
+    "max"   = MaxEntries,
+    "min"   = MinEntries,
+    "prod"  = Prod,
     "range" = cli_abort("{.fn range} is not supported for CVXR expressions."),
     "any"   = cli_abort("{.fn any} is not applicable to CVXR expressions."),
     "all"   = cli_abort("{.fn all} is not applicable to CVXR expressions."),
     cli_abort("{.fn {(.Generic)}} is not supported for CVXR expressions.")
+  )
+  if (length(args) == 1L) {
+    return(reduce(args[[1L]]))
+  }
+  parts <- lapply(args, function(a) reduce(as_expr(a)))
+  switch(.Generic,
+    "sum"   = Reduce(`+`, parts),
+    "prod"  = Reduce(`*`, parts),
+    "max"   = do.call(Maximum, parts),
+    "min"   = do.call(Minimum, parts)
   )
 }
 

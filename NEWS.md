@@ -72,8 +72,15 @@ different numbers.
   mixed sparse and dense result is a base matrix, a sparse one stays sparse.
 * `sum()`, `max()`, `min()` and `prod()` of an expression now honor `axis`
   and `keepdims`, as in CVXPY. A named `axis` was taken as one more operand,
-  so `sum(x, axis = 2)` returned `sum(x + 2)`; other named arguments are
-  now an error.
+  so `sum(x, axis = 2)` returned `sum(x + 2)`. Any other name labels an
+  operand, as in `base::sum()`, so `sum(a = x)` and `do.call(sum, parts)`
+  with a named list work as before.
+* `sum()`, `prod()`, `max()` and `min()` with more than one operand now mean
+  what they mean in base R: each operand is reduced on its own and the
+  results combined, so `sum(x, 2)` is `sum(x) + 2` and `max(x, y)` is one
+  scalar, the largest entry of either. They were `sum(x + 2)`, `prod(x * y)`
+  and the elementwise maximum and minimum; use `max_elemwise()` and
+  `min_elemwise()` for those.
 * `matrix_trace(A * B)` returned the trace of the matrix product (CVXPY
   1.9.3, #3492).
 * `cumsum(X)` of a matrix is now a column of `length(X)` entries in

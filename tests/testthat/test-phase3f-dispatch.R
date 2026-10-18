@@ -144,12 +144,26 @@ test_that("sum(x) creates SumEntries atom via Summary dispatch", {
 })
 
 ## @cvxpy NONE
-test_that("sum(x, y) adds then sums", {
-  x <- Variable(3)
-  y <- Variable(3)
+test_that("sum(x, y, ...) is the sum of the entry sums, as base::sum", {
+  ## base::sum(x, y) adds every entry of every operand; shapes need not
+  ## agree. sum(x, y) was sum(x + y) with broadcasting, so sum(x, 2) for a
+  ## 2 x 3 x added 2 six times.
+  x <- Variable(c(2L, 3L))
+  y <- Variable(c(3L, 1L))
+  M <- matrix(c(1, -4, 3, 2, -5, 6), 2L, 3L)
+  N <- matrix(c(10, 20, 30), 3L, 1L)
+  value(x) <- M
+  value(y) <- N
   s <- sum(x, y)
-  ## Should be SumEntries of (x + y)
-  expect_s3_class(s, "CVXR::SumEntries")
+  expect_equal(s@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(s)), sum(M, N))
+  expect_equal(as.numeric(value(sum(x, 2))), sum(M, 2))
+  expect_equal(as.numeric(value(sum(x, y, 2))), sum(M, N, 2))
+  expect_true(is_affine(s))
+  ## prod likewise: the product of the entry products, not prod(x * y).
+  expect_equal(as.numeric(value(prod(x, 2))), prod(M, 2))
+  expect_equal(as.numeric(value(prod(x, y))), prod(M, N))
+  expect_equal(prod(x, y)@shape, c(1L, 1L))
 })
 
 ## ── Summary group: max ───────────────────────────────────────────
@@ -164,12 +178,26 @@ test_that("max(x) creates MaxEntries atom via Summary dispatch", {
 })
 
 ## @cvxpy NONE
-test_that("max(x, y) creates Maximum (elementwise) via Summary dispatch", {
-  x <- Variable(3)
-  y <- Variable(3)
+test_that("max(x, y, ...) is one scalar over all operands, as base::max", {
+  ## base::max(x, y) is the largest entry of all operands, a length-1 result;
+  ## the elementwise maximum is pmax(), max_elemwise() here. max(x, y) used
+  ## to be the elementwise Maximum(x, y).
+  x <- Variable(c(2L, 3L))
+  y <- Variable(c(3L, 1L))
+  M <- matrix(c(1, -4, 3, 2, -5, 6), 2L, 3L)
+  N <- matrix(c(10, -20, 3), 3L, 1L)
+  value(x) <- M
+  value(y) <- N
   m <- max(x, y)
-  ## With multiple args, max should route to Maximum
   expect_s3_class(m, "CVXR::Maximum")
+  expect_equal(m@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(m)), max(M, N))
+  expect_true(is_convex(m))
+  expect_equal(max(x, 0)@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(max(x, 0))), max(M, 0))
+  expect_equal(as.numeric(value(max(x, y, 100))), 100)
+  ## The elementwise maximum is still max_elemwise().
+  expect_equal(max_elemwise(x, 0)@shape, c(2L, 3L))
 })
 
 ## ── Summary group: min ───────────────────────────────────────────
@@ -184,11 +212,21 @@ test_that("min(x) creates MinEntries atom via Summary dispatch", {
 })
 
 ## @cvxpy NONE
-test_that("min(x, y) creates Minimum (elementwise) via Summary dispatch", {
-  x <- Variable(3)
-  y <- Variable(3)
+test_that("min(x, y, ...) is one scalar over all operands, as base::min", {
+  x <- Variable(c(2L, 3L))
+  y <- Variable(c(3L, 1L))
+  M <- matrix(c(1, -4, 3, 2, -5, 6), 2L, 3L)
+  N <- matrix(c(10, -20, 3), 3L, 1L)
+  value(x) <- M
+  value(y) <- N
   m <- min(x, y)
   expect_s3_class(m, "CVXR::Minimum")
+  expect_equal(m@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(m)), min(M, N))
+  expect_true(is_concave(m))
+  expect_equal(min(x, 0)@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(min(x, 0))), min(M, 0))
+  expect_equal(min_elemwise(x, 0)@shape, c(2L, 3L))
 })
 
 ## ── Summary group: unsupported ───────────────────────────────────
@@ -228,16 +266,34 @@ test_that("sum/max/min/prod honor axis and keepdims as CVXPY's do", {
 })
 
 ## @cvxpy NONE
-test_that("sum/max/min/prod reject other named arguments and axis with several operands", {
+test_that("sum/max/min/prod take named operands as base R does; axis needs one operand", {
+  ## base::sum(..., na.rm) labels a `...` entry by its name and still adds it:
+  ## sum(a = 1:3) is 6 and sum(1:3, axes = 2) is 8. Only `axis` and `keepdims`
+  ## are options here (the CVXPY keywords); every other entry is an operand.
   x <- Variable(c(2L, 3L))
   y <- Variable(c(2L, 3L))
+  M <- matrix(c(1, -4, 3, 2, -5, 6), 2L, 3L)
+  value(x) <- M
+  value(y) <- 2 * M
+  expect_s3_class(sum(a = x), "CVXR::SumEntries")
+  expect_equal(as.numeric(value(sum(a = x))), sum(a = M))
+  expect_equal(as.numeric(value(do.call(sum, list(a = x, b = y)))), sum(M, 2 * M))
+  ## A misspelled option is an operand, as in base R; it means what the
+  ## unnamed call means.
+  expect_equal(value(sum(x, axes = 2L)), value(sum(x, 2L)))
+  expect_s3_class(max(a = x, b = y), "CVXR::Maximum")
+  expect_equal(as.numeric(value(max(a = x, b = y))), max(a = M, b = 2 * M))
+  expect_equal(as.numeric(value(min(a = x, b = y))), min(a = M, b = 2 * M))
+  expect_equal(as.numeric(value(prod(a = x))), prod(a = M))
+  ## Operand names do not reach the atom.
+  expect_null(names(max(a = x, b = y)@args))
   for (f in list(sum, max, min, prod)) {
-    expect_error(f(x, axes = 2L), "axes")
     expect_error(f(x, y, axis = 2L), "single expression")
+    expect_error(f(a = x, b = y, keepdims = TRUE), "single expression")
   }
   ## Unnamed operands keep the base R meaning.
-  expect_s3_class(sum(x, y), "CVXR::SumEntries")
-  expect_s3_class(max(x, y), "CVXR::Maximum")
+  expect_equal(sum(x, y)@shape, c(1L, 1L))
+  expect_equal(max(x, y)@shape, c(1L, 1L))
 })
 
 ## @cvxpy NONE

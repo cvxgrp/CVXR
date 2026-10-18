@@ -67,6 +67,16 @@ you wrote.
 * `sum()`, `max()`, `min()` and `prod()` of an expression took a named `axis`
   as one more operand, so `sum(x, axis = 2)` was `sum(x + 2)`. They now
   honor `axis` and `keepdims`.
+* `sum()`, `prod()`, `max()` and `min()` with more than one operand now mean
+  what they mean in base R: `sum(x, 2)` is `sum(x) + 2` and `max(x, y)` is
+  one scalar, the largest entry of either. They were `sum(x + 2)`,
+  `prod(x * y)` and the elementwise maximum and minimum; use
+  `max_elemwise()` and `min_elemwise()` for those.
+* `max_elemwise()` and `min_elemwise()` take `na.rm`, and `hstack()` and
+  `vstack()` take `deparse.level`, as `pmax()` and `rbind()` do, with no
+  effect. `max_elemwise(u, v, na.rm = TRUE)` used to take `TRUE` as a third
+  operand. Named operands, as from `do.call(vstack, split(...))`, are
+  accepted as before.
 * `x / A` with a matrix or vector `A` divided every entry of `x` by
   `A[1, 1]`. It is now entrywise, as in CVXPY. Present in 1.9.2.
 * `x / d` with shapes that do not broadcast, such as a 2 x 3 `x` and a

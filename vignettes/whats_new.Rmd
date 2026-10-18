@@ -59,10 +59,11 @@ you wrote.
 * A complex variable declared `PSD` or `NSD` lost its cone.
 * `sum_entries(x, axis = 2)` of a one-row expression gave wrong answers or
   crashed R. Present in 1.9.2.
-* `%*%` with a scalar operand, as in `2 %*% x`, or with a 1 x 1 operand that
-  does not conform, built a product that gave a scalar product or crashed R.
-  Both are now errors, as in CVXPY and base R; use `*` to multiply by a
-  scalar.
+* `%*%` with a scalar operand that does not conform, as in `2 %*% x` for a
+  2 x 3 `x`, or with a 1 x 1 operand that does not conform, built a product
+  that gave a scalar product or crashed R. Both are now errors, as in base R;
+  use `*` to multiply by a scalar. A scalar operand that conforms, as in
+  `x %*% 2` for a 3 x 1 `x`, is a product, as in base R.
 * `sum()`, `max()`, `min()` and `prod()` of an expression took a named `axis`
   as one more operand, so `sum(x, axis = 2)` was `sum(x + 2)`. They now
   honor `axis` and `keepdims`.

@@ -298,6 +298,30 @@ test_that("%*% with a conformable 1 x 1 operand is a matrix product", {
   expect_equal(as.numeric(value(z)), 1, tolerance = 1e-6)
 })
 
+## R-specific: base R's `%*%` promotes a length-1 vector to 1 x 1 and accepts
+## it when the other operand's inner dimension is 1 (?matmult); CVXPY has no
+## such case, a () operand is always rejected. CVXR follows R. aramappings
+## 0.2.0 does `Pvar[idx, ] %*% v_k` with a length-1 `v_k`, correct on 1.9.2
+## and rejected by 1.9.2.9500 (found by the 1.9.3 revdep check, 2026-10-17).
+## @cvxpy NONE
+test_that("%*% with a conformable bare scalar follows base R", {
+  x <- Variable(c(3, 1))
+  e <- x %*% 2
+  expect_equal(e@shape, c(3L, 1L))
+  value(x) <- matrix(1:3, 3, 1)
+  expect_equal(as.numeric(value(e)), c(2, 4, 6))
+  y <- Variable(c(1, 3))
+  e2 <- 2 %*% y
+  expect_equal(e2@shape, c(1L, 3L))
+  ## min sum(x) s.t. x %*% 2 >= (2, 4, 6): x = (1, 2, 3), objective 6.
+  prob <- Problem(Minimize(sum(x)), list(x %*% 2 >= matrix(c(2, 4, 6), 3, 1)))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(1, 2, 3), tolerance = 1e-6)
+  ## A non-conformable bare scalar is still rejected, as in base R.
+  expect_error(Variable(c(2, 3)) %*% 2, "Scalar operands are not allowed")
+  expect_error(5 %*% Variable(3), "Scalar operands are not allowed")
+})
+
 # ── 8. test_div_expression ───────────────────────────────────────────
 
 ## @cvxpy test_expressions.py::TestExpressions::test_div_expression

@@ -58,9 +58,11 @@ different numbers.
   variable of size 3 or more returned a wrong optimum.
 * `sum_entries(x, axis = 2)` of a one-row expression gave wrong results or
   crashed R. Present in 1.9.2.
-* `%*%` with a scalar operand (`2 %*% x`) or a non-conforming 1 x 1 operand
-  built a product that gave a scalar product or crashed R. Both are now
-  errors, as in CVXPY and base R; use `*` to multiply by a scalar.
+* `%*%` with a scalar operand that does not conform (`2 %*% x` for a 2 x 3
+  `x`) or a non-conforming 1 x 1 operand built a product that gave a scalar
+  product or crashed R. Both are now errors, as in base R; use `*` to
+  multiply by a scalar. A scalar operand that conforms (`x %*% 2` for a
+  3 x 1 `x`) is a product, as in base R.
 * `x / d` with shapes that do not broadcast, such as a 2 x 3 `x` and a
   length-3 `d`, recycled the divisor silently. It is now an error, as in
   CVXPY; a row or column divisor still broadcasts.

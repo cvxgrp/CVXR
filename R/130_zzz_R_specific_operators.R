@@ -63,23 +63,33 @@
 
 ## CVXPY: Expression.__matmul__ / __rmatmul__ (expression.py:842-843,
 ## 894-895) raise "Scalar operands are not allowed, use '*' instead" when
-## either operand has shape (). In R only a bare length-1 vector is a scalar
-## rather than a 1 x 1 matrix; a 1 x 1 operand goes on to the inner-dimension
-## check in mul_shapes_promote(), as a (1, 1) array does in CVXPY.
-.check_matmul_scalar <- function(v) {
+## either operand has shape (). R has no 0-d value: a bare length-1 vector is
+## also R's 1-vector, which base R's `%*%` promotes to 1 x 1 and accepts
+## whenever the other operand's inner dimension is 1 (?matmult), so
+## `x(n x 1) %*% 2` and `2 %*% y(1 x n)` are valid R and were valid in CVXR
+## 1.9.2. Reject only what base R rejects too, with CVXPY's message; a
+## conformable bare scalar goes on as a 1 x 1 constant through the
+## inner-dimension check in mul_shapes_promote(), as a (1, 1) array does in
+## CVXPY. (1.9.2.9500 rejected every bare scalar, which broke a CRAN reverse
+## dependency; recorded deviation from CVXPY, 2026-10-17.)
+.check_matmul_scalar <- function(v, other, side = c("right", "left")) {
   if (is.null(dim(v)) && length(v) == 1L) {
-    cli_abort("Scalar operands are not allowed, use {.code *} instead")
+    side <- match.arg(side)
+    inner <- if (side == "right") other@shape[2L] else other@shape[1L]
+    if (inner != 1L) {
+      cli_abort("Scalar operands are not allowed, use {.code *} instead")
+    }
   }
   invisible(NULL)
 }
 
 method(`%*%`, list(Expression, class_any)) <- function(x, y) {
-  .check_matmul_scalar(y)
+  .check_matmul_scalar(y, x, "right")
   MulExpression(x, as_expr(y))
 }
 
 method(`%*%`, list(class_any, Expression)) <- function(x, y) {
-  .check_matmul_scalar(x)
+  .check_matmul_scalar(x, y, "left")
   MulExpression(as_expr(x), y)
 }
 

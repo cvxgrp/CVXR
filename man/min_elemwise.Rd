@@ -4,14 +4,17 @@
 \alias{min_elemwise}
 \title{Elementwise minimum of expressions}
 \usage{
-min_elemwise(...)
+min_elemwise(..., na.rm = FALSE)
 }
 \arguments{
 \item{...}{Expressions (at least 2)}
+
+\item{na.rm}{Accepted for compatibility with \code{pmin()}; expressions cannot
+contain \code{NA}, so it has no effect}
 }
 \value{
 A Minimum atom
 }
 \description{
-Elementwise minimum of expressions
+Named operands are accepted, as in \code{pmin()}, and the names are dropped.
 }

@@ -10,8 +10,11 @@ HStack <- new_class("HStack", parent = AffAtom, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
-    ## hstack.py:25 takes one positional list; a keyword is a TypeError.
-    all_args <- lapply(.abort_named_dots(list(...), "hstack"), as_expr)
+    ## hstack.py:25 takes one positional list; a keyword is a TypeError. R's
+    ## variadic convention labels operands by name (`cbind(a = x, b = y)`,
+    ## `do.call(hstack, split(...))`), so names are dropped here and the
+    ## wrapper takes cbind's option formal. Recorded deviation, better-in-r.
+    all_args <- lapply(unname(list(...)), as_expr)
     if (length(all_args) == 0L) {
       cli_abort("{.cls HStack} requires at least one argument.")
     }
@@ -56,9 +59,13 @@ method(graph_implementation, HStack) <- function(x, arg_objs, shape, data = NULL
 
 #' Horizontal concatenation of expressions
 #'
+#' Named operands are accepted, as in `cbind()`, and the names are dropped.
+#'
 #' @param ... Expressions (same number of rows)
+#' @param deparse.level Accepted for compatibility with `cbind()`; expressions
+#'   have no dimnames, so it has no effect
 #' @returns An HStack atom
 #' @export
-hstack <- function(...) {
+hstack <- function(..., deparse.level = 1) {
   HStack(...)
 }

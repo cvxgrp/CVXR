@@ -9,8 +9,11 @@
 Minimum <- new_class("Minimum", parent = Elementwise, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
-    ## minimum.py:46 `__init__(self, arg1, arg2, *args)`; a keyword is a TypeError.
-    args <- .abort_named_dots(list(...), "min_elemwise")
+    ## minimum.py:46 `__init__(self, arg1, arg2, *args)`; a keyword is a
+    ## TypeError. R's variadic convention labels operands by name
+    ## (`pmin(a = x, b = y)`), so names are dropped here and the wrapper takes
+    ## pmin's `na.rm`. Recorded deviation, better-in-r.
+    args <- unname(list(...))
     if (length(args) < 2L) {
       cli_abort("{.cls Minimum} requires at least 2 arguments.")
     }
@@ -92,9 +95,13 @@ method(.grad, Minimum) <- function(x, values, ...) {
 
 #' Elementwise minimum of expressions
 #'
+#' Named operands are accepted, as in `pmin()`, and the names are dropped.
+#'
 #' @param ... Expressions (at least 2)
+#' @param na.rm Accepted for compatibility with `pmin()`; expressions cannot
+#'   contain `NA`, so it has no effect
 #' @returns A Minimum atom
 #' @export
-min_elemwise <- function(...) {
+min_elemwise <- function(..., na.rm = FALSE) {
   Minimum(...)
 }

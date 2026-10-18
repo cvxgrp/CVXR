@@ -4,14 +4,17 @@
 \alias{hstack}
 \title{Horizontal concatenation of expressions}
 \usage{
-hstack(...)
+hstack(..., deparse.level = 1)
 }
 \arguments{
 \item{...}{Expressions (same number of rows)}
+
+\item{deparse.level}{Accepted for compatibility with \code{cbind()}; expressions
+have no dimnames, so it has no effect}
 }
 \value{
 An HStack atom
 }
 \description{
-Horizontal concatenation of expressions
+Named operands are accepted, as in \code{cbind()}, and the names are dropped.
 }

@@ -4,14 +4,17 @@
 \alias{vstack}
 \title{Vertical concatenation of expressions}
 \usage{
-vstack(...)
+vstack(..., deparse.level = 1)
 }
 \arguments{
 \item{...}{Expressions (same number of columns)}
+
+\item{deparse.level}{Accepted for compatibility with \code{rbind()}; expressions
+have no dimnames, so it has no effect}
 }
 \value{
 A VStack atom
 }
 \description{
-Vertical concatenation of expressions
+Named operands are accepted, as in \code{rbind()}, and the names are dropped.
 }

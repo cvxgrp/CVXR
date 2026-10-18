@@ -9,8 +9,11 @@
 Maximum <- new_class("Maximum", parent = Elementwise, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
-    ## maximum.py:46 `__init__(self, arg1, arg2, *args)`; a keyword is a TypeError.
-    args <- .abort_named_dots(list(...), "max_elemwise")
+    ## maximum.py:46 `__init__(self, arg1, arg2, *args)`; a keyword is a
+    ## TypeError. R's variadic convention labels operands by name
+    ## (`pmax(a = x, b = y)`), so names are dropped here and the wrapper takes
+    ## pmax's `na.rm`. Recorded deviation, better-in-r.
+    args <- unname(list(...))
     if (length(args) < 2L) {
       cli_abort("{.cls Maximum} requires at least 2 arguments.")
     }
@@ -92,9 +95,13 @@ method(.grad, Maximum) <- function(x, values, ...) {
 
 #' Elementwise maximum of expressions
 #'
+#' Named operands are accepted, as in `pmax()`, and the names are dropped.
+#'
 #' @param ... Expressions (at least 2)
+#' @param na.rm Accepted for compatibility with `pmax()`; expressions cannot
+#'   contain `NA`, so it has no effect
 #' @returns A Maximum atom
 #' @export
-max_elemwise <- function(...) {
+max_elemwise <- function(..., na.rm = FALSE) {
   Maximum(...)
 }

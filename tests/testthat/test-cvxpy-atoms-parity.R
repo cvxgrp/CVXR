@@ -1625,29 +1625,55 @@ test_that("cvxr_norm with an unrecognized string p reports it, as CVXPY", {
 
 ## CVXPY hstack.py:25 and vstack.py:25 take one positional list, and
 ## maximum.py:46 / minimum.py:46 are `__init__(self, arg1, arg2, *args)`, so
-## any keyword is a TypeError. The R wrappers forward `...` into the
-## constructor, where a named entry such as `na.rm = TRUE` or `axis = 1`
-## used to become a silent extra Constant operand that changed the value and
-## the optimum (sweep item 4, pass E). Positional non-expressions stay
-## operands on both sides (`cp.maximum(u, v, True)` builds).
+## any keyword is a TypeError. R's variadic convention differs: a named entry
+## in `...` labels an operand (`rbind(a = x, b = y)`, `do.call(vstack,
+## split(...))`), and only the formals of the base R analog are options
+## (`pmax(..., na.rm)`, `rbind(..., deparse.level)`). CVXR follows base R:
+## named operands are accepted and their names dropped; `na.rm` and
+## `deparse.level` are accepted with no effect, as the Summary methods already
+## treat `na.rm`. Before 1.9.3, `na.rm = TRUE` became a silent extra Constant
+## operand that changed the optimum (sweep item 4, pass E); a 1.9.3 release
+## candidate then rejected every name, which broke `do.call(vstack, <named
+## list>)` in the cvxr_docs isotonic-regression example (docs regression
+## 2026-10-17). Recorded deviation, better-in-r. Positional non-expressions
+## stay operands on both sides (`cp.maximum(u, v, True)` builds).
 ## @cvxpy hstack.py::hstack vstack.py::vstack maximum.py::maximum minimum.py::minimum
-test_that("hstack, vstack, max_elemwise and min_elemwise reject a named argument", {
+test_that("hstack, vstack, max_elemwise and min_elemwise take named operands and the base R option formals", {
   x <- Variable(c(1, 2))
   y <- Variable(c(1, 3))
   u <- Variable(2)
   v <- Variable(2)
-  expect_error(hstack(x, y, axis = 1), "axis")
-  expect_error(vstack(u, v, deparse.level = 0), "deparse.level")
-  expect_error(max_elemwise(u, v, na.rm = TRUE), "na.rm")
-  expect_error(min_elemwise(u, v, na.rm = TRUE), "na.rm")
-  expect_error(max_elemwise(a = u, b = v), "a.*b")
-  ## positional non-expressions are operands, as upstream
+  value(u) <- c(-1, -3)
+  value(v) <- c(-2, -4)
+  ## named operands: accepted, names dropped, same object as the positional call
+  m_named <- max_elemwise(a = u, b = v)
+  expect_length(m_named@args, 2L)
+  expect_null(names(m_named@args))
+  expect_equal(as.numeric(value(m_named)), c(-1, -3))
+  expect_equal(dim(hstack(left = x, right = y)), c(1L, 5L))
+  ## the do.call-over-split idiom (cvxr_docs isotonic-regression)
+  parts <- lapply(split(1:4, c("8", "8", "10", "10")), function(i) u[1] * length(i))
+  expect_named(parts, c("10", "8"))
+  st <- do.call(vstack, parts)
+  expect_equal(dim(st), c(2L, 1L))
+  expect_null(names(st@args))
+  expect_equal(as.numeric(value(st)), c(-2, -2))
+  ## the base R option formals: accepted, no effect
+  m <- max_elemwise(u, v, na.rm = TRUE)
+  expect_length(m@args, 2L)
+  expect_equal(as.numeric(value(m)), c(-1, -3))
+  expect_length(min_elemwise(u, v, na.rm = TRUE)@args, 2L)
+  expect_equal(as.numeric(value(min_elemwise(u, v, na.rm = TRUE))), c(-2, -4))
+  expect_length(vstack(u, v, deparse.level = 0)@args, 2L)
+  expect_equal(dim(hstack(x, y, deparse.level = 2)), c(1L, 5L))
+  ## positional non-expressions are operands, as upstream and as pmax
   expect_equal(dim(hstack(x, 1)), c(1L, 3L))
   expect_equal(dim(max_elemwise(u, v, TRUE)), c(2L, 1L))
   expect_length(max_elemwise(u, v, TRUE)@args, 3L)
-  value(u) <- c(-1, -3)
-  value(v) <- c(-2, -4)
-  expect_equal(as.numeric(value(max_elemwise(u, v))), c(-1, -3))
+  ## the solve sweep item 4 measured: -2, not the 2 a third operand gave
+  prob <- Problem(Minimize(sum(max_elemwise(u, v, na.rm = TRUE))),
+                  list(u >= -1, v >= -2))
+  expect_equal(psolve(prob, solver = "CLARABEL"), -2, tolerance = 1e-6)
 })
 
 ## @cvxpy norm1.py::norm1 log_sum_exp.py::log_sum_exp

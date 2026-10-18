@@ -10,8 +10,11 @@ VStack <- new_class("VStack", parent = AffAtom, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
-    ## vstack.py:25 takes one positional list; a keyword is a TypeError.
-    all_args <- lapply(.abort_named_dots(list(...), "vstack"), as_expr)
+    ## vstack.py:25 takes one positional list; a keyword is a TypeError. R's
+    ## variadic convention labels operands by name (`rbind(a = x, b = y)`,
+    ## `do.call(vstack, split(...))`), so names are dropped here and the
+    ## wrapper takes rbind's option formal. Recorded deviation, better-in-r.
+    all_args <- lapply(unname(list(...)), as_expr)
     if (length(all_args) == 0L) {
       cli_abort("{.cls VStack} requires at least one argument.")
     }
@@ -56,9 +59,13 @@ method(graph_implementation, VStack) <- function(x, arg_objs, shape, data = NULL
 
 #' Vertical concatenation of expressions
 #'
+#' Named operands are accepted, as in `rbind()`, and the names are dropped.
+#'
 #' @param ... Expressions (same number of columns)
+#' @param deparse.level Accepted for compatibility with `rbind()`; expressions
+#'   have no dimnames, so it has no effect
 #' @returns A VStack atom
 #' @export
-vstack <- function(...) {
+vstack <- function(..., deparse.level = 1) {
   VStack(...)
 }

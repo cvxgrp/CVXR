@@ -299,25 +299,6 @@ as_expr <- function(x) {
   }
 }
 
-#' Reject named entries in a variadic operand list
-#'
-#' The CVXPY counterparts of the variadic atoms take positional operands
-#' only (`hstack(arg_list)`, `maximum(arg1, arg2, *args)`), so a keyword is
-#' a TypeError there. In R a named entry in `...` such as `na.rm = TRUE` or
-#' `axis = 1` would otherwise be promoted to a Constant operand and change
-#' the result silently (sweep item 4, pass E).
-#' @param dots `list(...)` as collected by the constructor
-#' @param fn The user-facing function name for the message
-#' @returns `dots`, invisibly, when no entry is named
-#' @noRd
-.abort_named_dots <- function(dots, fn) {
-  nm <- names(dots)
-  if (!is.null(nm) && any(nzchar(nm))) {
-    nm <- nm[nzchar(nm)]
-    cli_abort("{cli::qty(length(nm))}Unused argument{?s} {.arg {nm}} in {.fn {fn}}: operands are positional.")
-  }
-  invisible(dots)
-}
 
 #' Convert a value to a CVXR Expression
 #'

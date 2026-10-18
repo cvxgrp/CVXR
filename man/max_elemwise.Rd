@@ -4,14 +4,17 @@
 \alias{max_elemwise}
 \title{Elementwise maximum of expressions}
 \usage{
-max_elemwise(...)
+max_elemwise(..., na.rm = FALSE)
 }
 \arguments{
 \item{...}{Expressions (at least 2)}
+
+\item{na.rm}{Accepted for compatibility with \code{pmax()}; expressions cannot
+contain \code{NA}, so it has no effect}
 }
 \value{
 A Maximum atom
 }
 \description{
-Elementwise maximum of expressions
+Named operands are accepted, as in \code{pmax()}, and the names are dropped.
 }

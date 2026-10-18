@@ -232,9 +232,11 @@ different numbers.
   "Unsupported norm option", as CVXPY does; it was an R internal error.
   Assigning a sparse value containing `Inf` to a sparsity variable works;
   it was an R internal error.
-* `hstack()`, `vstack()`, `max_elemwise()` and `min_elemwise()` reject a
-  named argument such as `na.rm = TRUE`; it used to become a silent extra
-  operand.
+* `max_elemwise()` and `min_elemwise()` take `na.rm`, and `hstack()` and
+  `vstack()` take `deparse.level`, as `pmax()` and `rbind()` do; neither has
+  an effect. `max_elemwise(u, v, na.rm = TRUE)` used to take `TRUE` as a
+  third operand. Named operands, as from `do.call(vstack, split(...))`, are
+  accepted as before.
 * `residual()` and `violation()` of an `SOC` constraint whose value is a
   sparse matrix are right; they were garbage or an error. A `PowConeND`
   with a sparse `alpha` keeps one cone per column on solvers with native

@@ -760,6 +760,22 @@ test_that("Copying/cloning a Constant (CVXPY parity)", {
   expect_equal(as.numeric(value(c2)), 42)
 })
 
+## CVXPY constant.py:97-106 names a constant by its value, sparse or dense.
+## CVXR abbreviates a dimensioned constant to "[n x m matrix]"; the test for
+## "dimensioned" was `is.matrix()`, FALSE for a dgCMatrix, so a sparse 3 x 3
+## constant was named by its first element (sweep item 4, pass H1).
+## @cvxpy constant.py::Constant::name
+test_that("a sparse constant is named like a dense one", {
+  M <- matrix(c(1, 0, 2, 0, 0, 3, 0, 0, 4), 3)
+  expect_equal(expr_name(Constant(M)), "[3x3 matrix]")
+  expect_equal(expr_name(Constant(Matrix::Matrix(M, sparse = TRUE))), "[3x3 matrix]")
+  x <- Variable(3, name = "x")
+  expect_equal(expr_name(Constant(Matrix::Matrix(diag(3), sparse = TRUE)) %*% x),
+               "[3x3 matrix] %*% x")
+  ## a 1 x 1 sparse constant still prints its value
+  expect_equal(expr_name(Constant(Matrix::Matrix(7, 1, 1, sparse = TRUE))), "7")
+})
+
 # ── 10. matmul_scalars ──────────────────────────────────────────────
 
 ## @cvxpy test_expressions.py::TestExpressions::test_matmul_scalars

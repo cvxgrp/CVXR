@@ -1602,6 +1602,109 @@ test_that("norm exceptions: 'nuc' on a vector, 'fro'/'nuc' with an axis", {
                sum(svd(A)$d), tolerance = 1e-8)
 })
 
+## CVXPY norm.py:67 raises "Unsupported matrix norm." for any unrecognized p
+## on a 2-D argument with no axis, and norm.py:87 "Unsupported norm option
+## {p} for non-matrix." otherwise. A string that was neither a norm name nor
+## a number used to reach R's "missing value where TRUE/FALSE needed" behind
+## a coercion warning (sweep item 4, pass D3).
+## @cvxpy norm.py::norm
+test_that("cvxr_norm with an unrecognized string p reports it, as CVXPY", {
+  x <- Variable(2)
+  X <- Variable(c(3, 4))
+  expect_no_warning(
+    expect_error(cvxr_norm(x, "foo"), "Unsupported norm option foo for non-matrix"))
+  expect_no_warning(
+    expect_error(cvxr_norm(X, "foo"), "Unsupported matrix norm"))
+  expect_no_warning(
+    expect_error(cvxr_norm(x, "foo", axis = 1), "Unsupported norm option foo for non-matrix"))
+  expect_no_warning(
+    expect_error(cvxr_norm(X, "foo", axis = 2), "Unsupported norm option foo for non-matrix"))
+  expect_no_warning(
+    expect_error(norm(X, type = "foo"), "Unsupported matrix norm"))
+})
+
+## CVXPY hstack.py:25 and vstack.py:25 take one positional list, and
+## maximum.py:46 / minimum.py:46 are `__init__(self, arg1, arg2, *args)`, so
+## any keyword is a TypeError. The R wrappers forward `...` into the
+## constructor, where a named entry such as `na.rm = TRUE` or `axis = 1`
+## used to become a silent extra Constant operand that changed the value and
+## the optimum (sweep item 4, pass E). Positional non-expressions stay
+## operands on both sides (`cp.maximum(u, v, True)` builds).
+## @cvxpy hstack.py::hstack vstack.py::vstack maximum.py::maximum minimum.py::minimum
+test_that("hstack, vstack, max_elemwise and min_elemwise reject a named argument", {
+  x <- Variable(c(1, 2))
+  y <- Variable(c(1, 3))
+  u <- Variable(2)
+  v <- Variable(2)
+  expect_error(hstack(x, y, axis = 1), "axis")
+  expect_error(vstack(u, v, deparse.level = 0), "deparse.level")
+  expect_error(max_elemwise(u, v, na.rm = TRUE), "na.rm")
+  expect_error(min_elemwise(u, v, na.rm = TRUE), "na.rm")
+  expect_error(max_elemwise(a = u, b = v), "a.*b")
+  ## positional non-expressions are operands, as upstream
+  expect_equal(dim(hstack(x, 1)), c(1L, 3L))
+  expect_equal(dim(max_elemwise(u, v, TRUE)), c(2L, 1L))
+  expect_length(max_elemwise(u, v, TRUE)@args, 3L)
+  value(u) <- c(-1, -3)
+  value(v) <- c(-2, -4)
+  expect_equal(as.numeric(value(max_elemwise(u, v))), c(-1, -3))
+})
+
+## @cvxpy norm1.py::norm1 log_sum_exp.py::log_sum_exp
+test_that("norm1 and log_sum_exp reduce a sparse value along an axis", {
+  M <- matrix(c(3, -1, 0.5, 2, -2, 1, 4, 0.25, -3, 1.5, 2.5, -0.5), 3, 4)
+  X <- Variable(c(3, 4))
+  value(X) <- M
+  S <- Variable(c(3, 4), sparsity = as.matrix(expand.grid(1:3, 1:4)))
+  value(S) <- Matrix::Matrix(M, sparse = TRUE)
+  expect_s4_class(value(S), "dgCMatrix")
+  C <- Constant(Matrix::Matrix(M, sparse = TRUE))
+  ## dense values are CVXPY 1.9.3's (axis 1 here is axis=1 there, axis 2 is axis=0)
+  expect_equal(as.numeric(value(norm1(X, axis = 1))), c(10.5, 5.75, 5))
+  expect_equal(as.numeric(value(norm1(X, axis = 2))), c(4.5, 5, 7.25, 4.5))
+  expect_equal(as.numeric(value(log_sum_exp(X, axis = 1))),
+               c(4.460773, 2.636893, 1.614091), tolerance = 1e-6)
+  expect_equal(as.numeric(value(log_sum_exp(X, axis = 2))),
+               c(3.095674, 2.326563, 4.024136, 2.849012), tolerance = 1e-6)
+  ## a sparsity Variable and a sparse Constant reduce like the dense Variable
+  for (e in list(S, C)) {
+    for (ax in 1:2) {
+      expect_equal(value(norm1(e, axis = ax)), value(norm1(X, axis = ax)))
+      expect_equal(value(log_sum_exp(e, axis = ax)), value(log_sum_exp(X, axis = ax)))
+      expect_equal(dim(value(norm1(e, axis = ax, keepdims = TRUE))),
+                   dim(norm1(X, axis = ax)))
+    }
+  }
+})
+
+## `which` and `determinant` are base closures that Matrix makes S4-generic;
+## CVXR must import them for a sparse value to reach Matrix's methods
+## (1.9.2.9510, sweep item 4 pass I). Dense values are CVXPY 1.9.3's.
+## @cvxpy length.py::length log_det.py::log_det
+test_that("length_expr and log_det evaluate on a sparse value", {
+  v <- c(1, 0, 2.5, 0, 0)
+  sv <- Matrix::Matrix(v, 5, 1, sparse = TRUE)
+  Vs <- Variable(5, sparsity = c(1L, 3L))
+  value(Vs) <- sv
+  expect_s4_class(value(Vs), "dgCMatrix")
+  expect_equal(as.numeric(value(length_expr(Constant(v)))), 3)
+  expect_equal(value(length_expr(Constant(sv))), value(length_expr(Constant(v))))
+  expect_equal(value(length_expr(Vs)), value(length_expr(Constant(v))))
+
+  P <- matrix(c(4, 1, 0, 1, 3, 0, 0, 0, 2), 3, 3)
+  Ps <- Matrix::Matrix(P, sparse = TRUE)
+  Vp <- Variable(c(3, 3), sparsity = cbind(c(1, 2, 1, 2, 3), c(1, 1, 2, 2, 3)))
+  value(Vp) <- Ps
+  expect_s4_class(value(Vp), "dgCMatrix")
+  expect_equal(as.numeric(value(log_det(Constant(P)))), 3.091042453358316)
+  expect_equal(value(log_det(Vp)), value(log_det(Constant(P))))
+  ## CVXPY 1.9.3 crashes on a sparse Constant here (log_det.py:115, np.allclose
+  ## on a scipy sparse); the sparsity Variable above is the number it gives.
+  expect_equal(value(log_det(Constant(Ps))), value(log_det(Constant(P))))
+  expect_equal(value(log_det(Constant(Matrix::forceSymmetric(Ps)))),
+               value(log_det(Constant(P))))
+})
+
 # ═══════════════════════════════════════════════════════════════════════
 # test_harmonic_mean (test_atoms.py line 278)
 # ═══════════════════════════════════════════════════════════════════════

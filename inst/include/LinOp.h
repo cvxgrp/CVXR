@@ -88,34 +88,12 @@ public:
 	 * row vector). Matches CVXPY LinOp.data_ndim_. */
 	int data_ndim;
 
-#ifdef _R_INTERFACE_
-        /* almost uuid */
-        std::string id;
-	/* Constructor */
-	LinOp(){
-          id = genRandomId();
-#ifdef _R_DEBUG
-          Rcpp::Rcout << "LinOp id " << id << " Created!" << std::endl;
-#endif
-	  sparse = false; // sparse by default
-	  linOp_data = nullptr;
-	  data_ndim = 2; // default: 2D (R shapes are always 2D)
-	}
-
-        ~LinOp() {
-#ifdef _R_DEBUG
-           Rcpp::Rcout << "LinOp id " << id << " ; type " << type << " Destroyed!!" << std::endl;
-#endif
-         }
-
-#else
 	/* Constructor */
 	LinOp(){
 		sparse = false; // sparse by default
 		linOp_data = nullptr;
-		data_ndim = 2; // default: 2D
+		data_ndim = 2; // default: 2D (R shapes are always 2D)
 	}
-#endif
 	/* Checks if LinOp is constant type */
 	bool has_constant_type() {
 		return  type == SCALAR_CONST || type == DENSE_CONST

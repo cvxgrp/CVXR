@@ -55,16 +55,13 @@ method(is_decr, Prod) <- function(x, idx, ...) FALSE
 method(numeric_value, Prod) <- function(x, values, ...) {
   v <- values[[1L]]
   ax <- x@axis
-  kd <- x@keepdims
   if (is.null(ax)) {
-    result <- prod(v)
-    matrix(result, 1L, 1L)
+    matrix(prod(v), 1L, 1L)
   } else if (ax == 2L) {
-    result <- apply(v, 2L, prod)
-    if (kd) matrix(result, nrow = 1L) else matrix(result, nrow = 1L)
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
+    matrix(apply(v, 2L, prod), nrow = 1L)
   } else {
-    result <- apply(v, 1L, prod)
-    if (kd) matrix(result, ncol = 1L) else matrix(result, ncol = 1L)
+    matrix(apply(v, 1L, prod), ncol = 1L)
   }
 }
 

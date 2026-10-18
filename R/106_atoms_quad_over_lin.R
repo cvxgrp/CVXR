@@ -125,11 +125,10 @@ method(numeric_value, QuadOverLin) <- function(x, values, ...) {
   if (is.null(x@axis)) {
     matrix(sum(squared) / yv, 1L, 1L)
   } else if (x@axis == 2L) {
-    res <- apply(squared, 2L, sum) / yv
-    if (x@keepdims) matrix(res, nrow = 1L) else matrix(res, nrow = 1L)
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
+    matrix(apply(squared, 2L, sum) / yv, nrow = 1L)
   } else {
-    res <- apply(squared, 1L, sum) / yv
-    if (x@keepdims) matrix(res, ncol = 1L) else matrix(res, ncol = 1L)
+    matrix(apply(squared, 1L, sum) / yv, ncol = 1L)
   }
 }
 

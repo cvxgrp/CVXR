@@ -116,11 +116,15 @@ method(is_decr, MulExpression) <- function(x, idx, ...) {
 method(numeric_value, MulExpression) <- function(x, values, ...) {
   lhs <- values[[1L]]
   rhs <- values[[2L]]
-  ## Handle scalar multiplication
-  if (length(lhs) == 1L) return(drop(lhs) * rhs)
-  if (length(rhs) == 1L) return(lhs * drop(rhs))
+  ## Scalar multiplication (CVXPY: a `()` shape; an R scalar value is 1 x 1,
+  ## ADR D_AP.3). as.vector(), not drop(): base::drop leaves a 1 x 1 Matrix
+  ## object as it is, since Matrix's drop is an S4 generic this namespace
+  ## does not see. A dense Matrix result becomes a base matrix, as scipy
+  ## returns an ndarray; sparse stays sparse.
+  if (length(lhs) == 1L) return(.dense_Matrix_to_base(as.vector(lhs) * rhs))
+  if (length(rhs) == 1L) return(.dense_Matrix_to_base(lhs * as.vector(rhs)))
   ## Matrix multiplication
-  lhs %*% rhs
+  .dense_Matrix_to_base(lhs %*% rhs)
 }
 
 # -- graph_implementation --------------------------------------------
@@ -238,8 +242,10 @@ method(validate_arguments, Multiply) <- function(x) {
 method(numeric_value, Multiply) <- function(x, values, ...) {
   lhs <- values[[1L]]
   rhs <- values[[2L]]
-  ## R's * handles sparse matrices correctly
-  lhs * rhs
+  ## Matrix's `*` handles sparse operands; sparse * dense is a dgeMatrix,
+  ## which becomes a base matrix (the value path keeps base or dgCMatrix),
+  ## sparse * sparse stays sparse.
+  .dense_Matrix_to_base(lhs * rhs)
 }
 
 # -- symmetry --------------------------------------------------------
@@ -348,12 +354,30 @@ DivExpression <- new_class("DivExpression", parent = BinaryOperator, package = "
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     lh_exp <- as_expr(lh_exp)
     rh_exp <- as_expr(rh_exp)
+    orig_shapes <- list(.shape(lh_exp), .shape(rh_exp))
     ## Broadcast scalars
     bcast <- broadcast_args(lh_exp, rh_exp)
     lh_exp <- bcast[[1L]]
     rh_exp <- bcast[[2L]]
+    ## CVXPY Expression.__div__ (expression.py:862-870): after broadcasting,
+    ## the operands must be a scalar or of equal shape. CVXPY checks this in
+    ## the operator; here the constructor is the single entry point for `/`,
+    ## log2/log10 and the DQCP inverse, so the check lives here.
+    ls <- .shape(lh_exp)
+    rs <- .shape(rh_exp)
+    if (!(expr_is_scalar(lh_exp) || expr_is_scalar(rh_exp) || identical(ls, rs))) {
+      hint <- if (!identical(orig_shapes, list(ls, rs))) {
+        c(i = paste0("The operands were (", orig_shapes[[1L]][1L], ", ",
+                     orig_shapes[[1L]][2L], ") and (", orig_shapes[[2L]][1L],
+                     ", ", orig_shapes[[2L]][2L], ") before broadcasting."))
+      }
+      cli_abort(c(
+        "Incompatible shapes for division (({ls[1L]}, {ls[2L]}) / ({rs[1L]}, {rs[2L]}))",
+        hint
+      ))
+    }
     ## Shape is numerator shape
-    shape <- .shape(lh_exp)
+    shape <- ls
     obj <- .fast_new(DivExpression, S7_object(),
       id    = next_expr_id(),
       .cache = new.env(parent = emptyenv()),

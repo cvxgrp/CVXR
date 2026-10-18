@@ -310,11 +310,15 @@ ExactCone2Cone <- new_class("ExactCone2Cone", parent = Reduction,
 ## The conversion applicable to `con`, or NULL.
 ## CVXPY SOURCE: exact.py lines 457-460 (the `target_cones` filter) and the
 ## `type(current) in self.canon_methods` test at line 486.
+## Membership by class NAME (`.cone_has`), as everywhere else in the chain:
+## upstream's `c.source in target_cones` is type identity on a Python class,
+## which is a singleton; an R class object is a closure, and `identical()` on
+## it is a structural walk that fails on an instrumented copy (covr, trace())
+## and costs 10-120 us per miss (sweep item 4, pass J).
 .exact_conversion_for <- function(x, con) {
   for (conv in .EXACT_CONVERSIONS) {
     if (!.s7_is(con, conv$source)) next
-    if (length(x@target_cones) > 0L &&
-        !any(vapply(x@target_cones, identical, logical(1L), conv$source))) next
+    if (length(x@target_cones) > 0L && !.cone_has(x@target_cones, conv$source)) next
     return(conv)
   }
   NULL

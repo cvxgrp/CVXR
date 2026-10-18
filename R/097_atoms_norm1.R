@@ -69,11 +69,10 @@ method(numeric_value, Norm1) <- function(x, values, ...) {
   if (is.null(x@axis)) {
     matrix(sum(abs(v)), 1L, 1L)
   } else if (x@axis == 2L) {
-    res <- colSums(abs(v))
-    if (x@keepdims) matrix(res, nrow = 1L) else matrix(res, nrow = 1L)
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
+    matrix(colSums(abs(v)), nrow = 1L)
   } else {
-    res <- rowSums(abs(v))
-    if (x@keepdims) matrix(res, ncol = 1L) else matrix(res, ncol = 1L)
+    matrix(rowSums(abs(v)), ncol = 1L)
   }
 }
 

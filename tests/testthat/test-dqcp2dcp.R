@@ -244,3 +244,21 @@ test_that("DQCP bisection: minimize exp(x), x >= 1", {
   result <- psolve(prob, qcp = TRUE)
   expect_equal(as.numeric(result), exp(1), tolerance = 1e-2)
 })
+
+## ── Constraint-side evaluation errors propagate ────────────────
+
+## CVXPY reads `lhs.value` / `rhs.value` unguarded (dqcp2dcp.py:174-175); an
+## unset leaf already yields NULL without an error, so the R port's
+## `tryCatch(value(.), error = function(e) NULL)` only hid genuine
+## evaluation errors (sweep item 4, pass D2).
+## @cvxpy dqcp2dcp.py::Dqcp2Dcp::_canonicalize_constraint
+test_that("Dqcp2Dcp propagates an evaluation error from a constraint side", {
+  x <- Variable()
+  y <- Variable(pos = TRUE)
+  P <- Constant(matrix(0, 2, 2))  # exactly singular
+  rhs <- matrix_frac(Constant(c(1, 1)), P)
+  constr <- x / y <= rhs
+  expect_true(is_constant(rhs))
+  expect_false(is_dcp(constr))
+  expect_error(.dqcp_canonicalize_constraint(constr), "singular")
+})

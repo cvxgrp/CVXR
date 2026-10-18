@@ -236,6 +236,12 @@ matrix_frac <- function(X, P) {
   if (is.matrix(P) && !inherits(P, "Expression") && !.s7_is(P, Expression)) {
     ## CVXPY SOURCE: matrix_frac.py:147-149 -- `invP = LA.inv(P)`, same
     ## conditioning semantics as the other two sites. See `.mf_inv`.
+    ## numpy's LA.inv rejects a non-square P before inverting; here the
+    ## failed solve() was swallowed into "singular" (sweep item 4, pass L).
+    ## Same message as validate_arguments(MatrixFrac) above.
+    if (nrow(P) != ncol(P)) {
+      cli_abort("The second argument to {.fn matrix_frac} must be a square matrix.")
+    }
     invP <- .mf_inv(P)
     if (is.null(invP)) {
       cli_abort(c(

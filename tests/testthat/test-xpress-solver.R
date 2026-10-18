@@ -553,3 +553,54 @@ test_that("XPRESS LP dual signs match Clarabel", {
 
   expect_equal(as.numeric(d1_x), as.numeric(d1_c), tolerance = 1e-3)
 })
+
+# ══════════════════════════════════════════════════════════════════
+# Error handling (sweep item 4, pass D2)
+# ══════════════════════════════════════════════════════════════════
+
+## CVXPY lets a write failure propagate: xpress_conif.py:415-419 and
+## xpress_qpif.py:323-327 catch only the API-rename AttributeError. The R
+## port swallowed every error, so a bad `write_mps` path produced no file and
+## no message.
+## @cvxpy xpress_conif.py::XPRESS::solve_via_data xpress_qpif.py::XPRESS::solve_via_data
+test_that("XPRESS write_mps to an unwritable path is an error, not silence", {
+  bad <- file.path(tempdir(), "no_such_dir_zzz", "model.mps")
+  good <- file.path(tempdir(), "d2_xpress_model.mps")
+  on.exit(unlink(good), add = TRUE)
+
+  ## conic path (LP)
+  x <- Variable(2)
+  prob <- Problem(Minimize(x[1] + x[2]), list(x >= 1))
+  expect_error(psolve(prob, solver = "XPRESS", write_mps = bad),
+               "Unable to open")
+  psolve(prob, solver = "XPRESS", write_mps = good)
+  expect_true(file.exists(good))
+
+  ## QP path
+  z <- Variable(2)
+  probq <- Problem(Minimize(sum_squares(z)), list(z >= 1))
+  expect_error(psolve(probq, solver = "XPRESS", write_mps = bad),
+               "Unable to open")
+})
+
+## CVXPY's conic path lets an optimize() failure propagate (xpress_conif.py:422)
+## and its QP path turns `xp.ModelError` into SOLVER_ERROR silently
+## (xpress_qpif.py:320-333). CVXR keeps the catch on both paths and reports the
+## solver's message as a warning before the solver-error status.
+## @cvxpy xpress_conif.py::XPRESS::solve_via_data xpress_qpif.py::XPRESS::solve_via_data
+test_that("XPRESS reports the solver's message when optimization fails", {
+  testthat::local_mocked_bindings(
+    xprs_optimize = function(prob, ...) stop("boom from xpress"),
+    .package = "xpress"
+  )
+
+  x <- Variable(2)
+  prob <- Problem(Minimize(x[1] + x[2]), list(x >= 1))
+  expect_warning(expect_error(psolve(prob, solver = "XPRESS")),
+                 "boom from xpress")
+
+  z <- Variable(2)
+  probq <- Problem(Minimize(sum_squares(z)), list(z >= 1))
+  expect_warning(expect_error(psolve(probq, solver = "XPRESS")),
+                 "boom from xpress")
+})

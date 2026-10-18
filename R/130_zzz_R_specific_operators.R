@@ -61,11 +61,25 @@
 # -- %*% dispatch via S7 --------------------------------------------
 # %*% is NOT in the Ops group; S7 method() works directly.
 
+## CVXPY: Expression.__matmul__ / __rmatmul__ (expression.py:842-843,
+## 894-895) raise "Scalar operands are not allowed, use '*' instead" when
+## either operand has shape (). In R only a bare length-1 vector is a scalar
+## rather than a 1 x 1 matrix; a 1 x 1 operand goes on to the inner-dimension
+## check in mul_shapes_promote(), as a (1, 1) array does in CVXPY.
+.check_matmul_scalar <- function(v) {
+  if (is.null(dim(v)) && length(v) == 1L) {
+    cli_abort("Scalar operands are not allowed, use {.code *} instead")
+  }
+  invisible(NULL)
+}
+
 method(`%*%`, list(Expression, class_any)) <- function(x, y) {
+  .check_matmul_scalar(y)
   MulExpression(x, as_expr(y))
 }
 
 method(`%*%`, list(class_any, Expression)) <- function(x, y) {
+  .check_matmul_scalar(x)
   MulExpression(as_expr(x), y)
 }
 

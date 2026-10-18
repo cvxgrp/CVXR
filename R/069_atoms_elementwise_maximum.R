@@ -9,7 +9,8 @@
 Maximum <- new_class("Maximum", parent = Elementwise, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
-    args <- list(...)
+    ## maximum.py:46 `__init__(self, arg1, arg2, *args)`; a keyword is a TypeError.
+    args <- .abort_named_dots(list(...), "max_elemwise")
     if (length(args) < 2L) {
       cli_abort("{.cls Maximum} requires at least 2 arguments.")
     }

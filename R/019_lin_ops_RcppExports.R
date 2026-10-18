@@ -158,10 +158,6 @@ upper_tri_to_full <- function(n) {
     invisible(.Call(`_CVXR_LinOp__set_linOp_data`, xp, yp))
 }
 
-.LinOp__get_id <- function(xp) {
-    .Call(`_CVXR_LinOp__get_id`, xp)
-}
-
 .LinOpVector__new <- function() {
     .Call(`_CVXR_LinOpVector__new`)
 }

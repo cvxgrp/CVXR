@@ -34,6 +34,11 @@ method(validate_arguments, Length) <- function(x) {
   if (!is_vector(arg)) {
     cli_abort("{.fn length_expr} can only be applied to vectors.")
   }
+  ## Atom.validate_arguments (atom.py:95-96), which length inherits: no
+  ## _allow_complex. This override had dropped it (sweep item 5, finding 5.2).
+  if (.any_args(x, is_complex)) {
+    cli_abort("Arguments to {.cls {class(x)[[1L]]}} cannot be complex.")
+  }
   invisible(NULL)
 }
 

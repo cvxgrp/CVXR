@@ -61,7 +61,9 @@
       return(function(t) DivExpression(const, t))
     } else {
       const <- .args(expr)[[2L]]
-      return(function(t) MulExpression(const, t))
+      ## CVXPY inverse.py:67 is `const * t`: elementwise, since the divisor
+      ## of a DivExpression is a scalar or has the numerator's shape.
+      return(function(t) Multiply(const, t))
     }
   } else if (.s7_is(expr, AddExpression)) {
     if (is_constant(.args(expr)[[1L]])) {

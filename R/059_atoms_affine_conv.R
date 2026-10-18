@@ -71,9 +71,9 @@ method(is_decr, Convolve) <- function(x, idx, ...) {
   is_nonpos(.args(x)[[.conv_cst_loc(x)]])
 }
 
-# -- log-log: affine (CVXPY conv.py) -----------------------------
-method(is_atom_log_log_convex, Convolve) <- function(x) TRUE
-method(is_atom_log_log_concave, Convolve) <- function(x) TRUE
+## No log-log hooks: conv.py defines none, so Atom's FALSE applies
+## (atom.py:195-202). A TRUE/TRUE pair here made conv(c, x) log-log affine
+## and accepted GPs CVXPY rejects (sweep item 5, finding 5.1).
 
 method(numeric_value, Convolve) <- function(x, values, ...) {
   a <- as.vector(values[[1L]])

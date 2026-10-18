@@ -56,9 +56,18 @@ different numbers.
   scope, as CVXPY's are.
 * `perspective()` of a function of a `symmetric`, `PSD` or `NSD` matrix
   variable of size 3 or more returned a wrong optimum.
-* `sum_entries(x, axis = 2)` of a one-row expression, and any product of a
-  1 x 1 constant with a multi-column expression, gave wrong results or
+* `sum_entries(x, axis = 2)` of a one-row expression gave wrong results or
   crashed R. Present in 1.9.2.
+* `%*%` with a scalar operand (`2 %*% x`) or a non-conforming 1 x 1 operand
+  built a product that gave a scalar product or crashed R. Both are now
+  errors, as in CVXPY and base R; use `*` to multiply by a scalar.
+* `x / d` with shapes that do not broadcast, such as a 2 x 3 `x` and a
+  length-3 `d`, recycled the divisor silently. It is now an error, as in
+  CVXPY; a row or column divisor still broadcasts.
+* `value()` of a sum, a product or an index of a sparse-matrix constant failed
+  with "non-conformable arrays" or "subscript out of bounds", and a sum of two
+  sparse constants came back flattened to one column. These now evaluate; a
+  mixed sparse and dense result is a base matrix, a sparse one stays sparse.
 * `sum()`, `max()`, `min()` and `prod()` of an expression now honor `axis`
   and `keepdims`, as in CVXPY. A named `axis` was taken as one more operand,
   so `sum(x, axis = 2)` returned `sum(x + 2)`; other named arguments are
@@ -84,6 +93,13 @@ different numbers.
 * A complex variable declared `PSD`/`NSD` lost its cone (#3342), and one
   declared `diag` or with a `sparsity` pattern solved as dense (CVXPY 1.9.3
   still ignores those). Both are now enforced.
+* `conv()`, `cumsum()` and `kron()` were treated as log-log affine, so a
+  geometric program containing them was accepted and could solve to a wrong
+  value. They are now not DGP, as in CVXPY, and such a problem is rejected.
+* Calling `problem_data()` (or `get_problem_data()`) on a geometric program
+  between two solves made the next solve after a parameter change return the
+  previous optimum. `problem_data()` now goes through the same compile cache
+  as `psolve()`, as in CVXPY.
 
 ## New features
 
@@ -173,9 +189,21 @@ different numbers.
   OSQP, ECOS, ECOS_BB, Gurobi, DIFFCP, HiGHS and PIQP, as CVXPY does, and
   `solution(prob)` holds only the problem's own variables.
 * PIQP: `backend = "dense"` builds a dense model (it was silently sparse).
+* XPRESS: a `write_mps` path that cannot be written is an error (it was
+  silently skipped), and a failed optimization reports the solver's message
+  as a warning before the solver-error status.
+* GLPK_MI: an infeasible mixed-integer problem has status `infeasible`, as
+  in CVXPY; it failed with a solver error. GLPK's presolve is now on by
+  default (pass `presolve = FALSE` to turn it off).
+* Solving no longer advances R's random number stream. Compilation drew
+  from it (sixteen uniforms per expression node, for an internal debugging
+  label), so random draws after `psolve()` differed from the same draws
+  without the solve. Present in every earlier version.
 
 ## Errors, warnings and other changes
 
+* Variable `bounds` accept a 1-d array, a `sparseVector` and a sparse matrix
+  with unsorted row indices, which `Constant()` already accepted.
 * `power(x, p)` now takes its sign, curvature, domain, value and printed name
   from `p` as written, as CVXPY does, rather than from the rational
   approximation used to solve it.
@@ -198,6 +226,24 @@ different numbers.
   violation tolerance.
 * `visualize()` no longer errors on a problem containing `sqrt()`,
   `inv_pos()` or a fractional `power()` (broken in 1.9.2).
+* `cvxr_norm(x, p)` with a string `p` that is not a norm name reports
+  "Unsupported norm option", as CVXPY does; it was an R internal error.
+  Assigning a sparse value containing `Inf` to a sparsity variable works;
+  it was an R internal error.
+* `hstack()`, `vstack()`, `max_elemwise()` and `min_elemwise()` reject a
+  named argument such as `na.rm = TRUE`; it used to become a silent extra
+  operand.
+* `residual()` and `violation()` of an `SOC` constraint whose value is a
+  sparse matrix are right; they were garbage or an error. A `PowConeND`
+  with a sparse `alpha` keeps one cone per column on solvers with native
+  N-dimensional power cones. A sparse constant prints as `[n x m matrix]`.
+* `norm1()` and `log_sum_exp()` with an `axis` evaluate on a sparse value;
+  they were an error. So do `length_expr()` and `log_det()`, and
+  `visualize()` shows a 1x1 sparse constant as its number.
+* `matrix_frac(x, P)` with a non-square constant `P` reports the shape
+  error; it said `P` was singular.
+* `length_expr()`, `eye_minus_inv()`, `huber()` and `dotsort()` reject a
+  complex argument, as CVXPY does; they accepted one.
 * Problems with no constraint rows no longer trigger the Matrix deprecation
   warning `as(<ngCMatrix>, "dgCMatrix") is deprecated`, and Gurobi QPs no
   longer trigger the `dtCMatrix` one.
@@ -221,6 +267,9 @@ different numbers.
   `ignore_dpp` and `use_quad_obj`; `enforce_dpp` no longer takes part.
 * DQCP bisections are 7 percent and medium LPs 4 percent faster than in
   CVXR 1.9.2.
+* Bounds propagation keeps a sparse constant sparse, as CVXPY does; it
+  densified it, so `abs(A %*% x)` with a large sparse `A` on HiGHS, Gurobi,
+  SCIP or XPRESS allocated two dense copies of `A`.
 * `psolve(nlp = TRUE)` hands a dense constant matrix with at least 5 percent
   nonzeros to the derivative engine as dense, as CVXPY does: 1.7 to 2.6 times
   faster for a dense 1000 x 1000 `A`. Pass a sparse `Matrix` to keep the

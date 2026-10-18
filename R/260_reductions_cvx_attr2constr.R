@@ -318,13 +318,13 @@ method(reduction_apply, CvxAttr2Constr) <- function(x, problem, ...) {
   ## R-specific DPP-cache correctness: the reduced Parameter objects must keep
   ## STABLE identity across re-applications of this reduction. The DPP fast
   ## path caches a `param_prog` that holds direct references to these reduced
-  ## Parameters and re-syncs them via update_parameters(); CVXR's problem_data()
-  ## always re-runs the full chain (unlike CVXPY's cache-aware get_problem_data),
-  ## so re-creating a fresh reduced Parameter here would orphan the one the
-  ## cached param_prog points at -- a later solve would then read a stale value
-  ## (e.g. problem_data() followed by changing a diag/symmetric Parameter and
-  ## re-solving). Persist the reduced Parameters in a store that survives
-  ## re-application and reuse them below.
+  ## Parameters and re-syncs them via update_parameters(); any re-application
+  ## of the chain (a cache-key change, or problem_data() through 1.9.2.9513,
+  ## which bypassed the cache) that re-created a fresh reduced Parameter here
+  ## would orphan the one the cached param_prog points at -- a later solve
+  ## would then read a stale value (e.g. problem_data() followed by changing a
+  ## diag/symmetric Parameter and re-solving). Persist the reduced Parameters
+  ## in a store that survives re-application and reuse them below.
   if (is.null(x@.cache$reduced_param_store)) {
     x@.cache$reduced_param_store <- new.env(hash = TRUE, parent = emptyenv())
   }

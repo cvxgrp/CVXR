@@ -72,7 +72,9 @@ Constant <- new_class("Constant", parent = Leaf, package = "CVXR",
 method(expr_name, Constant) <- function(x) {
   if (nchar(x@.name) > 0L) return(x@.name)
   v <- x@.value
-  if (is.matrix(v) && any(dim(v) > 1L)) {
+  ## is.matrix() is FALSE for a Matrix-package value; the abbreviation applies
+  ## to every dimensioned constant (sweep item 4, pass H1).
+  if ((is.matrix(v) || inherits(v, "Matrix")) && any(dim(v) > 1L)) {
     ## Abbreviated representation for matrices
     paste0("[", nrow(v), "x", ncol(v), " matrix]")
   } else {
@@ -91,8 +93,11 @@ method(is_constant, Constant) <- function(x) TRUE
 ## as a point (lb == ub), enabling the exact split formula in matmul_bounds.
 method(get_bounds, Constant) <- function(x) {
   v <- x@.value
-  if (inherits(v, "Matrix")) v <- as.matrix(v)
-  v <- matrix(as.numeric(v), nrow = .shape(x)[1L], ncol = .shape(x)[2L])
+  ## constant.py:303-304 returns a sparse value as-is, "to avoid memory
+  ## blowup"; a Matrix value is already shaped (sweep item 4, pass B).
+  if (!inherits(v, "Matrix")) {
+    v <- matrix(as.numeric(v), nrow = .shape(x)[1L], ncol = .shape(x)[2L])
+  }
   list(v, v)
 }
 

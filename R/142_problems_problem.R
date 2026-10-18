@@ -544,9 +544,118 @@ method(print, Problem) <- function(x, ...) {
   problem@.cache$compile_chain
 }
 
+# -- Apply the compiled chain, through the DPP cache -----------------
+## CVXPY SOURCE: problem.py get_problem_data(), lines 849-897 (1.9.3): the
+## fast path (cached param_prog -> update_parameters on every reduction ->
+## solver.apply(param_prog)) and the full path (solving_chain.apply, then
+## cache param_prog and inverse_data[:-1] when safe_to_cache).
+##
+## ONE path, shared by psolve() and problem_data(), as upstream has one
+## get_problem_data() that solve() calls. Through 1.9.2.9513 only psolve()
+## went through the cache and problem_data() re-applied the whole chain every
+## call. Dgp2Dcp's apply builds fresh log-space Parameters on each application
+## (canonicalizers/parameter_canon.R), so a problem_data() call orphaned the
+## Parameters the cached param_prog read; the next solve after a parameter
+## edit then ran on the first solve's values and reported "optimal"
+## (lifecycle fuzz finding 6.1, notes/lifecycle_fuzz_2026-10-17.md).
+##
+## On first application the chain is split into pre-solver reductions and the
+## solver so the ConeMatrixStuffing data (which carries SD_PARAM_PROB) can be
+## intercepted before the solver's reduction_apply strips it.
+## Returns list(data, inverse_data); records compile_time on the problem.
+
+.compile_and_apply <- function(problem, chain, verbose = FALSE) {
+  t0 <- proc.time()
+  n_red <- length(chain@reductions)
+
+  if (!is.null(problem@.cache$param_prog)) {
+    ## Fast path: re-apply parameters to cached tensor
+    if (verbose) cli_alert_info("Using cached DPP tensor (fast path)")
+    ## CVXPY SOURCE: problem.py lines 855-859
+    ## Update parameter values for reductions that transform them
+    ## (e.g., Dgp2Dcp applies log() to parameter values)
+    for (red in chain@reductions) {
+      update_parameters(red, problem)
+    }
+    pp <- problem@.cache$param_prog
+    pp_result <- apply_parameters(pp, quad_obj = !is.null(pp@P_tensor))
+    ## Rebuild ConeMatrixStuffing-format data dict
+    cms_data <- list()
+    cms_data[[SD_C]] <- pp_result$c
+    cms_data[[SD_OFFSET]] <- pp_result$d
+    cms_data[[SD_A]] <- pp_result$A
+    cms_data[[SD_B]] <- pp_result$b
+    cms_data[[LOWER_BOUNDS]] <- pp_result$lower_bounds
+    cms_data[[UPPER_BOUNDS]] <- pp_result$upper_bounds
+    if (!is.null(pp@P_tensor)) cms_data[[SD_P]] <- pp_result$P
+    cms_data[[SD_DIMS]] <- pp@cone_dims
+    cms_data[["constraints"]] <- pp@constraints
+    cms_data[["x_id"]] <- pp@x_id
+    ## CVXPY SOURCE: problem.py:861 -- the fast path hands the solver's apply
+    ## the cached ParamConeProg, so `problem.variables` (read by GUROBI.apply
+    ## for init_value) is available on every solve, not only the first.
+    cms_data[["variables"]] <- pp@variables
+    cms_data[[SD_BOOL_IDX]] <- problem@.cache$compile_bool_idx
+    cms_data[[SD_INT_IDX]] <- problem@.cache$compile_int_idx
+    ## Carry the cached param_prog so the solver's reduction_apply can
+    ## see `param_prog@formatted = TRUE` and short-circuit
+    ## `format_constraints` (A and b from `apply_parameters` on the
+    ## post-format A_tensor are already in cone-interleaved layout).
+    cms_data[[SD_PARAM_PROB]] <- pp
+    ## Apply solver's reduction_apply to format data for solver
+    solver_result <- reduction_apply(chain@reductions[[n_red]], cms_data)
+    data <- solver_result[[1L]]
+    inverse_data <- c(problem@.cache$compile_inverse_data,
+                      list(solver_result[[2L]]))
+  } else {
+    ## Full path: apply pre-solver reductions, then solver separately
+    ## so we can intercept SD_PARAM_PROB before solver strips it.
+    pre_data <- problem
+    pre_inv_data <- list()
+    for (i in seq_len(n_red - 1L)) {
+      result <- reduction_apply(chain@reductions[[i]], pre_data)
+      pre_data <- result[[1L]]
+      pre_inv_data <- c(pre_inv_data, list(result[[2L]]))
+    }
+    ## Check if we can cache for DPP fast path
+    ## CVXPY SOURCE: problem.py lines 877-897
+    safe_to_cache <- is.list(pre_data) &&
+      !is.null(pre_data[[SD_PARAM_PROB]]) &&
+      !any(vapply(chain@reductions, function(r) .s7_is(r, EvalParams), logical(1L)))
+    ## Apply solver's reduction_apply
+    solver_result <- reduction_apply(chain@reductions[[n_red]], pre_data)
+    data <- solver_result[[1L]]
+    inverse_data <- c(pre_inv_data, list(solver_result[[2L]]))
+    ## Cache the POST-format param_prog (its A_tensor has been row-permuted
+    ## by ConicSolver.format_constraints to match the solver's cone-interleaved
+    ## row ordering, with `formatted = TRUE` set).  Fall back to the pre-solver
+    ## param_prog if the chosen solver did not produce one (e.g. QP path).
+    if (safe_to_cache) {
+      problem@.cache$param_prog <- data[[SD_PARAM_PROB]] %||%
+                                   pre_data[[SD_PARAM_PROB]]
+      problem@.cache$compile_inverse_data <- pre_inv_data
+      problem@.cache$compile_bool_idx <- pre_data[[SD_BOOL_IDX]]
+      problem@.cache$compile_int_idx <- pre_data[[SD_INT_IDX]]
+    }
+  }
+
+  compile_elapsed <- (proc.time() - t0)[["elapsed"]]
+  problem@.cache$compile_time <- compile_elapsed
+
+  if (verbose) {
+    solver_nm <- solver_name(chain@solver)
+    chain_names <- vapply(chain@reductions, function(r) class(r)[1L], character(1L))
+    cli_alert_info("Compilation: {.val {solver_nm}} via {paste(chain_names, collapse = ' -> ')}")
+    cli_alert_info("Compile time: {round(compile_elapsed, 4)}s")
+  }
+
+  list(data = data, inverse_data = inverse_data)
+}
+
 # -- problem_data --------------------------------------------------
-## CVXPY SOURCE: problem.py get_problem_data() (simplified)
-## Applies the solving chain and returns solver-ready data.
+## CVXPY SOURCE: problem.py get_problem_data()
+## Compiles (cached) and applies the solving chain through the same
+## DPP cache as psolve(); returns solver-ready data.
 ##
 ## Returns list(data, chain, inverse_data) where:
 ##   data: solver-ready data (A, b, c, cone_dims)
@@ -558,8 +667,8 @@ method(problem_data, Problem) <- function(x, solver = NULL, gp = FALSE,
   opts <- solver_opts(...)
   chain <- .compile(x, solver, gp = gp, opts = opts,
                     enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp)
-  result <- reduction_apply(chain, x)
-  list(data = result[[1L]], chain = chain, inverse_data = result[[2L]])
+  compiled <- .compile_and_apply(x, chain)
+  list(data = compiled$data, chain = chain, inverse_data = compiled$inverse_data)
 }
 
 ## Deprecated wrapper -- delegates to problem_data()
@@ -1125,97 +1234,15 @@ psolve <- function(problem, solver = NULL, gp = FALSE, qcp = FALSE,
 
   ## -- Build solver opts and compile --------------------------------
   opts <- solver_opts(...)
-  t0 <- proc.time()
   chain <- .compile(problem, solver, gp = gp, opts = opts,
                     enforce_dpp = enforce_dpp, ignore_dpp = ignore_dpp)
 
-  ## DPP fast path: if we have a cached param_prog, skip full chain apply.
-  ## On first solve, we split the chain into pre-solver + solver so we can
-  ## intercept the ConeMatrixStuffing data dict (which contains SD_PARAM_PROB)
-  ## before the solver's reduction_apply strips it.
-  ## CVXPY SOURCE: problem.py lines 849-900
-  n_red <- length(chain@reductions)
-
-  if (!is.null(problem@.cache$param_prog)) {
-    ## Fast path: re-apply parameters to cached tensor
-    if (verbose) cli_alert_info("Using cached DPP tensor (fast path)")
-    ## CVXPY SOURCE: problem.py lines 855-859
-    ## Update parameter values for reductions that transform them
-    ## (e.g., Dgp2Dcp applies log() to parameter values)
-    for (red in chain@reductions) {
-      update_parameters(red, problem)
-    }
-    pp <- problem@.cache$param_prog
-    pp_result <- apply_parameters(pp, quad_obj = !is.null(pp@P_tensor))
-    ## Rebuild ConeMatrixStuffing-format data dict
-    cms_data <- list()
-    cms_data[[SD_C]] <- pp_result$c
-    cms_data[[SD_OFFSET]] <- pp_result$d
-    cms_data[[SD_A]] <- pp_result$A
-    cms_data[[SD_B]] <- pp_result$b
-    cms_data[[LOWER_BOUNDS]] <- pp_result$lower_bounds
-    cms_data[[UPPER_BOUNDS]] <- pp_result$upper_bounds
-    if (!is.null(pp@P_tensor)) cms_data[[SD_P]] <- pp_result$P
-    cms_data[[SD_DIMS]] <- pp@cone_dims
-    cms_data[["constraints"]] <- pp@constraints
-    cms_data[["x_id"]] <- pp@x_id
-    ## CVXPY SOURCE: problem.py:861 -- the fast path hands the solver's apply
-    ## the cached ParamConeProg, so `problem.variables` (read by GUROBI.apply
-    ## for init_value) is available on every solve, not only the first.
-    cms_data[["variables"]] <- pp@variables
-    cms_data[[SD_BOOL_IDX]] <- problem@.cache$compile_bool_idx
-    cms_data[[SD_INT_IDX]] <- problem@.cache$compile_int_idx
-    ## Carry the cached param_prog so the solver's reduction_apply can
-    ## see `param_prog@formatted = TRUE` and short-circuit
-    ## `format_constraints` (A and b from `apply_parameters` on the
-    ## post-format A_tensor are already in cone-interleaved layout).
-    cms_data[[SD_PARAM_PROB]] <- pp
-    ## Apply solver's reduction_apply to format data for solver
-    solver_result <- reduction_apply(chain@reductions[[n_red]], cms_data)
-    data <- solver_result[[1L]]
-    inverse_data <- c(problem@.cache$compile_inverse_data,
-                      list(solver_result[[2L]]))
-  } else {
-    ## Full path: apply pre-solver reductions, then solver separately
-    ## so we can intercept SD_PARAM_PROB before solver strips it.
-    pre_data <- problem
-    pre_inv_data <- list()
-    for (i in seq_len(n_red - 1L)) {
-      result <- reduction_apply(chain@reductions[[i]], pre_data)
-      pre_data <- result[[1L]]
-      pre_inv_data <- c(pre_inv_data, list(result[[2L]]))
-    }
-    ## Check if we can cache for DPP fast path
-    ## CVXPY SOURCE: problem.py lines 877-897
-    safe_to_cache <- is.list(pre_data) &&
-      !is.null(pre_data[[SD_PARAM_PROB]]) &&
-      !any(vapply(chain@reductions, function(r) .s7_is(r, EvalParams), logical(1L)))
-    ## Apply solver's reduction_apply
-    solver_result <- reduction_apply(chain@reductions[[n_red]], pre_data)
-    data <- solver_result[[1L]]
-    inverse_data <- c(pre_inv_data, list(solver_result[[2L]]))
-    ## Cache the POST-format param_prog (its A_tensor has been row-permuted
-    ## by ConicSolver.format_constraints to match the solver's cone-interleaved
-    ## row ordering, with `formatted = TRUE` set).  Fall back to the pre-solver
-    ## param_prog if the chosen solver did not produce one (e.g. QP path).
-    if (safe_to_cache) {
-      problem@.cache$param_prog <- data[[SD_PARAM_PROB]] %||%
-                                   pre_data[[SD_PARAM_PROB]]
-      problem@.cache$compile_inverse_data <- pre_inv_data
-      problem@.cache$compile_bool_idx <- pre_data[[SD_BOOL_IDX]]
-      problem@.cache$compile_int_idx <- pre_data[[SD_INT_IDX]]
-    }
-  }
-
-  compile_elapsed <- (proc.time() - t0)[["elapsed"]]
-  problem@.cache$compile_time <- compile_elapsed
-
-  if (verbose) {
-    solver_nm <- solver_name(chain@solver)
-    chain_names <- vapply(chain@reductions, function(r) class(r)[1L], character(1L))
-    cli_alert_info("Compilation: {.val {solver_nm}} via {paste(chain_names, collapse = ' -> ')}")
-    cli_alert_info("Compile time: {round(compile_elapsed, 4)}s")
-  }
+  ## CVXPY SOURCE: problem.py lines 849-897 -- the DPP fast path and the
+  ## caching full path live in .compile_and_apply(), shared with problem_data().
+  compiled <- .compile_and_apply(problem, chain, verbose = verbose)
+  data <- compiled$data
+  inverse_data <- compiled$inverse_data
+  compile_elapsed <- problem@.cache$compile_time
 
   ## Validate solver data before passing to solver
   .validate_problem_data(data)

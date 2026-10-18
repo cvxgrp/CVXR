@@ -31,6 +31,11 @@ method(validate_arguments, EyeMinusInv) <- function(x) {
   if (length(.shape(X)) != 2L || .shape(X)[1L] != .shape(X)[2L]) {
     cli_abort("The argument to {.fn eye_minus_inv} must be a square matrix.")
   }
+  ## Atom.validate_arguments (atom.py:95-96), which eye_minus_inv inherits: no
+  ## _allow_complex. This override had dropped it (sweep item 5, finding 5.2).
+  if (.any_args(x, is_complex)) {
+    cli_abort("Arguments to {.cls {class(x)[[1L]]}} cannot be complex.")
+  }
   invisible(NULL)
 }
 

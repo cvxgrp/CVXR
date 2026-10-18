@@ -149,9 +149,11 @@ method(solve_via_data, XPRESS_QP_Solver) <- function(x, data, warm_start = FALSE
   if (length(user_opts) > 0L) .xpress_set_controls(prob, user_opts)
 
   ## Write MPS if requested
+  ## CVXPY: `writeProb` with only the API-rename AttributeError caught
+  ## (xpress_qpif.py:323-327); a write failure propagates. The R package has
+  ## one API, so no fallback is needed.
   if (!is.null(solver_opts[["write_mps"]])) {
-    tryCatch(xpress::writeprob(prob, solver_opts[["write_mps"]]),
-             error = function(e) NULL)
+    xpress::writeprob(prob, solver_opts[["write_mps"]])
   }
 
   ## -- MIP warm-start ---------------------------------------------------------
@@ -172,9 +174,18 @@ method(solve_via_data, XPRESS_QP_Solver) <- function(x, data, warm_start = FALSE
   }
 
   ## -- Optimize ---------------------------------------------------------------
+  ## CVXPY: `except xp.ModelError: status = SOLVER_ERROR` (xpress_qpif.py:
+  ## 320-333), silently. The catch stays (SOLSTATUS then reads 0, which maps
+  ## to SOLVER_ERROR) and the solver's message is surfaced, as in the conic
+  ## path (user, 2026-10-16).
   tryCatch(
     xpress::xprs_optimize(prob),
-    error = function(e) NULL
+    error = function(e) {
+      msg <- conditionMessage(e)
+      cli_warn(c("XPRESS failed while optimizing; reporting a solver error.",
+                 "x" = "{msg}"))
+      NULL
+    }
   )
 
   ## -- Extract results --------------------------------------------------------

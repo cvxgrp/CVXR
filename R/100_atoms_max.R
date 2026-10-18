@@ -66,11 +66,10 @@ method(numeric_value, MaxEntries) <- function(x, values, ...) {
   if (is.null(x@axis)) {
     matrix(max(v), 1L, 1L)
   } else if (x@axis == 2L) {
-    res <- apply(v, 2L, max)
-    if (x@keepdims) matrix(res, nrow = 1L) else matrix(res, nrow = 1L)
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
+    matrix(apply(v, 2L, max), nrow = 1L)
   } else {
-    res <- apply(v, 1L, max)
-    if (x@keepdims) matrix(res, ncol = 1L) else matrix(res, ncol = 1L)
+    matrix(apply(v, 1L, max), ncol = 1L)
   }
 }
 

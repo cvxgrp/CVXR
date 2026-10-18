@@ -299,6 +299,26 @@ as_expr <- function(x) {
   }
 }
 
+#' Reject named entries in a variadic operand list
+#'
+#' The CVXPY counterparts of the variadic atoms take positional operands
+#' only (`hstack(arg_list)`, `maximum(arg1, arg2, *args)`), so a keyword is
+#' a TypeError there. In R a named entry in `...` such as `na.rm = TRUE` or
+#' `axis = 1` would otherwise be promoted to a Constant operand and change
+#' the result silently (sweep item 4, pass E).
+#' @param dots `list(...)` as collected by the constructor
+#' @param fn The user-facing function name for the message
+#' @returns `dots`, invisibly, when no entry is named
+#' @noRd
+.abort_named_dots <- function(dots, fn) {
+  nm <- names(dots)
+  if (!is.null(nm) && any(nzchar(nm))) {
+    nm <- nm[nzchar(nm)]
+    cli_abort("{cli::qty(length(nm))}Unused argument{?s} {.arg {nm}} in {.fn {fn}}: operands are positional.")
+  }
+  invisible(dots)
+}
+
 #' Convert a value to a CVXR Expression
 #'
 #' Wraps numeric vectors, matrices, and Matrix package objects as CVXR
@@ -352,7 +372,11 @@ as_cvxr_expr <- function(x) as_expr(x)
 #' @returns A matrix with dimensions matching target_shape
 #' @noRd
 .broadcast_numeric <- function(val, target_shape) {
-  if (!is.matrix(val)) val <- matrix(val, nrow = length(val), ncol = 1L)
+  ## A Matrix-package value is already dimensioned; is.matrix() is FALSE for
+  ## it, and flattening a 2 x 3 dgCMatrix to 6 x 1 was harness finding F2.
+  if (!is.matrix(val) && !inherits(val, "Matrix")) {
+    val <- matrix(val, nrow = length(val), ncol = 1L)
+  }
   vdim <- dim(val)
   if (identical(vdim, as.integer(target_shape))) return(val)
   ## Scalar -> full matrix
@@ -368,6 +392,21 @@ as_cvxr_expr <- function(x) as_expr(x)
     return(matrix(val[1L, ], target_shape[1L], target_shape[2L], byrow = TRUE))
   }
   val
+}
+
+#' Make a dense Matrix-class result a base matrix
+#'
+#' Matrix arithmetic between a sparse and a dense operand returns a dense
+#' Matrix class (dgeMatrix); scipy returns an ndarray there. The value path
+#' deals in two types, base matrix or dgCMatrix (what `intf_convert` stores),
+#' and the other `numeric_value` methods test for exactly those, so a dense
+#' Matrix result becomes a base matrix. Sparse results stay sparse, as in
+#' scipy.
+#' @param val A value returned by Matrix or base arithmetic
+#' @returns `val`, or `as.matrix(val)` when it is a dense Matrix class
+#' @noRd
+.dense_Matrix_to_base <- function(val) {
+  if (inherits(val, "Matrix") && !inherits(val, "sparseMatrix")) as.matrix(val) else val
 }
 
 # -- Shape utilities ---------------------------------------------------

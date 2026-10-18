@@ -158,8 +158,10 @@ method(reduction_apply, Dqcp2Dcp) <- function(x, problem, ...) {
   ## Taking inverses can yield +/- infinity; handle here.
   ## lhs <= rhs: if lhs == -Inf or rhs == Inf, constraint is redundant (TRUE).
   ## If lhs == Inf or rhs == -Inf, constraint is infeasible (FALSE).
-  lhs_val <- tryCatch(value(lhs), error = function(e) NULL)
-  rhs_val <- tryCatch(value(rhs), error = function(e) NULL)
+  ## Unguarded, as upstream's `np.array(lhs.value)`: an unset leaf already
+  ## yields NULL, so a tryCatch here only hid genuine evaluation errors.
+  lhs_val <- value(lhs)
+  rhs_val <- value(rhs)
   if (!is.null(lhs_val) && is.numeric(lhs_val) &&
       all(is.infinite(lhs_val) & lhs_val < 0)) {
     return(list(TRUE))

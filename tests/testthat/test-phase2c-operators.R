@@ -381,11 +381,15 @@ test_that("MulExpression shape (3,4) x (4,2) → (3,2)", {
   expect_equal(m@shape, c(3L, 2L))
 })
 
+## CVXPY: MulExpression(Constant(2), x) raises "Multiplication by scalars is
+## not permitted." (utilities/shape.py:83); a 1 x 1 operand is a matrix whose
+## inner dimension must conform.
 ## @cvxpy NONE
-test_that("MulExpression scalar × vector", {
+test_that("MulExpression scalar × vector is an error", {
   lhs <- Constant(2)       ## 1×1
   rhs <- Variable(c(3, 1)) ## 3×1
-  m <- MulExpression(lhs, rhs)
+  expect_error(MulExpression(lhs, rhs), "Incompatible dimensions")
+  m <- Multiply(lhs, rhs)
   expect_equal(m@shape, c(3L, 1L))
 })
 
@@ -441,8 +445,11 @@ test_that("MulExpression value: const * const", {
 })
 
 ## @cvxpy NONE
-test_that("MulExpression value: scalar * vector", {
-  m <- MulExpression(Constant(3), Constant(matrix(c(1, 2), ncol = 1)))
+test_that("MulExpression value: scalar * vector is Multiply, not MulExpression", {
+  expect_error(MulExpression(Constant(3), Constant(matrix(c(1, 2), ncol = 1))),
+               "Incompatible dimensions")
+  m <- Constant(3) * Constant(matrix(c(1, 2), ncol = 1))
+  expect_true(S7_inherits(m, Multiply))
   expect_equal(as.numeric(value(m)), c(3, 6))
 })
 

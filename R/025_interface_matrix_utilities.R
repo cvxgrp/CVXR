@@ -28,12 +28,9 @@
 #' @keywords internal
 intf_convert <- function(val) {
   if (inherits(val, "sparseVector")) {
-    ## Sparse column; normalized by the sparseMatrix branch below.
-    n <- length(val)
-    idx <- val@i
-    x <- if (.hasSlot(val, "x")) val@x else rep(1, length(idx))   # pattern vector
-    val <- Matrix::sparseMatrix(i = idx, j = rep(1L, length(idx)), x = x,
-                                dims = c(n, 1L))
+    ## Matrix's own coercion to the n x 1 sparse column (a pattern vector gives
+    ## an ngCMatrix); normalized by the sparseMatrix branch below.
+    val <- methods::as(val, "CsparseMatrix")
   }
   if (inherits(val, "sparseMatrix")) {
     ## General double CSC. The three-step chain is Matrix's own replacement

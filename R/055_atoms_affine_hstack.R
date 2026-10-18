@@ -10,7 +10,8 @@ HStack <- new_class("HStack", parent = AffAtom, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
-    all_args <- lapply(list(...), as_expr)
+    ## hstack.py:25 takes one positional list; a keyword is a TypeError.
+    all_args <- lapply(.abort_named_dots(list(...), "hstack"), as_expr)
     if (length(all_args) == 0L) {
       cli_abort("{.cls HStack} requires at least one argument.")
     }

@@ -103,7 +103,8 @@ method(numeric_value, AddExpression) <- function(x, values, ...) {
   ## R doesn't broadcast matrices like numpy; promote shapes before reducing
   target_shape <- .shape(x)
   promoted <- lapply(values, .broadcast_numeric, target_shape = target_shape)
-  Reduce(`+`, promoted)
+  ## A sparse + dense sum is a dgeMatrix from Matrix; scipy returns an ndarray.
+  .dense_Matrix_to_base(Reduce(`+`, promoted))
 }
 
 # -- is_symmetric / is_hermitian -------------------------------------

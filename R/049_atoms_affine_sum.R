@@ -53,28 +53,17 @@ method(numeric_value, SumEntries) <- function(x, values, ...) {
     ## Sum all entries -> scalar
     return(matrix(sum(val), 1L, 1L))
   }
-  ## Axis-aware sum
-  if (inherits(val, "sparseMatrix")) {
-    val <- as.matrix(val)
-  }
-  if (!is.matrix(val)) val <- matrix(val, ncol = 1L)
+  ## Axis-aware sum. colSums/rowSums are Matrix's generics in this namespace,
+  ## so a sparse value sums at O(nnz), as `.sum(axis)` does (sum.py:114-117).
+  if (!is.matrix(val) && !inherits(val, "Matrix")) val <- matrix(val, ncol = 1L)
 
+  ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
   if (x@axis == 2L) {
     ## axis=2: Sum over rows (column-wise) -> colSums -> row vector (1, ncol)
-    result <- colSums(val)
-    if (x@keepdims) {
-      return(matrix(result, nrow = 1L))
-    } else {
-      return(matrix(result, nrow = 1L))
-    }
+    matrix(colSums(val), nrow = 1L)
   } else {
     ## axis=1: sum over columns (row-wise) -> rowSums -> column vector (nrow, 1)
-    result <- rowSums(val)
-    if (x@keepdims) {
-      return(matrix(result, ncol = 1L))
-    } else {
-      return(matrix(result, ncol = 1L))
-    }
+    matrix(rowSums(val), ncol = 1L)
   }
 }
 

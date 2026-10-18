@@ -738,3 +738,150 @@ test_that("a one-triangle (dsC) bound on a full-pattern sparsity variable is exp
     expect_equal(as.matrix(value(V)), lbd, tolerance = 1e-5)
   }
 })
+
+# ── bounds accept every container intf_convert accepts (sweep item 2) ───────
+## @cvxpy leaf.py::Leaf._ensure_valid_bounds
+test_that("a 1-d array bound is read as a vector of the variable's length", {
+  ## CVXPY 1.9.3: np.asarray(val) at leaf.py:920-923, accepted when
+  ## val.shape == self.shape (leaf.py:933); Variable(4, bounds=[arange(4.),
+  ## arange(4.) + 1]).bounds[1] -> [1, 2, 3, 4]. CVXR shapes a vector as
+  ## c(n, 1) and intf_convert reads a 1-d array as the same column; the bounds
+  ## path rejected it because its dim attribute (length 1) is not c(4, 1).
+  lo <- array(c(0, 1, 2, 3), dim = 4L)
+  hi <- array(c(1, 2, 3, 4), dim = 4L)
+  x <- Variable(4, bounds = list(lo, hi))
+  b <- get_bounds(x)
+  expect_equal(b[[1]], matrix(c(0, 1, 2, 3), 4, 1))
+  expect_equal(b[[2]], matrix(c(1, 2, 3, 4), 4, 1))
+  ## The length still has to match (leaf.py:929-937).
+  expect_error(Variable(4, bounds = list(array(c(0, 1, 2), dim = 3L), NULL)),
+               "Bounds should be NULL, scalars, or arrays with the same dimensions")
+})
+
+## @cvxpy leaf.py::Leaf._validate_sparse_bound
+test_that("a non-canonical dgCMatrix bound is canonicalized before the pattern check", {
+  ## CVXPY 1.9.3: sp.coo_array(val).sum_duplicates() at leaf.py:761-762 sorts
+  ## the coordinates before coords_equal; a csc with has_sorted_indices False
+  ## on Variable((3,3), sparsity=[[0,2],[0,0]]) is accepted and reads
+  ## [[1,0,0],[0,0,0],[4,0,0]]; min sum -> 5. CVXR skipped the canonical
+  ## chain for an input that already was a dgCMatrix, so unsorted row indices
+  ## failed the flat-index comparison. new() validates, so the object is built
+  ## the way a C-level producer would hand it over: by slot assignment.
+  m <- Matrix::sparseMatrix(i = c(1, 3), j = c(1, 1), x = c(1, 4), dims = c(3, 3))
+  m@i <- c(2L, 0L)
+  m@x <- c(4, 1)
+  V <- Variable(c(3, 3), sparsity = cbind(c(1, 3), c(1, 1)), bounds = list(m, NULL))
+  b <- V@attributes$bounds[[1]]
+  expect_s4_class(b, "dgCMatrix")
+  expect_equal(b@i, c(0L, 2L))
+  expect_equal(b@x, c(1, 4))
+  expect_equal(as.matrix(b), matrix(c(1, 0, 4, 0, 0, 0, 0, 0, 0), 3, 3))
+  expect_equal(psolve(Problem(Minimize(sum_entries(V))), solver = "CLARABEL"), 5,
+               tolerance = 1e-5)
+})
+
+## @cvxpy leaf.py::Leaf._validate_sparse_bound
+test_that("a sparseVector bound is a sparse column", {
+  ## CVXPY 1.9.3: sp.issparse routes to _validate_sparse_bound (leaf.py:926);
+  ## a 1-d coo bound on Variable(4, sparsity=[[0, 2]]) is accepted and stored
+  ## sparse; min sum -> 3. intf_convert already reads a sparseVector as a
+  ## sparse column; the bounds path tested inherits(b, "sparseMatrix"), which
+  ## a sparseVector fails, and rejected it as a dense array.
+  sv <- Matrix::sparseVector(x = c(1, 2), i = c(1L, 3L), length = 4L)
+  x <- Variable(4, sparsity = c(1L, 3L), bounds = list(sv, NULL))
+  b <- x@attributes$bounds[[1]]
+  expect_s4_class(b, "dgCMatrix")
+  expect_equal(dim(b), c(4L, 1L))
+  expect_equal(b@x, c(1, 2))
+  expect_equal(psolve(Problem(Minimize(sum_entries(x))), solver = "CLARABEL"), 3,
+               tolerance = 1e-5)
+  ## Still a sparse bound: rejected on a dense variable with upstream's message
+  ## (leaf.py:769-771).
+  expect_error(Variable(4, bounds = list(sv, NULL)),
+               "Sparse bounds are only supported for sparse variables")
+})
+
+## @cvxpy constant.py::Constant.get_bounds bounds.py::matmul_bounds leaf.py::Leaf.get_bounds test_bounds.py::TestBoundsPropagation::test_matmul_constant_matrix test_bounds.py::TestSparseBounds::test_sparse_variable_with_matching_sparse_bounds
+test_that("bounds propagation keeps a sparse constant and a sparse leaf bound sparse", {
+  ## constant.py:292-304 returns the sparse value as-is "to avoid memory
+  ## blowup"; bounds.py:774-791 tests the point with (lb - ub).nnz and splits
+  ## with sparse .maximum/.minimum; leaf.py:1010-1035 applies nonneg/boolean
+  ## to a sparse bound with .maximum/.minimum. CVXR densified at all three
+  ## (sweep item 4, pass B): a 400 x 400 sparse constant's bounds were two
+  ## 1.28 MB base matrices.
+  A <- matrix(c(-2, 0, 0, 0, 0, 5), 3, 2)
+  As <- Matrix::Matrix(A, sparse = TRUE)
+  cb <- get_bounds(Constant(As))
+  expect_s4_class(cb[[1]], "dgCMatrix")
+  expect_s4_class(cb[[2]], "dgCMatrix")
+  expect_equal(as.matrix(cb[[1]]), A)
+
+  ## Constant on the left: the split formula gives a dense result equal to
+  ## the dense constant's (bounds.py:782-791).
+  x <- Variable(2, bounds = list(-1, 1))
+  bs <- get_bounds(Constant(As) %*% x)
+  bd <- get_bounds(Constant(A) %*% x)
+  expect_true(is.matrix(bs[[1]]))
+  expect_true(is.matrix(bs[[2]]))
+  expect_equal(bs[[1]], bd[[1]])
+  expect_equal(bs[[2]], bd[[2]])
+  expect_equal(bd[[1]], matrix(c(-2, 0, -5), 3, 1))
+  expect_equal(bd[[2]], matrix(c(2, 0, 5), 3, 1))
+  ## Constant on the right (bounds.py:793-801).
+  y <- Variable(c(1, 3), bounds = list(-1, 1))
+  rs <- get_bounds(y %*% Constant(As))
+  rd <- get_bounds(y %*% Constant(A))
+  expect_true(is.matrix(rs[[1]]))
+  expect_equal(rs[[1]], rd[[1]])
+  expect_equal(rs[[2]], rd[[2]])
+  expect_equal(rd[[1]], matrix(c(-2, -5), 1, 2))
+  expect_equal(rd[[2]], matrix(c(2, 5), 1, 2))
+
+  ## A sparsity variable's sparse bound under nonneg / boolean stays sparse;
+  ## the values are what .maximum(0) / .minimum(1) give (oracle bc_oracle.log).
+  pat <- cbind(c(1L, 3L), c(1L, 2L))
+  lbS <- Matrix::sparseMatrix(i = c(1L, 3L), j = c(1L, 2L), x = c(-1, -1), dims = c(3L, 2L))
+  ubS <- Matrix::sparseMatrix(i = c(1L, 3L), j = c(1L, 2L), x = c(4, 4), dims = c(3L, 2L))
+  vb <- get_bounds(Variable(c(3, 2), sparsity = pat, nonneg = TRUE, bounds = list(lbS, ubS)))
+  expect_s4_class(vb[[1]], "dgCMatrix")
+  expect_s4_class(vb[[2]], "dgCMatrix")
+  expect_equal(as.matrix(vb[[1]]), matrix(0, 3, 2))
+  expect_equal(as.matrix(vb[[2]]), as.matrix(ubS))
+  wb <- get_bounds(Variable(c(3, 2), sparsity = pat, boolean = TRUE, bounds = list(lbS, ubS)))
+  expect_s4_class(wb[[1]], "dgCMatrix")
+  expect_s4_class(wb[[2]], "dgCMatrix")
+  expect_equal(as.matrix(wb[[1]]), matrix(0, 3, 2))
+  expect_equal(as.matrix(wb[[2]]), matrix(c(1, 0, 0, 0, 0, 1), 3, 2))
+
+  ## End to end through the canonicalizer that reads expression bounds
+  ## (abs_canon, under a BOUNDED_VARIABLES solver): sparse and dense agree.
+  require_solver("HIGHS")
+  xs <- Variable(2, bounds = list(-1, 1))
+  xd <- Variable(2, bounds = list(-1, 1))
+  ps <- Problem(Minimize(sum(abs(Constant(As) %*% xs))), list(sum(xs) == 1))
+  pd <- Problem(Minimize(sum(abs(Constant(A) %*% xd))), list(sum(xd) == 1))
+  expect_equal(psolve(ps, solver = "HIGHS"), psolve(pd, solver = "HIGHS"), tolerance = 1e-6)
+})
+
+## @cvxpy bounds.py::_all_isinf bounds.py::_any_isnan bounds.py::_all_zero_or_inf
+test_that("the bounds predicates see a sparse bound's structural zeros", {
+  ## bounds.py:79-107 read `.data` and treat a structural zero as 0; the R
+  ## predicates let is.infinite / is.nan / == dispatch on the Matrix object
+  ## (sweep item 4, pass B). Same answers as the densified form they replace.
+  s <- Matrix::sparseMatrix(i = 1L, j = 1L, x = Inf, dims = c(2L, 2L))
+  expect_false(CVXR:::.bounds_all_isinf(s))
+  expect_true(CVXR:::.bounds_all_isinf(matrix(Inf, 2, 2)))
+  expect_true(CVXR:::.bounds_all_zero_or_inf(s))
+  expect_false(CVXR:::.bounds_all_zero_or_inf(Matrix::sparseMatrix(i = 1L, j = 1L, x = 2, dims = c(2L, 2L))))
+  expect_false(CVXR:::.bounds_any_isnan(s))
+  expect_true(CVXR:::.bounds_any_isnan(Matrix::sparseMatrix(i = 1L, j = 1L, x = NaN, dims = c(2L, 2L))))
+  ## matmul's point test on two sparse operands is (lb - ub).nnz == 0
+  ## (bounds.py:775-777); NaN is never equal, and a stored Inf is not a point
+  ## either, since Inf - Inf is a stored NaN that scipy's nnz counts.
+  two <- Matrix::sparseMatrix(i = 1L, j = 1L, x = 2, dims = c(2L, 2L))
+  expect_true(CVXR:::.bnd_is_point(two, two))
+  expect_false(CVXR:::.bnd_is_point(s, s))
+  nan_s <- Matrix::sparseMatrix(i = 1L, j = 1L, x = NaN, dims = c(2L, 2L))
+  expect_false(CVXR:::.bnd_is_point(nan_s, nan_s))
+  expect_false(CVXR:::.bnd_is_point(two, Matrix::sparseMatrix(i = 2L, j = 2L, x = 2, dims = c(2L, 2L))))
+})

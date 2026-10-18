@@ -101,8 +101,23 @@ method(solve_via_data, GLPK_MI_Solver) <- function(x, data, warm_start = FALSE, 
     }
   }
 
-  ## Build control list
-  ctrl <- list(canonicalize_status = FALSE, verbose = verbose)
+  ## Build control list.
+  ## CVXPY SOURCE: glpk_mi_conif.py solve_via_data -> cvxopt_conif.py
+  ## STATUS_MAP: cvxopt's "LP relaxation is primal infeasible" is INFEASIBLE.
+  ## Rglpk exposes only the MIP status code; without presolve an infeasible
+  ## relaxation leaves glp_intopt no starting basis and the code is GLP_UNDEF
+  ## (1, SOLVER_ERROR). With `presolve = TRUE` GLPK presolves the relaxation
+  ## itself and reports GLP_NOFEAS (4, INFEASIBLE); a feasible MILP returns
+  ## the same optimum either way. The flag is set ONLY when an integer or
+  ## boolean column exists: on a pure LP (every type "C", which GLPK_MI
+  ## accepts) the presolver has the opposite effect, an infeasible LP is
+  ## GLP_UNDEF with presolve and GLP_NOFEAS without (measured, Rglpk 0.6).
+  ## A user-supplied `presolve` wins below.
+  ## RECORDED DEVIATION: an UNBOUNDED relaxation is GLP_UNDEF with or without
+  ## presolve, so it stays SOLVER_ERROR where CVXPY reports UNBOUNDED.
+  ## Lifecycle fuzz finding 6.2 (notes/lifecycle_fuzz_2026-10-17.md).
+  ctrl <- list(canonicalize_status = FALSE, verbose = verbose,
+               presolve = any(types != "C"))
   for (opt_name in names(solver_opts)) {
     ctrl[[opt_name]] <- solver_opts[[opt_name]]
   }

@@ -66,8 +66,10 @@ method(numeric_value, LogDet) <- function(x, values, ...) {
   A <- values[[1L]]
   ## CVXPY v1.8.2 fix: guard against NULL (unset Variable)
   if (is.null(A)) return(NULL)
-  ## Take Hermitian part for numerical stability (conj transpose, not just transpose)
-  symm <- (A + Conj(t(A))) / 2
+  ## Take Hermitian part for numerical stability (conj transpose, not just
+  ## transpose). Conj of a real value is the identity, and Matrix defines no
+  ## Complex-group method, so a real (possibly sparse) A skips it.
+  symm <- if (is.complex(A)) (A + Conj(t(A))) / 2 else (A + t(A)) / 2
   if (is.complex(symm)) {
     ## For complex Hermitian matrices, eigenvalues are real
     ev <- Re(eigen(symm, symmetric = FALSE, only.values = TRUE)$values)

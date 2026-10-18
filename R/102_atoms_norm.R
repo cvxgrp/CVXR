@@ -70,6 +70,16 @@ cvxr_norm <- function(x, p = 2, axis = NULL, keepdims = FALSE, max_denom = 1024L
   ## A numeric string ("1", "2", "Inf", as base R norm() types are written)
   ## is the same p as the number.
   pn <- suppressWarnings(as.numeric(p))
+  if (is.character(p) && is.na(pn)) {
+    ## CVXPY SOURCE: norm.py:67 (2-D, no axis) and norm.py:87 (otherwise). A
+    ## string that is neither a matrix-norm name nor a number used to fall
+    ## through to .cvxr_norm_entrywise and raise R's "missing value where
+    ## TRUE/FALSE needed" behind a coercion warning (sweep item 4, pass D3).
+    if (is.null(axis) && .shape(as_expr(x))[2L] > 1L) {
+      cli_abort("Unsupported matrix norm.")
+    }
+    cli_abort("Unsupported norm option {p} for non-matrix.")
+  }
   if (is.null(axis) && !is.na(pn)) {
     x <- as_expr(x)
     shp <- .shape(x)

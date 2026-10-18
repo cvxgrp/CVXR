@@ -200,11 +200,13 @@ test_that("Matmul: Variable %*% Variable → MulExpression", {
   expect_equal(result@shape, c(3L, 2L))
 })
 
-## @cvxpy NONE
-test_that("Matmul: scalar %*% Variable → MulExpression (scalar mult)", {
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("Matmul: scalar %*% Variable is an error, as in CVXPY", {
   x <- Variable(3)
-  result <- 5 %*% x
-  expect_true(S7_inherits(result, MulExpression))
+  expect_error(5 %*% x, "Scalar operands are not allowed")
+  expect_error(x %*% 5, "Scalar operands are not allowed")
+  result <- 5 * x
+  expect_true(S7_inherits(result, Multiply))
   expect_equal(result@shape, c(3L, 1L))
 })
 

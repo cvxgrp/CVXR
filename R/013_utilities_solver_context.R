@@ -50,11 +50,15 @@ SolverInfo <- new_class("SolverInfo", package = "CVXR",
 .POWERCONE_APPROX_SOC_THRESHOLD   <- 4L
 
 ## Predicate: is `target_cone` listed in this solver's supported constraints?
-## `solver_supported_constraints` is a list of S7 class objects.
+## `solver_supported_constraints` is a list of S7 class objects; membership is
+## by class NAME (`.cone_has`, reductions/solvers/solver.R), as in the rest of
+## the chain. Upstream (`power_canon.py:90-92`) tests `PowCone3D in
+## solver_context.solver_supported_constraints`, type identity on a Python
+## class; `identical()` on an R class object is a structural walk that fails
+## on an instrumented copy (covr, trace()) (sweep item 4, pass J).
 .solver_supports_cone <- function(solver_context, target_cone) {
   if (is.null(solver_context)) return(FALSE)
-  supported <- solver_context@solver_supported_constraints
-  any(vapply(supported, identical, logical(1L), target_cone))
+  .cone_has(solver_context@solver_supported_constraints, target_cone)
 }
 
 ## Emit a UserWarning analogue when the chosen solver supports the

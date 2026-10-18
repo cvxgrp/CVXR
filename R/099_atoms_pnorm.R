@@ -95,11 +95,8 @@ method(numeric_value, Pnorm) <- function(x, values, ...) {
     ## Axis-wise p-norm
     margin <- if (x@axis == 2L) 2L else 1L
     res <- apply(v, margin, function(col) sum(abs(col)^p)^(1/p))
-    if (x@keepdims) {
-      if (x@axis == 2L) matrix(res, nrow = 1L) else matrix(res, ncol = 1L)
-    } else {
-      if (x@axis == 2L) matrix(res, nrow = 1L) else matrix(res, ncol = 1L)
-    }
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
+    if (x@axis == 2L) matrix(res, nrow = 1L) else matrix(res, ncol = 1L)
   }
 }
 

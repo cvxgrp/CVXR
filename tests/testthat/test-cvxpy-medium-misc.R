@@ -163,6 +163,32 @@ test_that("soc_to_soc: SOC constraint preserved through solving pipeline", {
   expect_equal(as.numeric(value(t_var)), 5, tolerance = 1e-3)
 })
 
+## CVXPY second_order.py:74-82 keeps X two-dimensional (`np.atleast_2d`), so
+## the residual of a sparsity Variable, whose `.value` is dense there, is
+## right for both axes. The R arm flattened a dgCMatrix X to one column
+## (sweep item 4, pass H1); a sparse Constant X raises upstream, works here.
+## @cvxpy second_order.py::SOC::residual
+test_that("SOC residual and violation are right for a sparse-valued X", {
+  M <- matrix(c(3, -1, 0.5, 2, -2, 1), 2, 3)
+  Xd <- Variable(c(2, 3))
+  Xs <- Variable(c(2, 3), sparsity = as.matrix(expand.grid(1:2, 1:3)))
+  value(Xd) <- M
+  value(Xs) <- Matrix::Matrix(M, sparse = TRUE)
+  expect_s4_class(value(Xs), "dgCMatrix")
+  t2 <- Variable(2); value(t2) <- c(1, 4)
+  t3 <- Variable(3); value(t3) <- c(1, 4, 2)
+  ## CVXPY 1.9.3: [1.86680075 0.] and [1.5289612 0. 0.16692527]
+  r1 <- as.numeric(residual(SOC(t2, Xd, axis = 1)))
+  r2 <- as.numeric(residual(SOC(t3, Xd, axis = 2)))
+  expect_equal(r1, c(1.86680075, 0), tolerance = 1e-7)
+  expect_equal(r2, c(1.5289612, 0, 0.16692527), tolerance = 1e-7)
+  expect_equal(as.numeric(residual(SOC(t2, Xs, axis = 1))), r1)
+  expect_equal(as.numeric(residual(SOC(t3, Xs, axis = 2))), r2)
+  expect_equal(as.numeric(violation(SOC(t2, Xs, axis = 1))), r1)
+  Xc <- Constant(Matrix::Matrix(M, sparse = TRUE))
+  expect_equal(as.numeric(residual(SOC(t2, Xc, axis = 1))), r1)
+})
+
 # -- 2. expcone_to_expcone ----------------------------------------------------
 # ExpCone constraint: y * exp(x/y) <= z
 

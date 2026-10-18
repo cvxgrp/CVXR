@@ -596,3 +596,35 @@ test_that("a full-matrix PSD solver gets no svec conversion", {
   d <- problem_data(prob, solver = "CVXOPT")
   expect_equal(nrow(d[[1L]]$A), n * n)
 })
+
+## `.exact_conversion_for` and `.solver_supports_cone` decide membership by
+## class name, as `.cone_has` does. An S7 class object is a closure: a copy
+## with an instrumented body (what covr and trace() install) is still the
+## class for dispatch but is not `identical()` to the original. With the
+## identity test the PSD -> SvecPSD conversion was skipped under covr (171
+## failures, "cone dimensions ... not equal to num rows in A") and the
+## SOC-approximation warning was lost (sweep item 4, pass J). Upstream's
+## `c.source in target_cones` is type identity on a Python class, a singleton.
+## @cvxpy exact.py::ExactCone2Cone.__init__ power_canon.py::power_canon
+test_that("cone membership in the exact chain and the solver context is by class name", {
+  rebound <- PSD
+  body(rebound) <- call("{", quote(NULL), body(PSD))
+  attributes(rebound) <- attributes(PSD)
+  expect_false(identical(rebound, PSD))
+  con <- PSD(Variable(c(2L, 2L)))
+  expect_true(.s7_is(con, rebound))
+
+  red <- ExactCone2Cone(target_cones = list(rebound), solver_context = NULL)
+  conv <- .exact_conversion_for(red, con)
+  expect_false(is.null(conv))
+  expect_identical(.cone_name(conv$source), "PSD")
+  ## A target list without PSD still filters the conversion out.
+  red2 <- ExactCone2Cone(target_cones = list(PowConeND), solver_context = NULL)
+  expect_null(.exact_conversion_for(red2, con))
+
+  ctx <- SolverInfo(solver_name = "X",
+                    solver_supported_constraints = list(rebound, SOC))
+  expect_true(.solver_supports_cone(ctx, PSD))
+  expect_false(.solver_supports_cone(ctx, PowCone3D))
+  expect_false(.solver_supports_cone(NULL, PSD))
+})

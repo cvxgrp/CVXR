@@ -43,7 +43,8 @@ test_that("log-log curvature: AddExpression", {
 
 ## @cvxpy NONE
 test_that("log-log curvature: MulExpression", {
-  x <- Variable(pos = TRUE)
+  ## x must conform: a 1 x 1 operand is not a scalar in %*% (as in CVXPY).
+  x <- Variable(c(2, 1), pos = TRUE)
   A <- Constant(matrix(1:4, 2, 2))
 
   ## Matrix multiply is log-log convex only
@@ -277,4 +278,23 @@ test_that("is_log_log_* exported and works on expressions", {
   expect_true(is_log_log_affine(x))
   expect_true(is_log_log_convex(x))
   expect_true(is_log_log_concave(x))
+})
+
+## @cvxpy atom.py::Atom.is_atom_log_log_convex atom.py::Atom.is_atom_log_log_concave
+test_that("conv, cumsum and kron carry Atom's log-log default, not affine", {
+  ## conv.py, cumsum.py and kron.py define neither hook, so both are False
+  ## (atom.py:195-202). 9512 declared all three log-log affine and accepted
+  ## geometric programs CVXPY rejects with DGPError (sweep item 5, 5.1).
+  x <- Variable(3, pos = TRUE)
+  X <- Variable(c(2, 2), pos = TRUE)
+  for (e in list(conv(c(1, 2), x), cumsum(x), kron(matrix(1:4, 2), X))) {
+    expect_false(is_log_log_convex(e))
+    expect_false(is_log_log_concave(e))
+    expect_false(is_dgp(e))
+  }
+  ## The accepted GP returned 3e8 against a true optimum of 2 * sqrt(2).
+  y <- Variable(2, pos = TRUE)
+  prob <- Problem(Minimize(sum(cumsum(y))), list(y[1] * y[2] >= 1))
+  expect_false(is_dgp(prob))
+  expect_error(psolve(prob, gp = TRUE), "not DGP")
 })

@@ -30,8 +30,6 @@
 #include <Rcpp.h>
 #include <RcppEigen.h>
 
-std::string genRandomId(); // generate a random id for Linops etc.
-
 #endif
 
 #define NULL_MATRIX Eigen::SparseMatrix<double>(0,0)

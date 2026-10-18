@@ -54,6 +54,11 @@ method(validate_arguments, Huber) <- function(x) {
   if (!(is_nonneg(M) && expr_is_scalar(M) && is_constant(M))) {
     cli_abort("{.arg M} must be a non-negative scalar constant or {.cls Parameter}.")
   }
+  ## huber.py:96 `super().validate_arguments()`: Atom's complex rejection
+  ## (atom.py:95-96). This override had dropped it (sweep item 5, finding 5.2).
+  if (.any_args(x, is_complex)) {
+    cli_abort("Arguments to {.cls {class(x)[[1L]]}} cannot be complex.")
+  }
   invisible(NULL)
 }
 

@@ -123,3 +123,18 @@ test_that("the SLSEdesign shape solves end to end", {
   expect_equal(status(prob2), "optimal")
   expect_equal(as.numeric(val2), 0.0164945, tolerance = 1e-3)
 })
+
+## A non-square constant P took the quad_form shortcut, whose failed solve()
+## was swallowed into "singular"; the same P as a vector or an Expression got
+## the shape message from validate_arguments (sweep item 4, pass L). numpy's
+## LA.inv raises "Last 2 dimensions of the array must be square" at
+## matrix_frac.py:147-149.
+## @cvxpy matrix_frac.py::matrix_frac matrix_frac.py::MatrixFrac.validate_arguments
+test_that("matrix_frac with a non-square constant P reports the shape, not singularity", {
+  x <- Variable(3L)
+  expect_error(matrix_frac(x, matrix(1:6, 2L)), "must be a square matrix")
+  expect_error(matrix_frac(x, 1:3), "must be a square matrix")
+  expect_error(matrix_frac(x, Constant(matrix(1:6, 2L))), "must be a square matrix")
+  ## A square singular P is still reported as singular.
+  expect_error(matrix_frac(x, matrix(1, 3L, 3L)), "singular")
+})

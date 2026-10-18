@@ -35,6 +35,11 @@ method(validate_arguments, Dotsort) <- function(x) {
   if (expr_size(X) < expr_size(W)) {
     cli_abort("The size of {.arg W} must be less than or equal to the size of {.arg X}.")
   }
+  ## dotsort.py:55 `super().validate_arguments()`: Atom's complex rejection
+  ## (atom.py:95-96). This override had dropped it (sweep item 5, finding 5.2).
+  if (.any_args(x, is_complex)) {
+    cli_abort("Arguments to {.cls {class(x)[[1L]]}} cannot be complex.")
+  }
   invisible(NULL)
 }
 

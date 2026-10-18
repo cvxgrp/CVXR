@@ -254,6 +254,50 @@ test_that("Matrix multiplication, shape, curvature (CVXPY parity)", {
   expect_error(Constant(matrix(c(2, 1, 2, 2), 2, 2)) %*% C)
 })
 
+## The scalar branch of test_matmul_expression (test_expressions.py:905-908,
+## `x @ 2` is "Scalar operands are not allowed, use '*' instead") and the
+## incompatible-dimensions branch with a 1 x 1 operand (`(1, 1) @ (2, 3)` and
+## `(1, 3) @ (1, 1)` are "Incompatible dimensions" in CVXPY 1.9.3; base R
+## says "non-conformable arguments" for all of them).
+## Measured before the fix (differential harness, 2026-10-16): `2 %*% x` and
+## `Constant(matrix(2, 1, 1)) %*% x` with x 2 x 3 were accepted with shape
+## (2, 3) and aborted the R process in `problem_data()`; `x %*% 2` and
+## `Variable(c(1, 3)) %*% matrix(6, 1, 1)` were accepted as scalar products.
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("%*% rejects a scalar operand and a non-conformable 1 x 1 operand", {
+  x <- Variable(c(2, 3))
+  expect_error(2 %*% x, "Scalar operands are not allowed")
+  expect_error(x %*% 2, "Scalar operands are not allowed")
+  expect_error(5 %*% Variable(3), "Scalar operands are not allowed")
+  ## A 1 x 1 Expression is a matrix, not a scalar: the inner dimension fails.
+  expect_error(Constant(matrix(2, 1, 1)) %*% x, "Incompatible dimensions")
+  expect_error(matrix(2, 1, 1) %*% x, "Incompatible dimensions")
+  expect_error(Constant(2) %*% x, "Incompatible dimensions")
+  y <- Variable(c(1, 3))
+  expect_error(y %*% matrix(6, 1, 1), "Incompatible dimensions")
+  expect_error(Constant(matrix(1, 1, 3)) %*% Constant(matrix(2, 1, 1)),
+               "Incompatible dimensions")
+})
+
+## The conformable 1 x 1 case is a matrix product in CVXPY (`(1, 1) @ (1, 3)`
+## has shape (1, 3)) and must keep working; `sum_entries(x, axis = 2)` of a
+## one-row expression builds exactly this product.
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("%*% with a conformable 1 x 1 operand is a matrix product", {
+  z <- Variable(c(1, 1))
+  r <- matrix(1:3, 1, 3)
+  e <- z %*% r
+  expect_equal(e@shape, c(1L, 3L))
+  value(z) <- matrix(2, 1, 1)
+  expect_equal(as.matrix(value(e)), matrix(c(2, 4, 6), 1, 3))
+  e2 <- Variable(c(1, 3)) %*% matrix(1:3, 3, 1)
+  expect_equal(e2@shape, c(1L, 1L))
+  ## Minimize z subject to z * (1, 2, 3) >= (1, 2, 3): z = 1.
+  prob <- Problem(Minimize(z), list(z %*% r >= r))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 1, tolerance = 1e-6)
+  expect_equal(as.numeric(value(z)), 1, tolerance = 1e-6)
+})
+
 # ── 8. test_div_expression ───────────────────────────────────────────
 
 ## @cvxpy test_expressions.py::TestExpressions::test_div_expression
@@ -323,6 +367,70 @@ test_that("Division by a matrix or vector constant solves entrywise", {
   prob2 <- Problem(Minimize(sum(y)), list(y / d == 1))
   psolve(prob2, solver = "CLARABEL")
   expect_equal(as.numeric(value(y)), d, tolerance = 1e-6)
+})
+
+## CVXPY Expression.__div__ (expression.py:862-870) broadcasts both operands
+## and then requires a scalar operand or equal shapes, raising "Incompatible
+## shapes for division (lhs / rhs)" with the broadcast shapes. The upstream
+## test asserts this for x / [2, 2, 3] with a 2-vector x. Measured on the
+## pinned oracle: (2, 3) / (3, 1) and (3, 1) / (2, 3) raise; (2, 3) / (1, 3),
+## (2, 3) / (2, 1), (1, 3) / (2, 3) and (1, 3) / (3, 1) broadcast.
+## Before the fix CVXR built the mismatched quotient with the numerator's
+## shape, so value() failed with "non-conformable arrays" and problem_data()
+## recycled the divisor silently.
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division with non-broadcastable shapes is an error", {
+  x2 <- Variable(2)
+  expect_error(x2 / c(2, 2, 3), "Incompatible shapes for division")
+
+  x <- Variable(c(2, 3))
+  expect_error(x / c(2, 2, 3), "Incompatible shapes for division")
+  expect_error(x / matrix(c(2, 2, 3), 3, 1), "Incompatible shapes for division")
+  expect_error(c(2, 2, 3) / x, "Incompatible shapes for division")
+  expect_error(Constant(matrix(1, 3, 1)) / Constant(matrix(1, 2, 3)),
+               "Incompatible shapes for division")
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division broadcasts a row, a column, or a 1 x 1 operand", {
+  x <- Variable(c(2, 3))
+  value(x) <- matrix(0:5, 2, 3, byrow = TRUE)
+  row <- matrix(c(2, 2, 3), 1, 3)
+  col <- matrix(c(2, 3), 2, 1)
+
+  e1 <- x / row
+  expect_equal(e1@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e1)),
+               sweep(matrix(0:5, 2, 3, byrow = TRUE), 2, as.vector(row), "/"),
+               tolerance = 1e-10)
+
+  e2 <- x / col
+  expect_equal(e2@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e2)),
+               matrix(0:5, 2, 3, byrow = TRUE) / as.vector(col),
+               tolerance = 1e-10)
+
+  e3 <- row / x
+  expect_equal(e3@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e3))[2L, ], c(2, 2, 3) / c(3, 4, 5),
+               tolerance = 1e-10)
+
+  e4 <- x / matrix(2, 1, 1)
+  expect_equal(e4@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e4)), matrix(0:5, 2, 3, byrow = TRUE) / 2,
+               tolerance = 1e-10)
+
+  ## (1, 3) / (3, 1) broadcasts to 3 x 3, as CVXPY.
+  e5 <- Variable(c(1, 3)) / matrix(c(2, 2, 3), 3, 1)
+  expect_equal(e5@shape, c(3L, 3L))
+
+  ## Through the solver: the row divisor applies to every row.
+  D <- matrix(c(-2, 0, 2, -1, 1, -2), 2, 3, byrow = TRUE)
+  prob <- Problem(Minimize(sum(x / row)), list(x >= D))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.matrix(value(x)), D, tolerance = 1e-6)
+  expect_equal(val, sum(sweep(D, 2, as.vector(row), "/")), tolerance = 1e-6)
 })
 
 # ── 9. test_neg_expression ───────────────────────────────────────────

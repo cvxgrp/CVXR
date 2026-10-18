@@ -24,7 +24,11 @@ scalar_value <- function(v) {
   if (is.matrix(v) || inherits(v, "Matrix")) {
     if (prod(dim(v)) == 1L) return(as.double(v[1L, 1L]))
   }
-  as.double(v[1L])
+  ## CVXPY's ndarray arm is `matrix.item()` (ndarray_interface.py:71-72),
+  ## which raises on more than one element. An objective is scalar by
+  ## construction, so reaching here means another path produced a wrongly
+  ## shaped value; report it rather than return its first element.
+  cli_abort("Expected a scalar value but got one with {length(v)} elements.")
 }
 
 # -- Objective base class ---------------------------------------------

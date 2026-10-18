@@ -4,25 +4,6 @@
 #include "CVXR.h"
 #include "CVXcanon.h"
 
-static const char hexArray[] = { '0', '1', '2', '3', '4',
-				 '5', '6', '7', '8', '9',
-				 'a', 'b', 'c', 'd', 'e', 'f' };
-// Generate a random 16-hex digit id. grouped by four
-std::string genRandomId() {
-  char result[20];
-  Rcpp::NumericVector unif = Rcpp::runif(16, 0.0, 16.0);
-  for (int i = 0, j = 0; i < 19; ++i) {
-    if (i == 4 || i == 9 || i == 14) {
-      result[i] = '-';
-    } else {
-      result[i] = hexArray[static_cast<int>(unif[j])];
-      j++;
-    }
-  }
-  result[19] = '\0';
-  return(std::string(result));
-}
-
 // Make a map out of an Rcpp List. Caller's responsibility
 // to ensure proper names etc.
 std::map<std::string, double>  makeMap(Rcpp::List L) {
@@ -56,21 +37,12 @@ static std::map<int, int> parse_named_intvec(Rcpp::IntegerVector v) {
 // [[Rcpp::export(.build_matrix_0)]]
 SEXP build_matrix_0(SEXP xp, Rcpp::IntegerVector v, int var_length,
                     Rcpp::IntegerVector param_to_size_v) {
-#ifdef _R_DEBUG_
-  Rcpp::Rcout << "In Build Matrix 0" <<std::endl;
-#endif
   Rcpp::XPtr<LinOpVector> ptrX(xp);
   std::map<int, int> id_to_col = parse_named_intvec(v);
   std::map<int, int> param_to_size = parse_named_intvec(param_to_size_v);
 
   Rcpp::XPtr<ProblemData> resPtr(new ProblemData(), true);
-#ifdef _R_DEBUG_
-  Rcpp::Rcout << "After resPtr" <<std::endl;
-#endif
   build_matrix_2(ptrX->linvec, var_length, id_to_col, param_to_size, resPtr);
-#ifdef _R_DEBUG_
-  Rcpp::Rcout << "After constructing external ptr" <<std::endl;
-#endif
   return resPtr;
 }
 
@@ -95,15 +67,9 @@ SEXP build_matrix_1(SEXP xp, Rcpp::IntegerVector v1, int var_length,
     constr_offsets.push_back(v2[i]);
   }
 
-#ifdef _R_DEBUG_
-  Rcpp::Rcout << "Before Build Matrix 1" <<std::endl;
-#endif
   Rcpp::XPtr<ProblemData> resPtr(new ProblemData(), true);
   build_matrix_3(ptrX->linvec, var_length, id_to_col, param_to_size,
                  constr_offsets, resPtr);
-#ifdef _R_DEBUG_
-  Rcpp::Rcout << "After constructing external ptr" <<std::endl;
-#endif
   return resPtr;
 }
 

@@ -48,7 +48,6 @@ method(is_decr, LogSumExp) <- function(x, idx, ...) FALSE
 method(numeric_value, LogSumExp) <- function(x, values, ...) {
   v <- values[[1L]]
   axis <- x@axis
-  keepdims <- x@keepdims
 
   if (is.null(axis)) {
     ## Reduce all: scalar
@@ -58,14 +57,13 @@ method(numeric_value, LogSumExp) <- function(x, values, ...) {
     matrix(result, 1L, 1L)
   } else if (axis == 2L) {
     ## axis=2: Reduce along rows (column-wise) -> one value per column
+    ## keepdims does not change a 2-D R shape (.axis_shape): one arm each
     mx <- apply(v, 2L, max)
-    result <- mx + log(colSums(exp(sweep(v, 2L, mx))))
-    if (keepdims) matrix(result, nrow = 1L) else matrix(result, nrow = 1L)
+    matrix(mx + log(colSums(exp(sweep(v, 2L, mx)))), nrow = 1L)
   } else {
     ## axis == 1: Reduce along columns -> one value per row
     mx <- apply(v, 1L, max)
-    result <- mx + log(rowSums(exp(sweep(v, 1L, mx))))
-    if (keepdims) matrix(result, ncol = 1L) else matrix(result, ncol = 1L)
+    matrix(mx + log(rowSums(exp(sweep(v, 1L, mx)))), ncol = 1L)
   }
 }
 

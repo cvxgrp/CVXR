@@ -75,9 +75,9 @@ method(is_nsd, Kron) <- function(x) {
   (is_psd(a) && is_nsd(b)) || (is_nsd(a) && is_psd(b))
 }
 
-# -- log-log: affine (CVXPY kron.py) -----------------------------
-method(is_atom_log_log_convex, Kron) <- function(x) TRUE
-method(is_atom_log_log_concave, Kron) <- function(x) TRUE
+## No log-log hooks: kron.py defines none, so Atom's FALSE applies
+## (atom.py:195-202), although kron with a positive constant is entrywise a
+## monomial; parity over a claim upstream does not make (sweep item 5, 5.1).
 
 method(numeric_value, Kron) <- function(x, values, ...) {
   kronecker(values[[1L]], values[[2L]])

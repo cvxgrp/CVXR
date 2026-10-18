@@ -65,6 +65,24 @@ test_that("assigning NaN to a leaf reports the attribute, not an R internal", {
   expect_equal(as.numeric(value(w)), c(Inf, 1))
 })
 
+## The sparse arm of the same Inf - Inf path (leaf.py:635-642): a sparse
+## value with an Inf on the sparsity pattern projects to itself, so the
+## delta there is NaN and must be zeroed, not reported. The R arm called
+## base::summary on the delta and died on `nz$i` (sweep item 4, pass D3).
+## @cvxpy leaf.py::Leaf::_validate_value
+test_that("a sparse value with Inf on the sparsity pattern is accepted", {
+  s <- Variable(c(2, 2), sparsity = cbind(c(1L, 2L), c(1L, 2L)))
+  v <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(Inf, 1), dims = c(2, 2))
+  expect_no_error({ value(s) <- v })
+  expect_equal(as.vector(as.matrix(value(s))), c(Inf, 0, 0, 1))
+  ## -Inf on the pattern is accepted the same way; an Inf off the pattern is
+  ## still an attribute violation.
+  v2 <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(-Inf, 1), dims = c(2, 2))
+  expect_no_error({ value(s) <- v2 })
+  off <- Matrix::sparseMatrix(i = c(1, 2), j = c(2, 2), x = c(Inf, 1), dims = c(2, 2))
+  expect_error({ value(s) <- off }, "zero outside of sparsity pattern")
+})
+
 ## Inf in the OBJECTIVE or the constraint MATRIX is still an error: those keys
 ## are not in inf_allowed_keys.
 test_that("Inf outside the allowed keys is still rejected", {

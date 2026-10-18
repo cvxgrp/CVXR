@@ -285,9 +285,11 @@ method(solve_via_data, XPRESS_Conic_Solver) <- function(x, data, warm_start = FA
   user_opts <- solver_opts[!names(solver_opts) %in% c("write_mps")]
   if (length(user_opts) > 0L) .xpress_set_controls(prob, user_opts)
 
+  ## CVXPY: `writeProb` with only the API-rename AttributeError caught
+  ## (xpress_conif.py:415-419); a write failure propagates. The R package has
+  ## one API, so no fallback is needed.
   if (!is.null(solver_opts[["write_mps"]])) {
-    tryCatch(xpress::writeprob(prob, solver_opts[["write_mps"]]),
-             error = function(e) NULL)
+    xpress::writeprob(prob, solver_opts[["write_mps"]])
   }
 
   ## -- MIP warm-start -----------------------------------------------------
@@ -308,9 +310,19 @@ method(solve_via_data, XPRESS_Conic_Solver) <- function(x, data, warm_start = FA
   }
 
   ## -- Optimize -----------------------------------------------------------
+  ## CVXPY: the conic path lets optimize() propagate (xpress_conif.py:422);
+  ## the QP path catches `xp.ModelError` and reports SOLVER_ERROR
+  ## (xpress_qpif.py:320-333). Both R paths keep the catch (SOLSTATUS then
+  ## reads 0, which maps to SOLVER_ERROR) and surface the solver's message,
+  ## which the silent handler used to drop (user, 2026-10-16).
   tryCatch(
     xpress::xprs_optimize(prob),
-    error = function(e) NULL
+    error = function(e) {
+      msg <- conditionMessage(e)
+      cli_warn(c("XPRESS failed while optimizing; reporting a solver error.",
+                 "x" = "{msg}"))
+      NULL
+    }
   )
 
   ## -- Extract results ----------------------------------------------------

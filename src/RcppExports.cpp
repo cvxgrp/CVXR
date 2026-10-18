@@ -463,17 +463,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// LinOp__get_id
-std::string LinOp__get_id(SEXP xp);
-RcppExport SEXP _CVXR_LinOp__get_id(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(LinOp__get_id(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
 // LinOpVector__new
 SEXP LinOpVector__new();
 RcppExport SEXP _CVXR_LinOpVector__new() {
@@ -661,7 +650,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_LinOp__set_slice", (DL_FUNC) &_CVXR_LinOp__set_slice, 2},
     {"_CVXR_LinOp__set_data_ndim", (DL_FUNC) &_CVXR_LinOp__set_data_ndim, 2},
     {"_CVXR_LinOp__set_linOp_data", (DL_FUNC) &_CVXR_LinOp__set_linOp_data, 2},
-    {"_CVXR_LinOp__get_id", (DL_FUNC) &_CVXR_LinOp__get_id, 1},
     {"_CVXR_LinOpVector__new", (DL_FUNC) &_CVXR_LinOpVector__new, 0},
     {"_CVXR_LinOpVector__push_back", (DL_FUNC) &_CVXR_LinOpVector__push_back, 2},
     {"_CVXR_LinOp_at_index", (DL_FUNC) &_CVXR_LinOp_at_index, 2},

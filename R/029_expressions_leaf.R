@@ -119,8 +119,19 @@
     ## CVXPY SOURCE: leaf.py:905-911 -- a non-scalar, non-sparse bound is
     ## `np.asarray(val)`: a dense Matrix class (dgeMatrix, ...) is a base
     ## matrix from here on, so the dense-array rules below apply to it.
+    ## A sparseVector is `sp.issparse` in spirit (a 1-d coo bound is accepted
+    ## upstream, leaf.py:926): it becomes the sparse column `intf_convert`
+    ## makes of it (matrix_utilities.R:26-33), so the sparse rules apply.
     for (i in 1:2) {
-      if (inherits(bounds[[i]], "denseMatrix")) bounds[[i]] <- as.matrix(bounds[[i]])
+      b <- bounds[[i]]
+      if (inherits(b, "denseMatrix")) {
+        bounds[[i]] <- as.matrix(b)
+      } else if (inherits(b, "sparseVector")) {
+        ## Matrix's own coercion to the n x 1 sparse column (a pattern vector
+        ## gives an ngCMatrix; .validate_sparse_bound's dMatrix chain makes it
+        ## double).
+        bounds[[i]] <- methods::as(b, "CsparseMatrix")
+      }
     }
 
     if (has_structural_zeros) {
@@ -208,8 +219,11 @@
       ##
       ## R deviation, deliberate: a dim-less numeric of the right total length
       ## is accepted, since `Variable(3, bounds = list(rep(-1, 3), rep(1, 3)))`
-      ## is ordinary R and CVXR shapes vectors as c(n, 1). A bound that CARRIES
-      ## a dim must match `shape` exactly, as upstream requires.
+      ## is ordinary R and CVXR shapes vectors as c(n, 1). A 1-d array is the
+      ## same thing with a length-1 dim (upstream's `(n,)`, which equals the
+      ## variable's shape there; `intf_convert` reads it as a column too), so
+      ## it is stripped to that vector. A bound that carries a 2-d dim must
+      ## match `shape` exactly, as upstream requires.
       none_defaults <- list(-Inf, Inf)
       bad_shape <- "Bounds should be NULL, scalars, or arrays with the same dimensions as the variable/parameter."
       for (i in 1:2) {
@@ -220,10 +234,12 @@
           bounds[[i]] <- .validate_sparse_bound(b, shape, sparsity)
         } else if (length(b) == 1L) {
           bounds[[i]] <- rep(b, n_elem)
-        } else if (!is.null(dim(b))) {
+        } else if (length(dim(b)) > 1L) {
           if (!identical(as.integer(dim(b)), as.integer(shape))) cli_abort(bad_shape)
         } else if (length(b) != n_elem) {
           cli_abort(bad_shape)
+        } else {
+          bounds[[i]] <- as.vector(b)
         }
       }
     }
@@ -242,11 +258,10 @@
     if (!.s7_is(ub, Expression) && any(ub_data == -Inf)) {
       cli_abort("-Inf is not feasible as an upper bound.")
     }
-    if (!.s7_is(lb, Expression) && !.s7_is(ub, Expression)) {
-      lb_check <- if (inherits(lb, "sparseMatrix")) as.matrix(lb) else lb_data
-      ub_check <- if (inherits(ub, "sparseMatrix")) as.matrix(ub) else ub_data
-    }
-    if (!.s7_is(lb, Expression) && !.s7_is(ub, Expression) && any(lb_check > ub_check)) {
+    ## leaf.py:823-828. The comparison dispatches on a sparse bound (against
+    ## the other sparse bound or the vector a scalar was promoted to), and the
+    ## structural-zero checks above already hold the scalar side at 0.
+    if (!.s7_is(lb, Expression) && !.s7_is(ub, Expression) && any(lb > ub)) {
       cli_abort("Invalid bounds: some upper bounds are less than corresponding lower bounds.")
     }
   }
@@ -388,10 +403,14 @@
 ## dgCMatrix, built with the chain `intf_convert` uses: one-triangle (dsC,
 ## dtC), diagonal, triplet, pattern and logical classes are expanded,
 ## duplicate triplets are summed, explicit zeros are kept (as
-## `sum_duplicates()` keeps them, so they count toward the pattern). CSC is
-## sorted by column then row, so its column-major flat index is already in
-## `.mip_idx` order. The canonical matrix is what gets STORED, so get_bounds,
-## .leaf_bound_domain and .cvxattr_sparse_bound_attr all read a dgC.
+## `sum_duplicates()` keeps them, so they count toward the pattern). The
+## round trip through the triplet class runs for a dgCMatrix too: `new()`
+## validates, but slot assignment does not, so a dgC built by a C-level
+## producer may carry unsorted row indices, and `sum_duplicates()` sorts
+## those upstream. The result is sorted by column then row, so its
+## column-major flat index is in `.mip_idx` order. The canonical matrix is
+## what gets STORED, so get_bounds, .leaf_bound_domain and
+## .cvxattr_sparse_bound_attr all read a dgC.
 ##
 ## Before this, any `Matrix` bound was shape-checked only: a dsC on a dense
 ## variable bounded one triangle and left the rest unbounded (min sum -> -Inf),
@@ -404,9 +423,7 @@
   if (!.attr_set(sparsity)) {
     cli_abort("Sparse bounds are only supported for sparse variables.")
   }
-  if (!inherits(b, "dgCMatrix")) {
-    b <- as(as(as(b, "dMatrix"), "generalMatrix"), "CsparseMatrix")
-  }
+  b <- as(as(as(as(b, "dMatrix"), "generalMatrix"), "TsparseMatrix"), "CsparseMatrix")
   nr <- as.integer(shape[1L])
   flat <- b@i + 1L + rep.int(seq_len(ncol(b)) - 1L, diff(b@p)) * nr
   if (!identical(as.integer(flat), .mip_idx(sparsity, shape, "sparsity"))) {
@@ -567,18 +584,15 @@ method(get_bounds, Leaf) <- function(x) compute_once(x, "get_bounds", .leaf_get_
     }
   }
 
-  ## sign attributes (CVXPY leaf.py:1003-1019)
-  if (isTRUE(a$nonneg) || isTRUE(a$pos)) {
-    lb <- if (inherits(lb, "sparseMatrix")) pmax(as.matrix(lb), 0) else pmax(lb, 0)
-  }
-  if (isTRUE(a$nonpos) || isTRUE(a$neg)) {
-    ub <- if (inherits(ub, "sparseMatrix")) pmin(as.matrix(ub), 0) else pmin(ub, 0)
-  }
+  ## sign attributes (CVXPY leaf.py:1003-1019). pmax/pmin keep a sparse bound
+  ## sparse, as upstream's .maximum(0)/.minimum(0) do (sweep item 4, pass B).
+  if (isTRUE(a$nonneg) || isTRUE(a$pos)) lb <- pmax(lb, 0)
+  if (isTRUE(a$nonpos) || isTRUE(a$neg)) ub <- pmin(ub, 0)
 
   ## boolean -> [0, 1] (CVXPY leaf.py:1021-1036)
   if (isTRUE(a$boolean)) {
-    lb <- if (inherits(lb, "sparseMatrix")) pmax(as.matrix(lb), 0) else pmax(lb, 0)
-    ub <- if (inherits(ub, "sparseMatrix")) pmin(as.matrix(ub), 1) else pmin(ub, 1)
+    lb <- pmax(lb, 0)
+    ub <- pmin(ub, 1)
   }
 
   ## Shape to the leaf's dims (matching CVXPY's shape-carrying bounds) via a
@@ -675,7 +689,9 @@ method(value, Leaf) <- function(x) {
       if (any(nan_mask)) {
         val_dense <- as.matrix(value)
         proj_dense <- as.matrix(projected)
-        nz <- summary(delta)
+        ## Matrix::summary, not summary: inside the namespace the bare name
+        ## is base::summary, whose table has no $i (sweep item 4, pass D3).
+        nz <- Matrix::summary(delta)
         equal_inf <- val_dense[cbind(nz$i, nz$j)] == proj_dense[cbind(nz$i, nz$j)]
         ## `%in% TRUE` rather than the bare comparison: `NaN == NaN` is NA in R,
         ## and an NA in a subscript is an error, not a no-op. Only genuinely

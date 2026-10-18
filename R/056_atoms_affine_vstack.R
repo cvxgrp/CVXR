@@ -10,7 +10,8 @@ VStack <- new_class("VStack", parent = AffAtom, package = "CVXR",
   constructor = function(..., id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
-    all_args <- lapply(list(...), as_expr)
+    ## vstack.py:25 takes one positional list; a keyword is a TypeError.
+    all_args <- lapply(.abort_named_dots(list(...), "vstack"), as_expr)
     if (length(all_args) == 0L) {
       cli_abort("{.cls VStack} requires at least one argument.")
     }

@@ -32,25 +32,21 @@
   out
 }
 
-## Densify a possibly-sparse Matrix bound to a base-R matrix (dense path only).
+## Densify a possibly-sparse Matrix bound to a base-R matrix, where the
+## upstream helper densifies too (`_ensure_dense`, bounds.py:24-50; the dense
+## arithmetic of div/broadcast). The predicates below and `matmul_bounds` stay
+## sparse-aware, as bounds.py:79-107 and :747-806 do (sweep item 4, pass B).
 .bnd_dense <- function(arr) {
   if (inherits(arr, "Matrix")) as.matrix(arr) else arr
 }
 
-.bounds_all_isinf <- function(arr) {
-  arr <- .bnd_dense(arr)
-  all(is.infinite(arr))
-}
+## is.infinite / is.nan / == dispatch on a Matrix object: a structural zero is
+## neither Inf nor NaN and is 0, which is what bounds.py:79-107 reads off `.data`.
+.bounds_all_isinf <- function(arr) all(is.infinite(arr))
 
-.bounds_any_isnan <- function(arr) {
-  arr <- .bnd_dense(arr)
-  any(is.nan(arr))
-}
+.bounds_any_isnan <- function(arr) any(is.nan(arr))
 
-.bounds_all_zero_or_inf <- function(arr) {
-  arr <- .bnd_dense(arr)
-  all(arr == 0 | is.infinite(arr))
-}
+.bounds_all_zero_or_inf <- function(arr) all(arr == 0 | is.infinite(arr))
 
 .bounds_ensure_dense <- function(arr, shape) {
   arr <- .bnd_dense(arr)
@@ -386,36 +382,45 @@ index_bounds <- function(lb, ub, key_fn) {
 }
 
 ## CVXPY SOURCE: bounds.py:774-778 -- `_is_point`: EXACT equality (np.array_equal;
-## sparse `(lb - ub).nnz == 0`, but the R callers densify first). The split
-## formula in matmul_bounds is only valid for lb == ub, so this must not be a
-## tolerance test: `isTRUE(all.equal(lb, ub))` (relative 1.5e-8 on the differing
-## entries) called a [1, 1 + 1e-9] operand a point and returned finite bounds
-## for two narrow intervals where CVXPY returns unbounded. NaN entries are never
-## equal, as in numpy. Claims-audit C1002, decision 14, CVXR 1.9.2.9152.
+## two sparse operands `(lb - ub).nnz == 0`). The split formula in
+## matmul_bounds is only valid for lb == ub, so this must not be a tolerance
+## test: `isTRUE(all.equal(lb, ub))` (relative 1.5e-8 on the differing entries)
+## called a [1, 1 + 1e-9] operand a point and returned finite bounds for two
+## narrow intervals where CVXPY returns unbounded. NaN entries are never equal,
+## as in numpy (a stored NaN difference counts as nonzero). Claims-audit C1002,
+## decision 14, CVXR 1.9.2.9152.
 .bnd_is_point <- function(lb, ub) {
-  identical(dim(lb), dim(ub)) && length(lb) == length(ub) && isTRUE(all(lb == ub))
+  if (!identical(dim(lb), dim(ub)) || length(lb) != length(ub)) return(FALSE)
+  if (inherits(lb, "Matrix") && inherits(ub, "Matrix")) {
+    return(Matrix::nnzero(lb - ub, na.counted = TRUE) == 0L)
+  }
+  isTRUE(all(lb == ub))
 }
 
 ## CVXPY SOURCE: bounds.py:747-806 (matrix product x %*% y).
-## Exact split formula when one operand is a point (lb == ub); otherwise unbounded.
+## Exact split formula when one operand is a point (lb == ub); otherwise
+## unbounded. The point side may be a sparse constant's value and stays
+## sparse through pmax/pmin (`_safe_maximum`/`_safe_minimum`, bounds.py:53-76);
+## the interval side is dense, and so is the product (a dgeMatrix when one
+## factor is sparse, returned as a base matrix). Sweep item 4, pass B.
 matmul_bounds <- function(lb1, ub1, lb2, ub2) {
-  lb1 <- .bnd_dense(lb1); ub1 <- .bnd_dense(ub1)
-  lb2 <- .bnd_dense(lb2); ub2 <- .bnd_dense(ub2)
   lhs_point <- .bnd_is_point(lb1, ub1)
   rhs_point <- .bnd_is_point(lb2, ub2)
 
   if (lhs_point) {
+    lb2 <- .bnd_dense(lb2); ub2 <- .bnd_dense(ub2)
     a_pos <- pmax(lb1, 0); a_neg <- pmin(lb1, 0)
-    return(list(a_pos %*% lb2 + a_neg %*% ub2,
-                a_pos %*% ub2 + a_neg %*% lb2))
+    return(list(.dense_Matrix_to_base(a_pos %*% lb2 + a_neg %*% ub2),
+                .dense_Matrix_to_base(a_pos %*% ub2 + a_neg %*% lb2)))
   }
   if (rhs_point) {
+    lb1 <- .bnd_dense(lb1); ub1 <- .bnd_dense(ub1)
     b_pos <- pmax(lb2, 0); b_neg <- pmin(lb2, 0)
-    return(list(lb1 %*% b_pos + ub1 %*% b_neg,
-                ub1 %*% b_pos + lb1 %*% b_neg))
+    return(list(.dense_Matrix_to_base(lb1 %*% b_pos + ub1 %*% b_neg),
+                .dense_Matrix_to_base(ub1 %*% b_pos + lb1 %*% b_neg)))
   }
   ## both intervals: no efficient exact formula
-  unbounded(c(nrow(as.matrix(lb1)), ncol(as.matrix(lb2))))
+  unbounded(c(NROW(lb1), NCOL(lb2)))
 }
 
 # -- sign refinement ----------------------------------------------

@@ -63,6 +63,10 @@ ConeDims <- new_class("ConeDims", package = "CVXR",
              alpha_chunks <- vector("list", length(pnd_constrs))
              for (ci in seq_along(pnd_constrs)) {
                a <- value(pnd_constrs[[ci]]@alpha)
+               ## cone_matrix_stuffing.py:125-128 reads alpha as a 2-d array;
+               ## a Matrix-package alpha is not is.matrix() and would flatten
+               ## every cone into one (sweep item 4, pass H1).
+               if (inherits(a, "Matrix")) a <- as.matrix(a)
                if (is.matrix(a)) {
                  ## Each column is one cone's alpha vector
                  alpha_chunks[[ci]] <- lapply(seq_len(ncol(a)), function(j) a[, j])

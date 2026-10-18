@@ -386,3 +386,117 @@ test_that("Constant: explicit zeros in a dgCMatrix are kept", {
   expect_equal(length(A0@x), 2L)
   expect_equal(length(value(Constant(A0))@x), 2L)
 })
+
+## value() of an expression over a Matrix-class constant. CVXPY's numeric()
+## for add, index and matmul hands the stored (scipy sparse) value to the
+## operator; scipy returns an ndarray for a mixed sparse-and-dense operation
+## and a sparse array when both operands are sparse. The R value path keeps
+## two types, base matrix or dgCMatrix, so a mixed result is a base matrix.
+## Differential harness F2 (notes/diff_harness_findings_2026-10-16.md).
+
+## @cvxpy test_expressions.py::TestExpressions::test_add_expression
+test_that("value(): a Matrix-class constant adds to a dense or sparse constant", {
+  S <- Matrix::sparseMatrix(i = c(1L, 1L, 2L, 2L, 2L), j = c(1L, 3L, 1L, 2L, 3L),
+                            x = c(4, 2, -4, 5, -1), dims = c(2L, 3L))
+  D <- matrix(c(2, -4, 0, 2, 2, 5), 2, 3)
+  ## sparse + dense and dense - sparse: a base matrix (scipy: an ndarray)
+  v <- value(Constant(S) + Constant(D))
+  expect_true(is.matrix(v))
+  expect_equal(v, as.matrix(S) + D)
+  v <- value(Constant(D) - Constant(S))
+  expect_true(is.matrix(v))
+  expect_equal(v, D - as.matrix(S))
+  ## sparse + sparse stays sparse and keeps its shape (was a 6 x 1)
+  v <- value(Constant(S) + Constant(S))
+  expect_s4_class(v, "dgCMatrix")
+  expect_equal(dim(v), c(2L, 3L))
+  expect_equal(as.matrix(v), 2 * as.matrix(S))
+  ## a diagonal container goes through the same path
+  Dg <- Matrix::Diagonal(3L, x = c(1, 2, 3))
+  v <- value(Constant(Dg) + Constant(matrix(1, 3, 3)))
+  expect_equal(v, diag(c(1, 2, 3)) + 1)
+  ## a 1 x 1 operand broadcasts (CVXPY raises scipy's NotImplementedError
+  ## for scalar + sparse; R has no such limitation)
+  v <- value(Constant(S) + 2)
+  expect_equal(v, as.matrix(S) + 2)
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_index_expression
+test_that("value(): indexing a Matrix-class constant", {
+  R <- Matrix::sparseMatrix(i = c(1L, 1L), j = c(2L, 3L), x = c(-1, 6), dims = c(1L, 3L))
+  expect_equal(as.numeric(value(Constant(R)[1, 3])), 6)
+  expect_equal(as.numeric(value(Constant(R)[1, 1])), 0)
+  v <- value(Constant(R)[1, 1:2])
+  expect_equal(dim(v), c(1L, 2L))
+  expect_equal(as.numeric(as.matrix(v)), c(0, -1))
+  M <- Matrix::sparseMatrix(i = 1:3, j = 1:3, x = c(1, 2, 3))
+  v <- value(Constant(M)[2:3, 1:2])
+  expect_equal(as.matrix(v), matrix(c(0, 0, 2, 0), 2, 2))
+  expect_equal(as.matrix(value(Constant(Matrix::Diagonal(3L))[1:2, 1:2])), diag(2))
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("value(): %*% with a 1 x 1 or sparse Matrix-class constant", {
+  A <- matrix(c(4, 0, 5), 3, 1)
+  one <- Matrix::sparseMatrix(i = 1L, j = 1L, x = 6, dims = c(1L, 1L), repr = "T")
+  v <- value(Constant(A) %*% Constant(one))
+  expect_true(is.matrix(v))
+  expect_equal(v, 6 * A)
+  v <- value(Constant(one) %*% Constant(t(A)))
+  expect_true(is.matrix(v))
+  expect_equal(v, 6 * t(A))
+  S <- Matrix::sparseMatrix(i = c(1L, 1L, 2L, 2L, 2L), j = c(1L, 3L, 1L, 2L, 3L),
+                            x = c(4, 2, -4, 5, -1), dims = c(2L, 3L))
+  B <- matrix(as.numeric(1:6), 3, 2)
+  v <- value(Constant(S) %*% Constant(B))
+  expect_true(is.matrix(v))
+  expect_equal(v, as.matrix(S) %*% B)
+  ## sparse %*% sparse stays sparse
+  v <- value(Constant(S) %*% Constant(Matrix::Matrix(B, sparse = TRUE)))
+  expect_s4_class(v, "sparseMatrix")
+  expect_equal(as.matrix(v), as.matrix(S) %*% B)
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_broadcast_mul
+test_that("value(): elementwise product of a sparse and a dense constant", {
+  S <- Matrix::sparseMatrix(i = c(1L, 1L, 2L, 2L, 2L), j = c(1L, 3L, 1L, 2L, 3L),
+                            x = c(4, 2, -4, 5, -1), dims = c(2L, 3L))
+  D <- matrix(c(2, -4, 0, 2, 2, 5), 2, 3)
+  ## Matrix's sparse * dense is a dgeMatrix; the value path keeps base or dgC,
+  ## so an outer atom (here sum_entries over axis 2) sees a 2 x 3, not a 6 x 1
+  v <- value(Constant(S) * Constant(D))
+  expect_true(is.matrix(v))
+  expect_equal(v, as.matrix(S) * D)
+  expect_equal(as.vector(value(sum_entries(Constant(S) * Constant(D), axis = 2))),
+               colSums(as.matrix(S) * D))
+  ## sparse * sparse stays sparse
+  v <- value(Constant(S) * Constant(S))
+  expect_s4_class(v, "dgCMatrix")
+  expect_equal(as.matrix(v), as.matrix(S)^2)
+})
+
+## @cvxpy NONE
+test_that("Constant and bounds take a pattern sparseVector as a double sparse column", {
+  ## intf_convert and the bounds validator use Matrix's own coercion of a
+  ## sparseVector to its n x 1 CsparseMatrix (sweep item 4, pass C); a
+  ## pattern vector (no x slot) is all ones, a logical one its TRUEs.
+  nsv <- methods::new("nsparseVector", i = c(1L, 4L), length = 5L)
+  cst <- Constant(nsv)
+  v <- value(cst)
+  expect_s4_class(v, "dgCMatrix")
+  expect_equal(dim(v), c(5L, 1L))
+  expect_type(v@x, "double")
+  expect_equal(as.numeric(as.matrix(v)), c(1, 0, 0, 1, 0))
+  x <- Variable(5, sparsity = c(1L, 4L), bounds = list(nsv, NULL))
+  b <- x@attributes$bounds[[1]]
+  expect_s4_class(b, "dgCMatrix")
+  expect_equal(dim(b), c(5L, 1L))
+  expect_equal(as.numeric(as.matrix(b)), c(1, 0, 0, 1, 0))
+  expect_equal(psolve(Problem(Minimize(sum_entries(x))), solver = "CLARABEL"), 2,
+               tolerance = 1e-5)
+  ## An axis sum of a sparse value goes through Matrix's colSums / rowSums
+  ## without a densify (sum.py:114-117 `.sum(axis)`).
+  S <- Matrix::sparseMatrix(i = c(1L, 3L), j = c(1L, 2L), x = c(-2, 5), dims = c(3L, 2L))
+  expect_equal(value(sum_entries(Constant(S), axis = 1)), matrix(c(-2, 0, 5), 3, 1))
+  expect_equal(value(sum_entries(Constant(S), axis = 2)), matrix(c(-2, 5), 1, 2))
+})

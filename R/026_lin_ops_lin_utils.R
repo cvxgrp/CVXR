@@ -68,10 +68,14 @@ create_const <- function(value, shape, sparse = FALSE) {
   if (all(shape == c(1L, 1L))) {
     ## Scalar constant -- always extract to plain numeric
     op_type <- LINOP_SCALAR_CONST
+    ## CVXPY: `if not np.isscalar(value): value = value[0, 0]`
+    ## (lin_utils.py:116-117). A vector of any other length is a caller bug;
+    ## upstream would raise an IndexError there, so raise rather than
+    ## silently take the first element.
     if (is.matrix(value) || inherits(value, "Matrix")) {
       value <- value[1L, 1L]
     } else if (length(value) != 1L) {
-      value <- value[1L]
+      cli_abort("A constant of shape 1 x 1 needs a single value, got {length(value)}.")
     }
   } else if (sparse) {
     op_type <- LINOP_SPARSE_CONST

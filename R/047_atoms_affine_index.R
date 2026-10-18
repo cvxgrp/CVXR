@@ -109,7 +109,9 @@ method(is_atom_log_log_concave, Index) <- function(x) TRUE
 
 method(numeric_value, Index) <- function(x, values, ...) {
   val <- values[[1L]]
-  if (!is.matrix(val)) val <- matrix(val, ncol = 1L)
+  ## A Matrix-package value is already dimensioned (is.matrix() is FALSE for
+  ## it); Matrix's `[` returns the sub-matrix, as scipy slicing does.
+  if (!is.matrix(val) && !inherits(val, "Matrix")) val <- matrix(val, ncol = 1L)
   result <- val[x@key[[1L]], x@key[[2L]], drop = FALSE]
   result
 }

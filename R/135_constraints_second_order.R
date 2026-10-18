@@ -142,7 +142,12 @@ method(residual, SOC) <- function(x) {
   X_val <- value(x@args[[2L]])
   if (is.null(t_val) || is.null(X_val)) return(NULL)
 
-  ## Ensure matrix form
+  ## Ensure matrix form. CVXPY SOURCE: second_order.py:74-82, np.atleast_1d /
+  ## np.atleast_2d keep a 2-d value's shape; a Matrix-package value (a
+  ## sparsity Variable, a sparse Constant) is densified, not flattened
+  ## (sweep item 4, pass H1).
+  if (inherits(t_val, "Matrix")) t_val <- as.matrix(t_val)
+  if (inherits(X_val, "Matrix")) X_val <- as.matrix(X_val)
   if (!is.matrix(t_val)) t_val <- matrix(as.numeric(t_val), ncol = 1L)
   if (!is.matrix(X_val)) X_val <- matrix(as.numeric(X_val), ncol = 1L)
 

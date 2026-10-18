@@ -257,10 +257,15 @@ import(S7)
 importFrom(Matrix,
   Diagonal,
   Matrix,
+  colSums,
   crossprod,
+  determinant,
+  format,
+  rowSums,
   sparseMatrix,
   t,
-  tcrossprod
+  tcrossprod,
+  which
 )
 importFrom(Rcpp,evalCpp)
 importFrom(clarabel,clarabel_solver)

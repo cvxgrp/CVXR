@@ -43,20 +43,20 @@ mul_shapes_promote <- function(lh_shape, rh_shape) {
   lh_shape <- as.integer(lh_shape)
   rh_shape <- as.integer(rh_shape)
 
-  ## Handle scalar cases: (1,1) is R equivalent of CVXPY's () shape
-  ## Scalar * anything = anything (scalar multiplication)
-  if (is_scalar_shape(lh_shape)) {
-    return(list(lh_shape = lh_shape, rh_shape = rh_shape,
-                shape = rh_shape))
-  }
-  if (is_scalar_shape(rh_shape)) {
-    return(list(lh_shape = lh_shape, rh_shape = rh_shape,
-                shape = lh_shape))
-  }
-
+  ## No scalar case: CVXPY rejects a () operand outright (shape.py:82-83) and
+  ## treats a (1, 1) operand as a matrix, so (1, 1) @ (2, 3) is an
+  ## inner-dimension error (shape.py:89-90). A former R-only shortcut that
+  ## returned the other shape for a 1 x 1 operand let a non-conformable
+  ## product reach the C++ backend, which wrote out of bounds and crashed R.
   ## Inner dimension check
   if (lh_shape[2L] != rh_shape[1L]) {
-    cli_abort("Incompatible dimensions ({lh_shape[1L]}, {lh_shape[2L]}) and ({rh_shape[1L]}, {rh_shape[2L]}).")
+    hint <- if (is_scalar_shape(lh_shape) || is_scalar_shape(rh_shape)) {
+      c(i = "A 1 x 1 operand is a matrix in {.code %*%}; use {.code *} to multiply by a scalar.")
+    }
+    cli_abort(c(
+      "Incompatible dimensions ({lh_shape[1L]}, {lh_shape[2L]}) ({rh_shape[1L]}, {rh_shape[2L]})",
+      hint
+    ))
   }
 
   shape <- c(lh_shape[1L], rh_shape[2L])

@@ -67,9 +67,10 @@ method(shape_from_args, Cumsum) <- function(x) {
   .cumsum_shape(.arg_shape(x), x@axis)
 }
 
-# -- log-log: affine (CVXPY cumsum.py) ---------------------------
-method(is_atom_log_log_convex, Cumsum) <- function(x) TRUE
-method(is_atom_log_log_concave, Cumsum) <- function(x) TRUE
+## No log-log hooks: cumsum.py defines none, so Atom's FALSE applies
+## (atom.py:195-202). A TRUE/TRUE pair here made cumsum(x) log-log affine;
+## `min sum(cumsum(x)) s.t. x1 x2 >= 1` solved under gp = TRUE to 3e8 against
+## a true 2.83, where CVXPY raises DGPError (sweep item 5, finding 5.1).
 
 method(numeric_value, Cumsum) <- function(x, values, ...) {
   v <- values[[1L]]

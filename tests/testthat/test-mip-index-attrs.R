@@ -82,7 +82,7 @@ test_that("an entry in both boolean and integer is boolean", {
 # ---- offsets across variables ---------------------------------------
 
 ## Each variable's indices are shifted by its offset in the stuffed vector
-## (matrix_stuffing.py:113). Two variables are the minimum needed to catch a
+## (matrix_stuffing.py:110-118). Two variables are the minimum needed to catch a
 ## missing `+ offset`, which would otherwise half-work.
 ## @cvxpy NONE
 test_that("index lists are offset by the variable's position in the stuffed vector", {

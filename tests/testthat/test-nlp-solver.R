@@ -34,6 +34,49 @@ test_that("Bounds lowers constraints and extracts cl/cu/lb/ub/x0", {
 })
 
 ## @cvxpy NONE
+## Claims-audit row C0841, ported 1.9.2.9138 (ADR D_PORT.8). CVXPY 1.9.3
+## `Bounds.get_constraint_bounds` (nlp_solver.py:99-120) handles only Equality
+## and Inequality and silently drops a NonNeg/NonPos/Zero constraint, although
+## all three define is_dnlp and pass the DNLP gate (measured: IPOPT returns 0 at
+## x = (1, 1) for the NonNeg problem below, whose optimum is 2 at x = (2, 2)).
+## CVXR lowers all three instead; 1.9.2.9137 aborted on them.
+test_that("Bounds lowers NonNeg, NonPos, and Zero constraints (C0841)", {
+  x <- Variable(2L)
+  value(x) <- c(0, 0)
+  c1 <- NonNeg(x - 2)
+  c2 <- NonPos(x - 0.5)
+  c3 <- Zero(x[1] - 3)
+  prob <- Problem(Minimize(sum_squares(x - 1)), list(c1, c2, c3))
+  expect_true(is_dnlp(prob))
+  b <- Bounds(prob)
+  cons <- b@new_problem@constraints
+  expect_length(cons, 3L)
+  expect_equal(b@cl, c(0, 0, 0, 0, 0))
+  expect_equal(b@cu, c(Inf, Inf, Inf, Inf, 0))
+  expect_true(S7_inherits(cons[[1L]], NonNeg))
+  expect_true(S7_inherits(cons[[2L]], NonNeg))
+  expect_true(S7_inherits(cons[[3L]], Zero))
+  ## ids survive lowering so duals map back to the user's constraints
+  expect_equal(cons[[1L]]@id, c1@id)
+  expect_equal(cons[[2L]]@id, c2@id)
+  expect_equal(cons[[3L]]@id, c3@id)
+  ## NonPos(e) is lowered to NonNeg(-e)
+  expect_equal(as.numeric(value(cons[[2L]]@args[[1L]])), c(0.5, 0.5))
+})
+
+## @cvxpy NONE
+test_that("NLP solve honors a NonNeg constraint (C0841)", {
+  skip_if_not_installed("sparsediff")
+  skip_if_not_installed("ipopt")
+  x <- Variable(2L)
+  value(x) <- c(0, 0)
+  prob <- Problem(Minimize(sum_squares(x - 1)), list(NonNeg(x - 2)))
+  val <- psolve(prob, solver = "IPOPT", nlp = TRUE)
+  expect_equal(val, 2, tolerance = 1e-5)
+  expect_equal(as.numeric(value(x)), c(2, 2), tolerance = 1e-5)
+})
+
+## @cvxpy NONE
 test_that("Bounds: a plain variable has (-Inf, Inf) bounds", {
   x <- Variable(3)
   value(x) <- c(0, 0.5, 1)

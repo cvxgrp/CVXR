@@ -200,11 +200,20 @@ test_that("Matmul: Variable %*% Variable → MulExpression", {
   expect_equal(result@shape, c(3L, 2L))
 })
 
-## @cvxpy NONE
-test_that("Matmul: scalar %*% Variable → MulExpression (scalar mult)", {
+## CVXPY rejects a () operand outright; R has no (), so a bare scalar is a
+## 1-vector and `%*%` follows base R's promotion rule (?matmult): rejected
+## when it does not conform, a product when it does (CVXR 1.9.3).
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("Matmul: a scalar operand errors unless it conforms, as in base R", {
   x <- Variable(3)
-  result <- 5 %*% x
-  expect_true(S7_inherits(result, MulExpression))
+  expect_error(5 %*% x, "Scalar operands are not allowed")
+  expect_error(Variable(c(2, 3)) %*% 5, "Scalar operands are not allowed")
+  ## x is 3 x 1, so x %*% 5 is (3 x 1) %*% (1 x 1), as in base R.
+  prod <- x %*% 5
+  expect_true(S7_inherits(prod, MulExpression))
+  expect_equal(prod@shape, c(3L, 1L))
+  result <- 5 * x
+  expect_true(S7_inherits(result, Multiply))
   expect_equal(result@shape, c(3L, 1L))
 })
 

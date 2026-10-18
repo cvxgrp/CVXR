@@ -174,3 +174,197 @@ test_that("MOSEK norm_nuc problem", {
 test_that("MOSEK solver name constant is exported", {
   expect_equal(CVXR::MOSEK_SOLVER, "MOSEK")
 })
+
+# ── Simplex, bfs, save_file (claims-audit rows C0803 / C0796) ────────────────
+## Expected values below were run on CVXPY 1.9.3 + MOSEK 11 (2026-10-09).
+
+## @cvxpy mosek_conif.py::MOSEK::invert
+test_that("MOSEK simplex optimizers return the basic solution", {
+  skip_if_not_installed("Rmosek")
+  ## Rmosek returns ONLY sol$bas for a simplex optimizer. Until 1.9.2.9146
+  ## the interface always read sol$itr and so reported "Solver MOSEK failed"
+  ## for every simplex solve; mosek_conif.py:463-476 reads the basic solution
+  ## for primal_simplex / dual_simplex. All three parameter carriers, both
+  ## the string names and MOSEK's optimizertype codes (dual_simplex = 1,
+  ## primal_simplex = 6). CVXPY: optimal, 2.5, x = (1, 1.5), duals (0.5, 0)
+  ## and 0.5.
+  carriers <- list(
+    list(MSK_IPAR_OPTIMIZER = "MSK_OPTIMIZER_PRIMAL_SIMPLEX"),
+    list(iparam = list(OPTIMIZER = "MSK_OPTIMIZER_DUAL_SIMPLEX")),
+    list(mosek_params = list(MSK_IPAR_OPTIMIZER = 6L)),
+    list(iparam = list(OPTIMIZER = 1L)))
+  for (opt in carriers) {
+    x <- Variable(2)
+    c1 <- x >= 1
+    c2 <- x[1] + 2 * x[2] >= 4
+    prob <- Problem(Minimize(sum(x)), list(c1, c2))
+    val <- do.call(psolve, c(list(prob, solver = "MOSEK"), opt))
+    lab <- paste(deparse(opt), collapse = "")
+    expect_equal(status(prob), "optimal", label = lab)
+    expect_equal(val, 2.5, tolerance = 1e-6, label = lab)
+    expect_equal(as.numeric(value(x)), c(1, 1.5), tolerance = 1e-6, label = lab)
+    expect_equal(as.numeric(dual_value(c1)), c(0.5, 0), tolerance = 1e-6, label = lab)
+    expect_equal(as.numeric(dual_value(c2)), 0.5, tolerance = 1e-6, label = lab)
+  }
+})
+
+## @cvxpy mosek_conif.py::MOSEK::invert
+test_that("MOSEK simplex certificates are read from the basic solution", {
+  skip_if_not_installed("Rmosek")
+  z <- Variable(2)
+  prob <- Problem(Minimize(sum(z)), list(z <= 1, sum(z) >= 10))
+  val <- psolve(prob, solver = "MOSEK",
+                MSK_IPAR_OPTIMIZER = "MSK_OPTIMIZER_PRIMAL_SIMPLEX")
+  expect_equal(status(prob), "infeasible")
+  expect_equal(val, Inf)
+
+  z <- Variable(2)
+  prob <- Problem(Minimize(-sum(z)), list(z >= 0, z[1] == z[2]))
+  val <- psolve(prob, solver = "MOSEK",
+                MSK_IPAR_OPTIMIZER = "MSK_OPTIMIZER_PRIMAL_SIMPLEX")
+  expect_equal(status(prob), "unbounded")
+  expect_equal(val, -Inf)
+})
+
+## @cvxpy mosek_conif.py::MOSEK::handle_options mosek_conif.py::MOSEK::invert
+test_that("MOSEK bfs = TRUE returns a vertex of the optimal face", {
+  skip_if_not_installed("Rmosek")
+  ## Degenerate LP: every point of the segment x1 + x2 = 1, x >= 0 is
+  ## optimal. With bfs = TRUE basis identification runs
+  ## (MSK_IPAR_INTPNT_BASIS = always, mosek_conif.py:678-679) and the basic
+  ## solution is a vertex. CVXPY: (0, 1) with bfs; without it CVXPY reports
+  ## the analytic center (0.5, 0.5) because it hands MOSEK the DUAL of every
+  ## continuous problem (mosek_conif.py:198, :533), whereas CVXR hands MOSEK
+  ## the primal and its presolve already lands on a vertex, so the
+  ## no-bfs iterate is not compared here. Until 1.9.2.9146 `bfs` was refused
+  ## as an invalid option (C0796).
+  deg <- function() {
+    y <- Variable(2)
+    list(y = y, prob = Problem(Minimize(sum(y)), list(y >= 0, sum(y) >= 1)))
+  }
+  d <- deg()
+  val <- psolve(d$prob, solver = "MOSEK", bfs = TRUE)
+  expect_equal(status(d$prob), "optimal")
+  expect_equal(val, 1, tolerance = 1e-6)
+  expect_equal(sort(as.numeric(value(d$y))), c(0, 1), tolerance = 1e-6)
+
+  ## With cones there is no basic solution: bfs_active requires
+  ## task.getnumcone() == 0 (mosek_conif.py:469), so the interior-point
+  ## solution is read. CVXPY: optimal, 0.7071068, x = (0.5, 0.5).
+  x <- Variable(2)
+  prob <- Problem(Minimize(p_norm(x, 2)), list(sum(x) >= 1))
+  val <- psolve(prob, solver = "MOSEK", bfs = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, sqrt(0.5), tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(0.5, 0.5), tolerance = 1e-5)
+})
+
+## @cvxpy mosek_conif.py::MOSEK::handle_options mosek_conif.py::MOSEK::solve_via_data
+test_that("MOSEK save_file writes the task before optimizing", {
+  skip_if_not_installed("Rmosek")
+  ## mosek_conif.py:248-250 `task.writedata(save_file)`; Rmosek's
+  ## `writebefore` is the same write. Was refused as an invalid option.
+  f <- tempfile(fileext = ".task")
+  on.exit(unlink(f), add = TRUE)
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum(x)), list(x >= 1))
+  val <- psolve(prob, solver = "MOSEK", save_file = f)
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, 2, tolerance = 1e-6)
+  expect_true(file.exists(f))
+  expect_gt(file.size(f), 0)
+})
+
+## @cvxpy mosek_conif.py::MOSEK::handle_options
+test_that("MOSEK basis identification is off unless bfs is requested", {
+  skip_if_not_installed("Rmosek")
+  ## mosek_conif.py:678-681 sets MSK_IPAR_INTPNT_BASIS to never (always under
+  ## bfs) AFTER the user's parameters. MOSEK's own default (IF_FEASIBLE) ran
+  ## basis identification on every LP and returned a sol$bas nobody read.
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum(x)), list(x >= 1, x[1] + 2 * x[2] >= 4))
+  pd <- problem_data(prob, solver = "MOSEK")
+  solve_raw <- function(opts) {
+    solve_via_data(pd$chain, pd$data, warm_start = FALSE, verbose = FALSE,
+                   solver_opts = opts)
+  }
+  raw <- solve_raw(list())
+  expect_identical(names(raw$sol), "itr")
+  expect_identical(raw[[CVXR:::MOSEK_SOL_TYPE]], "itr")
+
+  raw <- solve_raw(list(bfs = TRUE))
+  expect_setequal(names(raw$sol), c("itr", "bas"))
+  expect_identical(raw[[CVXR:::MOSEK_SOL_TYPE]], "bas")
+
+  ## A user's own INTPNT_BASIS is overridden, as upstream.
+  raw <- solve_raw(list(iparam = list(INTPNT_BASIS = "MSK_BI_ALWAYS")))
+  expect_identical(names(raw$sol), "itr")
+
+  raw <- solve_raw(list(MSK_IPAR_OPTIMIZER = "MSK_OPTIMIZER_DUAL_SIMPLEX"))
+  expect_identical(names(raw$sol), "bas")
+  expect_identical(raw[[CVXR:::MOSEK_SOL_TYPE]], "bas")
+})
+
+## Claims-audit decision 28 (CVXR 1.9.2.9150). MOSEK's MSK_RES_TRM_* response
+## codes (max iterations 100000, max time 100001, stall 100006, ...) are
+## terminations, not errors: Rmosek returns them in response$code with the
+## solution attached and its own solsta. CVXPY reads `rescode =
+## task.optimize()` (mosek_conif.py:253) and never consults it again, except to
+## warn on trm_max_time (:255-258); the status comes from solsta. Until 9149
+## CVXR returned SOLVER_ERROR for any nonzero code. Measured against CVXPY 1.9.3
+## + MOSEK 11.2.6 (notes/audit/claims_audit_item1.md, Decision 28): the
+## iteration-limited solve is a SolverError by default and `optimal_inaccurate`
+## under accept_unknown; the time-limited solve warns and then does the same.
+
+## @cvxpy NONE
+test_that("MOSEK termination codes are read through to the solution status", {
+  skip_if_not_installed("Rmosek")
+  set.seed(1)
+  n <- 6; m <- 3
+  A <- matrix(round(rnorm(m * n), 2), m, n)
+  b <- as.numeric(A %*% (runif(n) + 0.5))
+  cvec <- runif(n) + 1
+  mk <- function() {
+    x <- Variable(n)
+    list(x = x, prob = Problem(Minimize(sum(cvec * x)), list(A %*% x == b, x >= 0)))
+  }
+  ## MSK_RES_TRM_MAX_ITERATIONS with solsta UNKNOWN: a solver error, as the
+  ## UNKNOWN entry of the status map says, not because the code was nonzero.
+  p <- mk()
+  ## class: problem.py:1453-1456 raises SolverError at unpack (decision 19, 9151).
+  expect_error(psolve(p$prob, solver = "MOSEK", MSK_IPAR_INTPNT_MAX_ITERATIONS = 1L),
+               "MOSEK.*failed", class = "SolverError")
+  ## The same termination under accept_unknown keeps the iterate, as CVXPY.
+  p <- mk()
+  expect_warning(
+    val <- psolve(p$prob, solver = "MOSEK", MSK_IPAR_INTPNT_MAX_ITERATIONS = 1L,
+                  accept_unknown = TRUE),
+    "inaccurate")
+  expect_identical(status(p$prob), "optimal_inaccurate")
+  expect_true(is.finite(val))
+  expect_length(as.numeric(value(p$x)), n)
+  expect_true(all(is.finite(value(p$x))))
+})
+
+## @cvxpy NONE
+test_that("MOSEK time limit warns as CVXPY and the terminated solution is kept", {
+  skip_if_not_installed("Rmosek")
+  x <- Variable(3)
+  mk <- function() Problem(Minimize(sum(x)), list(x >= 1, x[1] + 2 * x[2] >= 4))
+  ## mosek_conif.py:255-258: the warning fires on MSK_RES_TRM_MAX_TIME whatever
+  ## the status; without accept_unknown the UNKNOWN solsta is still an error.
+  prob <- mk()
+  expect_warning(
+    expect_error(psolve(prob, solver = "MOSEK", MSK_DPAR_OPTIMIZER_MAX_TIME = 0),
+                 "MOSEK.*failed", class = "SolverError"),
+    "terminated by time limit")
+  prob <- mk()
+  expect_warning(
+    expect_warning(
+      val <- psolve(prob, solver = "MOSEK", MSK_DPAR_OPTIMIZER_MAX_TIME = 0,
+                    accept_unknown = TRUE),
+      "inaccurate"),
+    "terminated by time limit")
+  expect_identical(status(prob), "optimal_inaccurate")
+  expect_true(is.finite(val))
+})

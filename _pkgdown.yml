@@ -252,6 +252,7 @@ reference:
   desc: Query properties of CVXR expressions
   contents:
   - curvature
+  - curvatures
   - expr_sign
   - is_affine
   - is_concave
@@ -259,6 +260,7 @@ reference:
   - is_convex
   - is_dcp
   - is_dgp
+  - is_diag
   - is_dnlp
   - is_dpp
   - is_dqcp
@@ -266,6 +268,7 @@ reference:
   - is_log_log_concave
   - is_log_log_convex
   - is_lp
+  - log_log_curvature
   - is_matrix
   - is_mixed_integer
   - is_nonneg

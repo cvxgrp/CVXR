@@ -287,7 +287,7 @@ test_that("cone2cone gap: PowND pcp_3 axis=1", {
 
   ## Same problem but transposed: axis=1 (CVXPY axis=1 -> R axis=1)
   ## ConeMatrixStuffing now transposes PowConeND(axis=1) -> PowConeND(axis=2)
-  ## before extracting alpha columns (matching CVXPY lines 382-388).
+  ## before extracting alpha columns (matching CVXPY lines 413-419).
   x <- Variable(3)
   expect_x <- c(0.06393515, 0.78320961, 2.30571048)
   hypos <- Variable(2)
@@ -487,6 +487,65 @@ test_that("EXACT_CONE_CONVERSIONS is a DAG (no cone reaches itself)", {
   }
 })
 
+## `expand_cones` is CVXPY's set algebra over cone CLASSES (solver.py:26-67)
+## spelled out over lists of S7 class objects.  Membership goes by class name
+## (1.9.2.9143); these pin the set semantics that the name comparison must
+## reproduce: unsupported-but-convertible cones are replaced by their targets
+## and reported, supported cones are left alone, duplicates are not introduced.
+## @cvxpy solver.py::expand_cones
+test_that("expand_cones replaces convertible cones and reports the targets", {
+  nm <- function(lst) sort(vapply(lst, function(c) attr(c, "name"), character(1L)))
+  svec_solver <- list(Zero, NonNeg, SOC, ExpCone, PowCone3D, SvecPSD, PowConeND)
+
+  ## PSD -> SvecPSD for a packed-triangle solver; SOC untouched.
+  out <- expand_cones(list(SOC, PSD), svec_solver)
+  expect_equal(nm(out$cones), c("SOC", "SvecPSD"))
+  expect_equal(nm(out$exact_targets), "PSD")
+  expect_length(out$approx_targets, 0L)
+
+  ## Nothing to convert: the input survives unchanged and nothing is reported.
+  out <- expand_cones(list(SOC, ExpCone), svec_solver)
+  expect_equal(nm(out$cones), c("ExpCone", "SOC"))
+  expect_length(out$exact_targets, 0L)
+
+  ## PowConeND -> PowCone3D for a solver without the N-D cone; a target already
+  ## in the cone list is not duplicated.
+  pow3_solver <- list(Zero, NonNeg, SOC, PowCone3D)
+  out <- expand_cones(list(PowConeND, PowCone3D), pow3_solver)
+  expect_equal(nm(out$cones), "PowCone3D")
+  expect_equal(nm(out$exact_targets), "PowConeND")
+
+  ## A solver that supports the cone natively never has it expanded, and a
+  ## cone the solver neither supports nor can reach is left in place for the
+  ## caller to reject.
+  full_psd_solver <- list(Zero, NonNeg, SOC, PSD)
+  out <- expand_cones(list(PSD, ExpCone), full_psd_solver)
+  expect_equal(nm(out$cones), c("ExpCone", "PSD"))
+  expect_length(out$exact_targets, 0L)
+
+  ## Empty input.
+  out <- expand_cones(list(), svec_solver)
+  expect_length(out$cones, 0L)
+  expect_length(out$exact_targets, 0L)
+})
+
+## @cvxpy solving_chain.py::construct_solving_chain
+test_that(".solver_supports_cones accepts a cone an exact conversion reaches", {
+  clar <- SOLVER_MAP_CONIC[["CLARABEL"]]
+  res <- .solver_supports_cones(clar, list(SOC, PSD))
+  expect_true(res$ok)
+  expect_length(res$unsupported, 0L)
+  expect_equal(vapply(res$exact_targets, function(c) attr(c, "name"), ""), "PSD")
+
+  ## A QP-only cone set for a conic solver that lacks the cone: refused, and the
+  ## offending cone is named.
+  fake <- clar
+  fake@SUPPORTED_CONSTRAINTS <- list(Zero, NonNeg, SOC)
+  res <- .solver_supports_cones(fake, list(SOC, ExpCone))
+  expect_false(res$ok)
+  expect_equal(vapply(res$unsupported, function(c) attr(c, "name"), ""), "ExpCone")
+})
+
 ## @cvxpy test_cone2cone.py::TestExactApproxCone2Cone::test_exact_cone2cone_target_cones_filtering
 test_that("ExactCone2Cone(target_cones=) converts only the cones asked for", {
   X <- Variable(c(3L, 3L), symmetric = TRUE)
@@ -536,4 +595,36 @@ test_that("a full-matrix PSD solver gets no svec conversion", {
   prob <- Problem(Minimize(matrix_trace(X)), list(X %>>% diag(n)))
   d <- problem_data(prob, solver = "CVXOPT")
   expect_equal(nrow(d[[1L]]$A), n * n)
+})
+
+## `.exact_conversion_for` and `.solver_supports_cone` decide membership by
+## class name, as `.cone_has` does. An S7 class object is a closure: a copy
+## with an instrumented body (what covr and trace() install) is still the
+## class for dispatch but is not `identical()` to the original. With the
+## identity test the PSD -> SvecPSD conversion was skipped under covr (171
+## failures, "cone dimensions ... not equal to num rows in A") and the
+## SOC-approximation warning was lost (sweep item 4, pass J). Upstream's
+## `c.source in target_cones` is type identity on a Python class, a singleton.
+## @cvxpy exact.py::ExactCone2Cone.__init__ power_canon.py::power_canon
+test_that("cone membership in the exact chain and the solver context is by class name", {
+  rebound <- PSD
+  body(rebound) <- call("{", quote(NULL), body(PSD))
+  attributes(rebound) <- attributes(PSD)
+  expect_false(identical(rebound, PSD))
+  con <- PSD(Variable(c(2L, 2L)))
+  expect_true(.s7_is(con, rebound))
+
+  red <- ExactCone2Cone(target_cones = list(rebound), solver_context = NULL)
+  conv <- .exact_conversion_for(red, con)
+  expect_false(is.null(conv))
+  expect_identical(.cone_name(conv$source), "PSD")
+  ## A target list without PSD still filters the conversion out.
+  red2 <- ExactCone2Cone(target_cones = list(PowConeND), solver_context = NULL)
+  expect_null(.exact_conversion_for(red2, con))
+
+  ctx <- SolverInfo(solver_name = "X",
+                    solver_supported_constraints = list(rebound, SOC))
+  expect_true(.solver_supports_cone(ctx, PSD))
+  expect_false(.solver_supports_cone(ctx, PowCone3D))
+  expect_false(.solver_supports_cone(NULL, PSD))
 })

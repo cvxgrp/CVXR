@@ -23,7 +23,7 @@
 }
 
 # ===================================================================
-# Objective arithmetic and predicates  (objective.py:61-95, 134-192, 210-268)
+# Objective arithmetic and predicates  (objective.py:61-95, 134-191, 210-268)
 # ===================================================================
 
 ## @cvxpy test_objectives.py::TestObjectives::test_objective_arithmetic_and_predicate_branches
@@ -95,7 +95,7 @@ test_that("objective arithmetic follows the CVXPY rules", {
 })
 
 # ===================================================================
-# DEFAULT_TO_COMMERCIAL_SOLVERS  (settings.py:114-123, problem_form.py:356)
+# DEFAULT_TO_COMMERCIAL_SOLVERS  (settings.py:115-123, problem_form.py:356)
 # ===================================================================
 
 ## @cvxpy test_problem_form.py::TestPickDefaultSolver::test_default_to_commercial_solvers_env_var
@@ -150,25 +150,28 @@ test_that("the commercial-solver preference can be switched off", {
   x <- Variable(2)
   prob <- Problem(Minimize(sum(x)), list(x >= 1))
   .with_opt("CVXR.default_to_commercial_solvers", FALSE, {
-    picked <- .pick_default_conic_solver(prob, names(SOLVER_MAP_CONIC),
-                                         list(NonNeg))
+    picked <- solver_name(pick_default_solver(ProblemForm(prob)))
     expect_false(picked %in% .COMMERCIAL_CONIC_SOLVERS)
     expect_equal(picked, CLARABEL_SOLVER)
   })
 })
 
 # ===================================================================
-# PIQP -- blocked upstream, not a CVXR defect
+# PIQP
 # ===================================================================
 
 ## @cvxpy test_qp_solvers.py::TestPiqpInterface::test_piqp_invalid_backend
-## @v19-pending: piqp-r backend validation [upstream]
 test_that("PIQP rejects an unrecognized backend", {
-  skip(paste("Blocked on piqp-r. CVXR passes `backend` straight through and the",
-             "R piqp package validates it with match.arg, giving \"'arg' should",
-             "be one of auto, sparse, dense\" rather than CVXPY's \"backend must",
-             "be either dense or sparse\"; it also accepts an `auto` backend that",
-             "CVXPY does not. To be fixed in piqp-r, not here (2026-08-12)."))
+  ## CVXR validates `backend` itself since 1.9.2.9160 (claims audit decision
+  ## 24c), with CVXPY's message (piqp_qpif.py:92-93); before that the value
+  ## went straight through to R piqp's match.arg.
+  require_solver("PIQP")
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum_squares(x)), list(x >= 1))
+  expect_error(psolve(prob, solver = "PIQP", backend = "tridiagonal"),
+               "backend must be either dense or sparse")
+  expect_error(psolve(prob, solver = "PIQP", backend = "auto"),
+               "backend must be either dense or sparse")
 })
 
 ## @cvxpy test_qp_solvers.py::TestPiqpInterface::test_piqp_unknown_setting

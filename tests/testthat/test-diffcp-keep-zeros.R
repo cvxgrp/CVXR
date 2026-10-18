@@ -12,7 +12,7 @@
 ##     At p = 0 the entry of `A` that p drives multiplies out to zero and DROPS
 ##     OUT OF THE SPARSITY PATTERN, so there is no entry to differentiate with
 ##     respect to. CVXPY prevents this with `keep_zeros`
-##     (cone_matrix_stuffing.py:213 -> ReducedMat.cache, utilities.py:138-140 ->
+##     (cone_matrix_stuffing.py:250 -> ReducedMat.cache, utilities.py:138-140 ->
 ##     A_mapping_nonzero_rows), whose single caller is DIFFCP.apply
 ##     (diffcp_conif.py:72). CVXR had no such flag anywhere.
 ##
@@ -95,6 +95,7 @@ test_that("problem_data() for DIFFCP keeps parameter-driven zeros in A", {
 
 test_that("A_mapping_nonzero_rows finds the parameter-driven rows", {
   ## CVXPY SOURCE: canonInterface.py:170-180. Unit-level, no solve.
+  skip_if_not_installed("diffcp")
   h <- .kz_problem(0)
   pd <- problem_data(h$prob, solver = "DIFFCP")
   pp <- pd$data[["param_prob"]]

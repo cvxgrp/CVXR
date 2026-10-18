@@ -558,6 +558,26 @@ test_that("PowCone3D is_dcp", {
   expect_true(is_dcp(constr))
 })
 
+## CVXPY power.py:112-118 -- under the DPP scope a Parameter alpha is rejected
+## (`exps_ok`); outside it alpha is ignored. Claims-audit row C0345, ported 9136.
+## @cvxpy NONE
+test_that("PowCone3D is_dpp is FALSE when alpha is a Parameter", {
+  x <- Variable(2L)
+  y <- Variable(2L)
+  z <- Variable(2L)
+  alpha <- Parameter(2L)
+  value(alpha) <- c(0.5, 0.5)
+  constr <- PowCone3D(x, y, z, alpha)
+  expect_true(is_dcp(constr))
+  expect_false(is_dpp(constr))
+  prob <- Problem(Maximize(sum_entries(z)), list(constr, x <= 2, y <= 3))
+  expect_true(is_dcp(prob))
+  expect_false(is_dpp(prob))
+  ## A constant alpha stays DPP.
+  constr2 <- PowCone3D(x, y, z, c(0.5, 0.5))
+  expect_true(is_dpp(constr2))
+})
+
 ## @cvxpy NONE
 test_that("PowCone3D is_dgp FALSE", {
   x <- Variable(1L)
@@ -651,6 +671,43 @@ test_that("PowCone3D dual_cone scaling", {
 })
 
 ## @cvxpy NONE
+test_that("dual_cone with explicit args checks their count and shapes", {
+  ## The explicit-args branch of _dual_cone asserts len(args) == len(self.args)
+  ## and equal shapes: power.py:150-153 (PowCone3D), power.py:324-328
+  ## (PowConeND, plus args[0].value.shape == alpha.value.shape),
+  ## second_order.py:191-194 (SOC), exponential.py:160-163 (ExpCone). CVXR had
+  ## no checks. Claims-audit row C0334, ported 1.9.2.9137 as cli_abort()s.
+  x <- Variable(2L); y <- Variable(2L); z <- Variable(2L)
+  bad <- Variable(3L)
+
+  pc <- PowCone3D(x, y, z, c(0.5, 0.5))
+  expect_true(S7::S7_inherits(dual_cone(pc, x, y, z), PowCone3D))
+  expect_error(dual_cone(pc, x, y), "3 arguments")
+  expect_error(dual_cone(pc, x, y, bad), "shape")
+
+  ec <- ExpCone(x, y, z)
+  expect_true(S7::S7_inherits(dual_cone(ec, x, y, z), ExpCone))
+  expect_error(dual_cone(ec, x, y), "3 arguments")
+  expect_error(dual_cone(ec, x, y, bad), "shape")
+
+  t <- Variable(1L); X <- Variable(3L)
+  soc <- SOC(t, X)
+  expect_true(S7::S7_inherits(dual_cone(soc, t, X), SOC))
+  expect_error(dual_cone(soc, t), "2 arguments")
+  expect_error(dual_cone(soc, t, Variable(2L)), "shape")
+
+  W <- Variable(c(3L, 2L)); zz <- Variable(c(2L, 1L))
+  value(W) <- matrix(1, 3L, 2L)
+  alpha <- matrix(c(0.2, 0.3, 0.5, 0.4, 0.4, 0.2), 3L, 2L)
+  pnd <- PowConeND(W, zz, alpha, axis = 2L)
+  expect_true(S7::S7_inherits(dual_cone(pnd, W, zz), PowConeND))
+  expect_error(dual_cone(pnd, W), "2 arguments")
+  expect_error(dual_cone(pnd, Variable(c(2L, 3L)), zz), "shape")
+  W_novalue <- Variable(c(3L, 2L))
+  expect_error(dual_cone(pnd, W_novalue, zz), "alpha")
+})
+
+## @cvxpy NONE
 test_that("PowCone3D save_dual_value", {
   x <- Variable(1L)
   y <- Variable(1L)
@@ -712,12 +769,29 @@ test_that("PowConeND invalid axis errors", {
 })
 
 ## @cvxpy NONE
-test_that("PowConeND is_dcp always TRUE", {
+test_that("PowConeND is_dcp with affine args", {
   W <- Variable(c(3L, 2L))
   z <- Variable(c(2L, 1L))
   alpha <- Constant(matrix(c(0.2, 0.3, 0.5, 0.4, 0.4, 0.2), 3, 2))
   constr <- PowConeND(W, z, alpha, axis = 2L)
   expect_true(is_dcp(constr))
+  expect_true(is_dpp(constr))
+})
+
+## CVXPY power.py:285-293 -- under the DPP scope a Parameter alpha is rejected
+## (`exps_ok`). Claims-audit row C0345, ported 9136 (ADR D4.6 closed).
+## @cvxpy NONE
+test_that("PowConeND is_dpp is FALSE when alpha is a Parameter", {
+  W <- Variable(c(3L, 2L))
+  z <- Variable(c(2L, 1L))
+  alpha <- Parameter(c(3L, 2L))
+  value(alpha) <- matrix(c(0.2, 0.3, 0.5, 0.4, 0.4, 0.2), 3, 2)
+  constr <- PowConeND(W, z, alpha, axis = 2L)
+  expect_true(is_dcp(constr))
+  expect_false(is_dpp(constr))
+  prob <- Problem(Maximize(sum_entries(z)), list(constr, W <= 2))
+  expect_true(is_dcp(prob))
+  expect_false(is_dpp(prob))
 })
 
 ## @cvxpy NONE

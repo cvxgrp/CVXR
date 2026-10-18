@@ -169,7 +169,7 @@ constants <- new_generic("constants", "x")
 #' Get all Parameters of a Problem as a Named List
 #'
 #' Mirrors CVXPY's \code{Problem.param_dict} property
-#' (\code{cvxpy/problems/problem.py:260-264}): returns a named list keyed by
+#' (\code{cvxpy/problems/problem.py:257-262}): returns a named list keyed by
 #' each parameter's name, where the value is the \code{\link{Parameter}}
 #' object itself.
 #'
@@ -182,7 +182,7 @@ param_dict <- new_generic("param_dict", "x")
 #' Get all Variables of a Problem as a Named List
 #'
 #' Mirrors CVXPY's \code{Problem.var_dict} property
-#' (\code{cvxpy/problems/problem.py:267-271}): returns a named list keyed by
+#' (\code{cvxpy/problems/problem.py:264-269}): returns a named list keyed by
 #' each variable's name, where the value is the \code{\link{Variable}}
 #' object itself.
 #'
@@ -195,12 +195,12 @@ var_dict <- new_generic("var_dict", "x")
 #' Get Size Metrics for a Problem
 #'
 #' Mirrors CVXPY's \code{Problem.size_metrics} property
-#' (\code{cvxpy/problems/problem.py:486-490}, class at lines 1690-1752):
-#' returns a \code{SizeMetrics} object summarising the problem's scale.
+#' (\code{cvxpy/problems/problem.py:515-521}, class at lines 1592-1654):
+#' returns a \code{SizeMetrics} object summarizing the problem's scale.
 #'
 #' @param x A \code{\link{Problem}} object.
 #' @param ... Not used.
-#' @returns A \code{SizeMetrics} object with seven numeric fields.
+#' @returns A \code{SizeMetrics} object with six numeric fields.
 #' @export
 size_metrics <- new_generic("size_metrics", "x")
 
@@ -241,7 +241,7 @@ is_nonneg <- new_generic("is_nonneg", "x")
 #'   interval arithmetic (see `bounds_from_args`).
 #' @name get_bounds
 ## CVXPY v1.9.0 feature: get_bounds (abstract on expressions/expression.py:566;
-## concrete on expressions/leaf.py:929, atoms/atom.py:130). Introduced for the
+## concrete on expressions/leaf.py:948, atoms/atom.py:130). Introduced for the
 ## 1.9 DNLP/bounds work; expression-tree propagation is #3080 (Wave 2).
 #' @export
 get_bounds <- new_generic("get_bounds", "x")
@@ -290,6 +290,18 @@ is_nsd <- new_generic("is_nsd", "x")
 #' @returns Logical scalar.
 #' @export
 is_symmetric <- new_generic("is_symmetric", "x")
+
+#' Check if a Leaf is Diagonal
+#'
+#' Reports the \code{diag} attribute of a Variable or Parameter, as CVXPY's
+#' \code{Leaf.is_diag()}. Defined for leaves only.
+#'
+#' @param x A Variable or Parameter.
+#' @param ... Not used.
+#' @returns Logical scalar: \code{TRUE} if \code{x} was created with
+#'   \code{diag = TRUE}.
+#' @export
+is_diag <- new_generic("is_diag", "x")
 
 # -- Phase 1: additional generics -------------------------------------
 
@@ -429,7 +441,7 @@ is_hermitian <- new_generic("is_hermitian", "x")
 #' Check if Expression is Skew-Symmetric
 #'
 #' Tests whether \code{X + t(X) == 0} (real matrices only).
-#' CVXPY SOURCE: expression.py line 470-473
+#' CVXPY SOURCE: expression.py line 515-518
 #'
 #' @param x An expression object.
 #' @param ... Not used.
@@ -490,7 +502,7 @@ tree_copy <- new_generic("tree_copy", "x",
   function(x, id_objects = NULL) S7_dispatch())
 
 # -- Quadratic / piecewise-linear analysis --------------------------
-## CVXPY SOURCE: expression.py lines 448-484
+## CVXPY SOURCE: expression.py lines 493-529
 ## These are needed by the QP solver path (OSQP) for problem classification.
 
 #' Check if an Expression is Quadratic
@@ -711,7 +723,7 @@ numeric_value <- new_generic("numeric_value", "x",
   function(x, values, ...) S7_dispatch())
 
 # -- DQCP curvature queries ---------------------------------------
-## CVXPY SOURCE: expression.py lines 411-429, atom.py lines 288-335
+## CVXPY SOURCE: expression.py lines 456-474, atom.py lines 358-406
 
 #' Check if Expression is Quasiconvex
 #' @param x An expression object.
@@ -760,7 +772,7 @@ is_atom_quasiconvex <- new_generic("is_atom_quasiconvex", "x")
 is_atom_quasiconcave <- new_generic("is_atom_quasiconcave", "x")
 
 # -- DNLP curvature queries (CVXPY 1.9.0) -------------------------
-## CVXPY SOURCE: expression.py:349-405, atom.py:191-298, leaf.py:267-273.
+## CVXPY SOURCE: expression.py:349-405, atom.py:191-298, leaf.py:283-289.
 ## The disciplined-nonlinear-programming (DNLP) predicate cluster: an
 ## expression is DNLP if it is "smooth representable" -- convex (or concave)
 ## after linearizing every smooth subexpression. is_smooth / is_atom_smooth /

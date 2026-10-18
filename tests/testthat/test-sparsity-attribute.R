@@ -19,9 +19,9 @@
 ##     omitted "sparsity", while `reduction_attributes` twenty lines above
 ##     listed five. Two lists for one concept, disagreeing.
 ##
-## CVXPY SOURCE: leaf.py:148-152 (sparse_idx), :714-728 (_has_dim_reducing_attr,
-## _reduced_size), cvx_attr2constr.py:32-43 (CONVEX_ATTRIBUTES), :155-161
-## (build_dim_reduced_expression's sparse arm), :93-97 (recover_value_for_leaf).
+## CVXPY SOURCE: leaf.py:149-156 (sparse_idx), :730-744 (_has_dim_reducing_attr,
+## _reduced_size), cvx_attr2constr.py:32-43 (CONVEX_ATTRIBUTES), :154-159
+## (build_dim_reduced_expression's sparse arm), :94-97 (recover_value_for_leaf).
 ##
 ## R DEVIATION, deliberate and consistent with `boolean`/`integer`: CVXPY takes
 ## a numpy multi-index (a tuple of per-dimension arrays) and RAISES TypeError on
@@ -120,7 +120,7 @@ test_that("a value set on the leaf survives the reduction", {
 })
 
 test_that("sparsity still cannot be combined with the attributes it contradicts", {
-  ## pos/neg force strict signs, sparsity forces zeros. CVXPY leaf.py:161-167.
+  ## pos/neg force strict signs, sparsity forces zeros. CVXPY leaf.py:178-185.
   expect_error(Variable(c(2, 2), sparsity = c(1), pos = TRUE), "Cannot combine")
   expect_error(Variable(c(2, 2), sparsity = c(1), neg = TRUE), "Cannot combine")
   ## and it is one of the mutually exclusive dimension-reducing attributes.

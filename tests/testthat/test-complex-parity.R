@@ -459,6 +459,27 @@ test_that("test_matrix_frac: matrix_frac with complex P", {
   expect_equal(result, mf_ref_cx, tolerance = 1e-2)
 })
 
+## @cvxpy NONE
+test_that("objective value is real when complex arguments leave round-off imaginary parts", {
+  ## Deterministic: the coercion helper itself.
+  expect_no_warning(v <- scalar_value(complex(real = 0.1, imaginary = 1e-40)))
+  expect_identical(v, 0.1)
+  expect_no_warning(v <- scalar_value(matrix(complex(real = 0.1, imaginary = -1e-40), 1L, 1L)))
+  expect_identical(v, 0.1)
+
+  ## End to end: free complex Y in matrix_frac; the value carries a ~1e-50
+  ## imaginary part (CVXPY 1.9.3 returns np.complex128 here, measured).
+  skip_if_not_installed("scs")
+  Y <- Variable(c(2L, 2L), complex = TRUE)
+  x <- Variable(2)
+  prob <- Problem(Minimize(matrix_frac(x, Y)),
+                  list(x == c(0, 1), Re(Y) == diag(10, 2)))
+  expect_no_warning(result <- psolve(prob, solver = "SCS"))
+  expect_type(result, "double")
+  expect_equal(result, 0.1, tolerance = 1e-4)
+  expect_type(value(prob), "double")
+})
+
 ## @cvxpy test_complex.py::TestComplex::test_convolve
 test_that("test_convolve: conv/convolve with complex variables", {
   skip_if_not_installed("clarabel")
@@ -857,5 +878,9 @@ test_that("test_illegal_complex_args: complex args rejected by cone constraints"
   expect_error(PowCone3D(x[1], x[2], x[3], 0.5))
   expect_error(PowConeND(x[1:2], x[3], Constant(c(0.5, 0.5))))
   expect_error(NonNeg(x))
-  expect_error(NonPos(x))
+  ## Explicit NonPos() is deprecated; CVXPY 1.9.3 warns, then rejects the input.
+  ## CVXR warns once per session; "verbose" lifts the limit so the test sees it
+  ## whatever ran before (as in test-phase2e-constraints.R).
+  rlang::local_options(rlib_warning_verbosity = "verbose")
+  expect_warning(expect_error(NonPos(x)), "deprecated")
 })

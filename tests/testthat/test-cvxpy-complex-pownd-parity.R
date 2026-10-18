@@ -70,6 +70,28 @@ test_that("test_pow_cone_nd: PowConeND with 3 variables (>3D), verify solving", 
   expect_equal(as.numeric(value(z)), 1.0, tolerance = 1e-3)
 })
 
+## CVXPY cone_matrix_stuffing.py:123-129 reads each PowConeND alpha as a
+## 2-d array, one column per cone. The R collector tested `is.matrix()`,
+## which is FALSE for a dgCMatrix alpha, and flattened two cones into one
+## (sweep item 4, pass H1). Only solvers that keep N-d power cones see the
+## `pnd` block; Clarabel is one. Upstream rejects a sparse alpha at
+## construction by accident ("setting an array element with a sequence").
+## @cvxpy cone_matrix_stuffing.py::ConeMatrixStuffing
+test_that("a PowConeND alpha given as a sparse Matrix yields one cone per column", {
+  skip_if_not_installed("clarabel")
+  alpha <- matrix(c(0.2, 0.3, 0.5, 0.6, 0.3, 0.1), 3, 2)
+  dims_for <- function(a) {
+    W <- Variable(c(3, 2)); z <- Variable(2)
+    prob <- Problem(Minimize(sum_entries(z)), list(PowConeND(W, z, a), W >= 1))
+    problem_data(prob, solver = "CLARABEL")$data$dims
+  }
+  d_base <- dims_for(alpha)
+  d_sparse <- dims_for(Matrix::Matrix(alpha, sparse = TRUE))
+  expect_equal(lengths(d_base@pnd), c(3L, 3L))
+  expect_equal(lengths(d_sparse@pnd), c(3L, 3L))
+  expect_equal(d_sparse@pnd, d_base@pnd)
+})
+
 ## @cvxpy test_pow_cone_nd.py::TestPowConeND::test_pow_cone_nd_dual_variables
 test_that("test_pow_cone_nd_dual_variables: Verify dual values from PowConeND constraints", {
   ## CVXPY parity: pcp_3 test from test_cone2cone.py TestPowND.pcp_3

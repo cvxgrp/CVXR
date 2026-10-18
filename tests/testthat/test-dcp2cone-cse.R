@@ -161,6 +161,22 @@ test_that("a large Constant deduplicates when the same object is reused", {
   expect_length(.aux_vars(.apply_dcp2cone(prob_two), x), 2L)
 })
 
+## Upstream's two `np.shares_memory` asserts are PYTHON_SPECIFIC (R is
+## copy-on-modify, so `arr[1] <- ...` rebinds the source and never aliases a
+## Constant). The key assert is the parity point: a mutated source must not
+## merge with the snapshot taken before the mutation.
+## @cvxpy test_dcp2cone_cse.py::TestDcp2ConeCSE::test_mutated_shared_ndarray_constants_do_not_dedup
+test_that("Constants taken before and after mutating the source do not share a key", {
+  set.seed(0)
+  arr <- rnorm(100)
+  c1 <- Constant(arr)
+  arr[1] <- arr[1] + 1
+  c2 <- Constant(arr)
+
+  kc <- StructuralKeyCache()
+  expect_false(identical(expr_key(c1, kc), expr_key(c2, kc)))
+})
+
 ## @cvxpy test_dcp2cone_cse.py::TestDcp2ConeCSE::test_sparse_constant_key_uses_sparse_contents
 test_that("sparse Constants key on contents, not storage order", {
   m_coo <- Matrix::sparseMatrix(i = c(1, 2), j = c(2, 1), x = c(1, 2), dims = c(2, 2))

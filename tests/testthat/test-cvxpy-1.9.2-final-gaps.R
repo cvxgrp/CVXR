@@ -58,7 +58,7 @@ test_that("every canonicalizer dispatches on an Expression or Constraint class",
     expect_gt(length(keys), 1L)
     for (key in keys) {
       ## The single permitted non-atom key: the base-class default that stands
-      ## in for "absent from the dict" upstream (dcp2cone.R:22, :50).
+      ## in for "absent from the dict" upstream (dcp2cone.R:31-33, :60).
       if (identical(key, "S7_object")) next
       expect_match(key, "^CVXR::", info = paste(gname, key))
       nm <- sub("^CVXR::", "", key)
@@ -73,7 +73,7 @@ test_that("every canonicalizer dispatches on an Expression or Constraint class",
   }
 
   ## The cone2cone conversions are a genuine table rather than S7 dispatch
-  ## (S7 class objects cannot be list names -- exact.R:43), so their `source`
+  ## (S7 class objects cannot be list names -- exact.R:38-39), so their `source`
   ## and `targets` entries get the same check.
   for (tbl in list(EXACT_CONE_CONVERSIONS, .EXACT_CONVERSIONS)) {
     expect_gt(length(tbl), 0L)
@@ -133,7 +133,7 @@ test_that("a Hermitian leaf accepts a complex value", {
   ## mapping-helpers test below, where `hparam.value = [[1, 2+5j], [2-5j, 3]]`
   ## simply would not run.
   ##
-  ## leaf.py:318 defines is_complex() as complex || is_imag() || hermitian, and
+  ## leaf.py:334 defines is_complex() as complex || is_imag() || hermitian, and
   ## project() strips the imaginary part only when NOT is_complex(). CVXR's
   ## project() tested the raw `complex`/`imag` attributes and omitted
   ## `hermitian`, so it reached Re(val) first and the hermitian branch below it
@@ -216,7 +216,7 @@ test_that("Complex2Real splits and recombines general and Hermitian leaves", {
   ## var_id_map() stays empty even after apply(), unlike upstream. That is the
   ## shared-id design of ADR D_19.5 (#3147 part B deferred): the producers keep
   ## leaf ids rather than minting fresh ones, so there is nothing to remap. The
-  ## consumer idiom still resolves correctly -- see chain.R:63-80.
+  ## consumer idiom still resolves correctly -- see chain.R:75-80.
   expect_equal(var_id_map(reduction), list())
   expect_equal(param_id_map(reduction), list())
 
@@ -322,9 +322,10 @@ test_that("ExpCone reports its metadata and dual cone correctly", {
   expect_equal(as.vector(value(explicit@args[[1L]])), -as.vector(value(y)))
   expect_equal(as.vector(value(explicit@args[[2L]])), -as.vector(value(x)))
   expect_equal(as.vector(value(explicit@args[[3L]])), exp(1) * as.vector(value(z)))
-  ## Upstream raises AssertionError on a shape mismatch; CVXR raises through
-  ## the ExpCone constructor's own shape check.
-  expect_error(dual_cone(con, Variable(1), y, z), "same shapes")
+  ## Upstream asserts the explicit args' shapes (exponential.py:163); since
+  ## 1.9.2.9137 CVXR raises the same check through .dual_cone_check_args()
+  ## before the ExpCone constructor's own shape check can (row C0334).
+  expect_error(dual_cone(con, Variable(1), y, z), "shapes of the")
 })
 
 ## @cvxpy test_constraints.py::TestConstraints::test_exponential_cone_metadata_duals_and_validation

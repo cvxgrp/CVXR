@@ -42,7 +42,7 @@ test_that("log(x) creates Log atom via Math dispatch", {
 test_that("sqrt(x) creates PowerApprox(x, 0.5) via Math dispatch", {
   x <- Variable(3)
   s <- sqrt(x)
-  ## sqrt.py:19 is `power(x, Fraction(1, 2))` -- the WRAPPER, whose
+  ## sqrt.py:24 is `power(x, Fraction(1, 2))` -- the WRAPPER, whose
   ## `approx = TRUE` default yields PowerApprox (SOC).  The old assertion
   ## named the bare `Power` class and so pinned the PowCone3D defect; because
   ## PowerApprox extends Power it could never have caught it.
@@ -199,6 +199,45 @@ test_that("prod(x) creates Prod atom via Summary dispatch", {
   p <- prod(x)
   expect_s3_class(p, "CVXR::Prod")
   expect_equal(p@shape, c(1L, 1L))
+})
+
+## @cvxpy NONE
+test_that("sum/max/min/prod honor axis and keepdims as CVXPY's do", {
+  ## A named axis was taken as one more operand: sum(x, axis = 2L) was
+  ## sum(x + 2) and max(x, axis = 2L) was the elementwise max with 2.
+  x <- Variable(c(2L, 3L))
+  M <- matrix(c(1, -4, 3, 2, -5, 6), 2L, 3L)
+  value(x) <- M
+  cases <- list(sum = list(sum, sum_entries, base::sum),
+                max = list(max, max_entries, base::max),
+                min = list(min, min_entries, base::min),
+                prod = list(prod, function(e, ...) Prod(e, ...), base::prod))
+  for (nm in names(cases)) {
+    f <- cases[[nm]][[1L]]; g <- cases[[nm]][[2L]]; b <- cases[[nm]][[3L]]
+    for (ax in 1:2) {
+      e <- f(x, axis = ax)
+      expect_equal(e@shape, g(x, axis = ax)@shape, info = paste(nm, ax))
+      expect_equal(as.numeric(value(e)), as.numeric(apply(M, ax, b)),
+                   info = paste(nm, ax))
+      ek <- f(x, axis = ax, keepdims = TRUE)
+      expect_equal(ek@shape, g(x, axis = ax, keepdims = TRUE)@shape,
+                   info = paste(nm, ax, "keepdims"))
+    }
+    expect_equal(as.numeric(value(f(x, keepdims = TRUE))), b(M), info = nm)
+  }
+})
+
+## @cvxpy NONE
+test_that("sum/max/min/prod reject other named arguments and axis with several operands", {
+  x <- Variable(c(2L, 3L))
+  y <- Variable(c(2L, 3L))
+  for (f in list(sum, max, min, prod)) {
+    expect_error(f(x, axes = 2L), "axes")
+    expect_error(f(x, y, axis = 2L), "single expression")
+  }
+  ## Unnamed operands keep the base R meaning.
+  expect_s3_class(sum(x, y), "CVXR::SumEntries")
+  expect_s3_class(max(x, y), "CVXR::Maximum")
 })
 
 ## @cvxpy NONE

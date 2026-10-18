@@ -1300,6 +1300,88 @@ test_that("solve_solver_path: fallback chain (CVXPY parity)", {
   )
 })
 
+## Claims-audit decision 19 (C0546), CVXR 1.9.2.9151. CVXPY's
+## _solve_solver_path (problem.py:569, :574-575) forwards EVERY solve()
+## keyword to each attempt, so `enforce_dpp`, `ignore_dpp` and `nlp` reach
+## the solver; a key present in both an entry's dict and the kwargs is a
+## TypeError; only error.SolverError is caught (:587), so a DCPError or a
+## DPPError propagates from the first attempt. Every case below was
+## measured against CVXPY 1.9.3 (scratch d19_cvxpy.py / d19_cvxpy2.py) and
+## against CVXR 1.9.2.9150, where the three flags were dropped and every
+## error was swallowed into "All solvers failed".
+## @cvxpy test_problem.py::TestProblem::test_solve_solver_path
+test_that("solve_solver_path: every psolve() argument reaches each attempt and only SolverError is caught", {
+  skip_if_not_installed("clarabel")
+  skip_if_not_installed("osqp")
+  set.seed(1)
+  A <- matrix(rnorm(15), 5, 3)
+  b <- rnorm(5)
+  x <- Variable(3)
+  prob_ok <- Problem(Minimize(sum_squares(A %*% x - b)), list(x >= 0))
+
+  ## (a) enforce_dpp is forwarded: a non-DPP parametric problem raises
+  ## DPPError under solver_path exactly as with `solver =` (CVXPY: DPPError).
+  p <- Parameter(nonneg = TRUE)
+  value(p) <- 2
+  nondpp <- function() Problem(Minimize(sum_squares(A %*% x - b) + p * p * sum_squares(x)))
+  pr <- nondpp()
+  expect_false(is_dpp(pr))
+  expect_error(psolve(pr, solver_path = "CLARABEL", enforce_dpp = TRUE),
+               class = "DPPError")
+
+  ## (b) ignore_dpp is forwarded: it silences the not-DPP warning under
+  ## solver_path as it does with `solver =` (CVXPY: no warning).
+  pr <- nondpp()
+  expect_no_warning(val <- psolve(pr, solver_path = "CLARABEL", ignore_dpp = TRUE))
+  expect_identical(status(pr), "optimal")
+  expect_true(is.finite(val))
+
+  ## (c) nlp is forwarded: a conic solver is "not supported for NLP
+  ## problems" (nlp_solving_chain.py:51-53, SolverError), which is caught
+  ## and ends in the all-failed SolverError (CVXPY: "All solvers failed").
+  err <- expect_error(psolve(prob_ok, solver_path = "CLARABEL", nlp = TRUE),
+                      class = "SolverError")
+  expect_match(conditionMessage(err), "not supported for NLP problems")
+
+  ## (d) Anything that is not a SolverError propagates from the first
+  ## attempt instead of being swallowed (CVXPY: DCPError).
+  y <- Variable(2)
+  nondcp <- Problem(Minimize(sqrt(y[1]) - square(y[2]) * -1 + square(y[1]) * -1))
+  expect_false(is_dcp(nondcp))
+  err <- expect_error(psolve(nondcp, solver_path = c("CLARABEL", "SCS")),
+                      "not DCP compliant")
+  expect_false(inherits(err, "SolverError"))
+
+  ## (e) An unknown / uninstalled solver is a SolverError
+  ## (solving_chain.py:301-303, :330-332), so the path falls through to the next
+  ## entry (CVXPY: optimal, CLARABEL).
+  expect_error(psolve(prob_ok, solver = "NOSUCHSOLVER"), class = "SolverError")
+  val <- psolve(prob_ok, solver_path = c("NOSUCHSOLVER", "CLARABEL"))
+  expect_identical(status(prob_ok), "optimal")
+  expect_identical(solver_stats(prob_ok)@solver_name, "CLARABEL")
+  expect_true(is.finite(val))
+
+  ## (f) A key in both an entry's opts and the psolve() kwargs is an
+  ## error (CVXPY: TypeError "got multiple values for keyword argument").
+  expect_error(
+    psolve(prob_ok, solver_path = list(list("CLARABEL", list(max_iter = 50L))),
+           max_iter = 100L),
+    "multiple values"
+  )
+
+  ## (g) An entry's opts may name a psolve() formal (CVXPY: optimal).
+  val <- psolve(prob_ok, solver_path = list(list("CLARABEL", list(verbose = FALSE))))
+  expect_identical(status(prob_ok), "optimal")
+  expect_true(is.finite(val))
+
+  ## (h) An OSQP setup failure is a SolverError (osqp_qpif.py:150-153),
+  ## which is what lets the all-fail case above end in SolverError once
+  ## only SolverError is caught.
+  x1 <- Variable(1)
+  bad <- Problem(Minimize(quad_form(x1 + 1, matrix(-1, 1, 1), TRUE)))
+  expect_error(psolve(bad, solver = "OSQP", max_iter = 1L), class = "SolverError")
+})
+
 ## @cvxpy test_problem.py::TestProblem::test_cp_node_count_warn
 test_that("cp_node_count_warn: skipped (no node count warning in CVXR)", {
   skip("Node count warning not implemented in CVXR")

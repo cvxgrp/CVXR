@@ -446,3 +446,19 @@ test_that("AffAtom is_imag propagates from args", {
   expect_true(is_imag(wx))
   expect_false(is_imag(wy))
 })
+
+## @cvxpy atom.py::Atom.validate_arguments huber.py::huber.validate_arguments dotsort.py::dotsort.validate_arguments
+test_that("length, eye_minus_inv, huber and dotsort reject a complex argument", {
+  ## None of the four sets _allow_complex; huber.py:96 and dotsort.py:55 call
+  ## super().validate_arguments(), length and eye_minus_inv inherit it. Their
+  ## R overrides had dropped Atom's check (sweep item 5, finding 5.2).
+  z <- Variable(2, complex = TRUE)
+  Z <- Variable(c(2, 2), complex = TRUE)
+  expect_error(length_expr(z), "cannot be complex")
+  expect_error(eye_minus_inv(Z), "cannot be complex")
+  expect_error(huber(z), "cannot be complex")
+  expect_error(dotsort(z, c(1, 0)), "cannot be complex")
+  ## The shape checks still come first.
+  expect_error(length_expr(Z), "vectors")
+  expect_error(eye_minus_inv(Variable(c(2, 3), complex = TRUE)), "square")
+})

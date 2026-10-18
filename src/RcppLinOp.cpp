@@ -239,11 +239,6 @@ void LinOp__set_type(SEXP xp, int typeValue) {
     // grab the object as a XPtr (smart pointer)
     Rcpp::XPtr<LinOp> ptr(xp);
     ptr->type = oType;
-
-#ifdef _R_DEBUG_
-    Rcpp::Rcout << "LinOp Id " << ptr->id << " type now " << ptr->type << std::endl;
-#endif
-
   }
 }
 
@@ -402,20 +397,6 @@ void LinOp__set_linOp_data(SEXP xp, SEXP yp) {
   Rcpp::XPtr<LinOp> ptrY(yp);
   ptrX->linOp_data = ptrY;
 }
-
-// Get the id field of the LinOp Object
-//
-// @param xp the LinOp Object XPtr
-// @return the value of the id field of the LinOp Object
-// [[Rcpp::export(.LinOp__get_id)]]
-std::string LinOp__get_id(SEXP xp) {
-  // grab the object as a XPtr (smart pointer)
-  Rcpp::XPtr<LinOp> ptr(xp);
-
-  // Get the result
-  return ptr->id;
-}
-
 
 
 

@@ -1,4 +1,4 @@
-## @cvxpy tests/test_conic_solvers.py::TestCPLEX
+## @cvxpy tests/test_conic_solvers.py
 ##
 ## CPLEX status handling: a DECISION PROCEDURE, not a table.
 ##
@@ -24,7 +24,7 @@
 ## licence-gated test is how the mislabelling survived.
 
 test_that("the status ladder resolves the limit codes on primal feasibility", {
-  ## CVXPY group 2 (cplex_conif.py:160-171): pfeas ? OPTIMAL_INACCURATE : SOLVER_ERROR
+  ## CVXPY group 2 (cplex_conif.py:160-172): pfeas ? OPTIMAL_INACCURATE : SOLVER_ERROR
   for (code in c(10L,   # CPX_STAT_ABORT_IT_LIM
                  11L,   # CPX_STAT_ABORT_TIME_LIM
                  12L,   # CPX_STAT_ABORT_OBJ_LIM
@@ -42,7 +42,7 @@ test_that("the status ladder resolves the limit codes on primal feasibility", {
 })
 
 test_that("the feasible-but-not-proved codes resolve on dual feasibility", {
-  ## CVXPY group 3 (cplex_conif.py:172-181): dfeas ? OPTIMAL : OPTIMAL_INACCURATE
+  ## CVXPY group 3 (cplex_conif.py:173-183): dfeas ? OPTIMAL : OPTIMAL_INACCURATE
   for (code in c(23L,    # CPX_STAT_FEASIBLE
                  104L,   # CPXMIP_SOL_LIM
                  105L,   # CPXMIP_NODE_LIM_FEAS
@@ -66,17 +66,17 @@ test_that("the unconditional groups do not consult feasibility", {
                    "solver_error", label = paste("code", code, "pfeas", pf))
     }
   }
-  ## group 4 -- always OPTIMAL (cplex_conif.py:183-188)
+  ## group 4 -- always OPTIMAL (cplex_conif.py:184-189)
   for (code in c(1L, 5L, 102L, 129L, 130L)) {
     expect_equal(CVXR:::.cplex_get_status(code, pfeas = TRUE, dfeas = FALSE),
                  "optimal", label = paste("code", code))
   }
   ## group 5 -- always INFEASIBLE.
   ## Only code 3 can actually reach it: upstream's list also names
-  ## optimal_relaxed_{sum,inf,quad} (cplex_conif.py:189-193), but
+  ## optimal_relaxed_{sum,inf,quad} (cplex_conif.py:190-194), but
   ## _handle_solve_status intercepts every feasopt status and raises first
   ## (:110-123), so those three entries are DEAD -- as are the
-  ## feasible_relaxed_* entries of the next branch (:196-199). The port keeps
+  ## feasible_relaxed_* entries of the next branch (:195-198). The port keeps
   ## them for line-by-line correspondence; the test asserts what is reachable.
   expect_equal(CVXR:::.cplex_get_status(3L, pfeas = FALSE, dfeas = FALSE),
                "infeasible")
@@ -89,7 +89,7 @@ test_that("the unconditional groups do not consult feasibility", {
 })
 
 test_that("MIP codes normalize onto their LP equivalents", {
-  ## CVXPY SOURCE: cplex_conif.py:75-145 (_handle_solve_status).
+  ## CVXPY SOURCE: cplex_conif.py:75-144 (_handle_solve_status).
   expect_equal(CVXR:::.cplex_normalize_solstat(101L), 1L)    # MIP_optimal -> optimal
   expect_equal(CVXR:::.cplex_normalize_solstat(103L), 3L)    # MIP_infeasible -> infeasible
   expect_equal(CVXR:::.cplex_normalize_solstat(107L), 11L)   # TIME_LIM_FEAS -> abort_time_limit
@@ -130,7 +130,7 @@ test_that("a degenerate status never raises", {
 
 test_that("feasopt and conflict-refiner statuses abort, as upstream asserts", {
   ## CVXR never calls feasopt or the conflict refiner, so one of these means the
-  ## model came from somewhere else. cplex_conif.py:121-136 raises AssertionError.
+  ## model came from somewhere else. cplex_conif.py:110-135 raises AssertionError.
   expect_error(CVXR:::.cplex_normalize_solstat(14L), "feasopt")
   expect_error(CVXR:::.cplex_normalize_solstat(120L), "feasopt")
   expect_error(CVXR:::.cplex_normalize_solstat(31L), "conflict refiner")
@@ -140,7 +140,7 @@ test_that(".cplex_solution_feasibility reads the Rcplex result", {
   ok <- list(xopt = c(1, 2), extra = list(lambda = c(0.5)))
   f <- CVXR:::.cplex_solution_feasibility(ok)
   expect_true(f$pfeas); expect_true(f$dfeas)
-  ## a MIP has no meaningful dual (cplex_conif.py:149)
+  ## a MIP has no meaningful dual (cplex_conif.py:150-151)
   f2 <- CVXR:::.cplex_solution_feasibility(ok, is_mip = TRUE)
   expect_true(f2$pfeas); expect_false(f2$dfeas)
   ## no solve happened

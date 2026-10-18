@@ -285,6 +285,17 @@ test_that("is_scalar_linop: scalar constant is scalar", {
   expect_true(CVXR:::is_scalar_linop(op))
 })
 
+## CVXPY takes `value[0, 0]` for a (1, 1) shape (lin_utils.py:114-117); the R
+## port had an extra arm returning `value[1L]` of a longer or empty vector
+## (sweep item 4, pass A1).
+## @cvxpy lin_utils.py::create_const
+test_that("create_const rejects a vector of the wrong length for a 1 x 1 shape", {
+  expect_error(create_const(c(1, 2, 3), c(1L, 1L)), "single value")
+  expect_error(create_const(numeric(0), c(1L, 1L)), "single value")
+  expect_equal(create_const(5, c(1L, 1L))$data, 5)
+  expect_equal(create_const(matrix(7), c(1L, 1L))$data, 7)
+})
+
 ## @cvxpy NONE
 test_that("is_scalar_linop: matrix is not scalar", {
   op <- create_const(matrix(1:6, 2, 3), c(2L, 3L))

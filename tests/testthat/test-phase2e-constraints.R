@@ -233,6 +233,51 @@ test_that("NonPos: value FALSE when some > 0", {
   expect_false(value(constr))
 })
 
+## nonpos.py:47-56 -- an explicit NonPos(expr) is deprecated, in upstream's
+## words (claims audit C0293). CVXR warns once per session (the rate limit of
+## its other deprecations); "verbose" lifts the limit so the test sees it.
+## @cvxpy NONE
+test_that("NonPos: explicit construction warns that it is deprecated", {
+  rlang::local_options(rlib_warning_verbosity = "verbose")
+  x <- Variable(2)
+  w <- NULL
+  withCallingHandlers(NonPos(x - 1), warning = function(cnd) {
+    w <<- cnd
+    invokeRestart("muffleWarning")
+  })
+  expect_s3_class(w, "CvxpyDeprecationWarning")
+  msg <- gsub("\\s+", " ", conditionMessage(w))
+  expect_match(msg, "Explicitly invoking \"NonPos(expr)\" to a create a constraint is deprecated.", fixed = TRUE)
+  expect_match(msg, "Please use operator overloading or \"NonNeg(-expr)\" instead.", fixed = TRUE)
+  expect_match(msg, "Sign conventions on dual variables associated with NonPos constraints may change in the future.", fixed = TRUE)
+})
+
+## The sign constraint of a nonpos/neg variable is NonNeg(-x), not NonPos(x),
+## so CVXR's own reduction never trips the deprecation (ADR D_PORT.14, C0472).
+## @cvxpy NONE
+test_that("CvxAttr2Constr lowers a nonpos variable to NonNeg, not NonPos", {
+  for (attr in c("nonpos", "neg")) {
+    x <- do.call(Variable, c(list(2), stats::setNames(list(TRUE), attr)))
+    p <- Problem(Maximize(sum_entries(x)), list(x >= -1))
+    new_p <- reduction_apply(CvxAttr2Constr(reduce_bounds = TRUE), p)[[1]]
+    cls <- vapply(new_p@constraints, function(cn) class(cn)[1L], "")
+    expect_false(any(cls == "CVXR::NonPos"), info = attr)
+    expect_true(any(cls == "CVXR::NonNeg"), info = attr)
+  }
+})
+
+## Pin (passes before and after C0293): no deprecation reaches a user who
+## never wrote NonPos(), and the solve is unchanged.
+## @cvxpy NONE
+test_that("a nonpos variable solve raises no NonPos deprecation", {
+  rlang::local_options(rlib_warning_verbosity = "verbose")
+  x <- Variable(2, nonpos = TRUE)
+  p <- Problem(Maximize(sum_entries(x)), list(x >= -1))
+  expect_no_warning(val <- psolve(p, solver = "CLARABEL"))
+  expect_equal(val, 0, tolerance = 1e-6)
+  expect_equal(status(p), "optimal")
+})
+
 # ═══════════════════════════════════════════════════════════════════
 # NonNeg constraint (x >= 0)
 # ═══════════════════════════════════════════════════════════════════
@@ -444,10 +489,25 @@ test_that("Constraint: constr_expr for single-arg constraints", {
   expect_identical(constr_expr(constr)@id, x@id)
 })
 
-## @cvxpy NONE
-test_that("Constraint: constr_expr errors for multi-arg constraints", {
+## @cvxpy NONE -- Equality.expr / Inequality.expr return the stored lhs - rhs
+## (zero.py:116-118, nonpos.py:203-205); before CVXR 1.9.2.9149 constr_expr()
+## errored "ambiguous" on them.
+test_that("Constraint: constr_expr returns lhs - rhs for Equality and Inequality", {
   x <- Variable(3); y <- Variable(3)
-  constr <- Equality(x, y)
+  eq <- Equality(x, y)
+  expect_identical(constr_expr(eq)@id, eq@.expr@id)
+  expect_equal(expr_name(constr_expr(eq)), expr_name(x - y))
+
+  le <- x <= y
+  expect_identical(constr_expr(le)@id, le@.expr@id)
+  ge <- x >= y                      # Inequality(y, x): expr is y - x
+  expect_equal(expr_name(constr_expr(ge)), expr_name(y - x))
+})
+
+## @cvxpy NONE -- canonical.py:41-45 raises for any other multi-argument constraint
+test_that("Constraint: constr_expr errors for multi-arg cone constraints", {
+  t <- Variable(1); X <- Variable(3)
+  constr <- SOC(t, X)
   expect_error(constr_expr(constr), "ambiguous")
 })
 

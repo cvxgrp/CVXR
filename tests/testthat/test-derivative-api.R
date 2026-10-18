@@ -174,16 +174,37 @@ test_that("backward errors when requires_grad was not set", {
 
 # ---- test_unsupported_solver (test_derivative.py:323-331) ---------
 
+## @cvxpy test_derivative.py::TestBackward::test_unsupported_solver
 test_that("requires_grad with a non-DIFFCP solver errors", {
   x <- Variable()
-  prob <- Problem(Minimize(x^2), list(x >= 1))
+  param <- Parameter(value = 1)
+  prob <- Problem(Minimize(x), list(x <= param))
   expect_error(
     psolve(prob, solver = CLARABEL_SOLVER, requires_grad = TRUE),
-    "DIFFCP"
+    "When requires_grad is True, the only supported solver is SCS"
   )
 })
 
-# ---- test_zero_in_problem_data (test_derivative.py:333-341) -------
+## @cvxpy NONE
+## The rest of the requires_grad guard (problem.py:1061-1078): QCP is refused,
+## SCS is accepted (and routed to DIFFCP), and a non-DCP problem is a DPPError
+## (not DPP), with no separate DCP check.
+test_that("requires_grad guard mirrors CVXPY: QCP, SCS, non-DCP", {
+  x <- Variable()
+  p <- Parameter(value = 1.5)
+  prob <- Problem(Minimize(ceiling(x)), list(x >= p))
+  expect_error(psolve(prob, qcp = TRUE, requires_grad = TRUE),
+               "Cannot compute gradients of DQCP problems.", fixed = TRUE)
+  y <- Variable()
+  q <- Parameter(value = 2)
+  prob2 <- Problem(Minimize(y), list(y >= q))
+  expect_equal(psolve(prob2, solver = "SCS", requires_grad = TRUE), 2, tolerance = 1e-4)
+  z <- Variable()
+  prob3 <- Problem(Minimize(sqrt(z)), list(z >= 1))
+  expect_error(psolve(prob3, requires_grad = TRUE), class = "DPPError")
+})
+
+# ---- test_zero_in_problem_data (test_derivative.py:333-340) -------
 
 test_that("zero-coefficient parameter entries don't break the chain", {
   ## The constraint matrix has a structurally-present zero coefficient
@@ -197,7 +218,7 @@ test_that("zero-coefficient parameter entries don't break the chain", {
   expect_error(psolve(prob, requires_grad = TRUE))
 })
 
-# ---- test_basic_gp (test_derivative.py:554-569) -------------------
+# ---- test_basic_gp (test_derivative.py:668-683) -------------------
 
 test_that("basic GP: backward / derivative through Dgp2Dcp chain rule", {
   ## min   x * y
@@ -231,7 +252,7 @@ test_that("basic GP: backward / derivative through Dgp2Dcp chain rule", {
 ## traversal only walks @args, so without explicit overrides those
 ## Parameters become invisible to parameters(problem), which in turn
 ## leaves their backward gradients empty.
-## CVXPY counterparts: power.py:208, huber.py:52, gmatmul.py:112.
+## CVXPY counterparts: power.py:233-249, huber.py:51-53, gmatmul.py:111-113.
 
 test_that("parameters() finds Parameter exponent in Power", {
   x <- Variable(pos = TRUE)
@@ -327,4 +348,106 @@ test_that("DIFFCP solves a PSD problem with the SCS svec format", {
   prob2 <- Problem(Minimize(matrix_trace(C %*% X)), list((X - diag(n)) %>>% 0))
   expect_equal(psolve(prob2, solver = "DIFFCP"), sum(diag(C)), tolerance = 1e-5)
   expect_equal(status(prob2), "optimal")
+})
+
+## @cvxpy NONE
+## CVXPY problem.py:1064-1066 refuses requires_grad on a non-DPP problem with
+## DPPError before solving. CVXR used to solve it and then crash in backward()
+## ("no applicable method for `@` applied to NULL").
+test_that("requires_grad on a non-DPP problem is a DPPError", {
+  p <- Parameter(value = 2)
+  q <- Parameter(value = 3)
+  x <- Variable()
+  prob <- Problem(Minimize(square(x) - p * q * x))
+  expect_false(is_dpp(prob))
+  expect_error(psolve(prob, requires_grad = TRUE), class = "DPPError")
+  ## A parameter in quad_over_lin's denominator is not DPP either.
+  z <- Variable()
+  r <- Parameter(value = 1)
+  expect_error(psolve(Problem(Minimize(quad_over_lin(z, r) + z)), requires_grad = TRUE),
+               class = "DPPError")
+  ## The DGP context is checked with gp = TRUE: quad_over_lin over a positive
+  ## parameter is DGP-DPP and still differentiates.
+  xg <- Variable(2, pos = TRUE)
+  yg <- Parameter(pos = TRUE, value = 1)
+  pg <- Problem(Minimize(quad_over_lin(xg, yg)), list(xg >= 1))
+  expect_equal(psolve(pg, gp = TRUE, requires_grad = TRUE), 2, tolerance = 1e-4)
+})
+
+## Derivatives through a Hermitian variable (claims-audit row C0587, repro 18).
+## The compact imaginary part is the strict upper triangle in ROW-major order
+## (CVXPY `np.triu_indices(n, k=1)`, complex2real.py:128-179; CVXR's canon
+## `vec_to_upper_tri`). The derivative helpers used column-major `upper.tri`,
+## which coincides for n <= 3 and permutes the (1,4)/(2,3) entries for n = 4.
+## minimize ||X - p*C||_F^2 s.t. trace(X) == 1 has X* = p*C + (1 - p*tr(C))/n * I,
+## so dX/dp = D = C - tr(C)/n * I and, for a gradient seed G on X,
+## dL/dp = sum(Re(G)*Re(D)) + sum_{i<j} Im(G)_ij * Im(D)_ij.
+## RECORDED DIVERGENCE (ADR D_PORT.7): CVXPY 1.9.3 seeds `np.asarray(variable.gradient,
+## dtype=np.float64)` (problems/problem.py:1259-1260) and so discards the imaginary
+## part of a complex gradient (5.7778 for n = 3 where 6.3678 is right); CVXR keeps it.
+## @cvxpy NONE
+test_that("Hermitian variable: delta and gradient use the row-major compact imaginary order", {
+  skip_if_not_installed("scs")
+  triu_rm <- function(M) {
+    idx <- which(upper.tri(M), arr.ind = TRUE)
+    idx <- idx[order(idx[, 1L], idx[, 2L]), , drop = FALSE]
+    M[idx]
+  }
+  hermitian <- function(n, re_seed, im_vals) {
+    A <- matrix(seq_len(n * n) / (n * n), n, n, byrow = TRUE) + re_seed
+    U <- matrix(0, n, n)
+    idx <- which(upper.tri(U), arr.ind = TRUE)
+    idx <- idx[order(idx[, 1L], idx[, 2L]), , drop = FALSE]
+    U[idx] <- im_vals[seq_len(n * (n - 1L) / 2L)]
+    (A + t(A)) / 2 + 1i * (U - t(U))
+  }
+  for (n in c(3L, 4L)) {
+    C <- hermitian(n, 0, (1:6) / 10)
+    G <- hermitian(n, 1, c(1.2, 0.7, 1.1, 0.8, 1.0, 0.9))
+    D <- C - Re(sum(diag(C))) / n * diag(n)
+
+    X <- Variable(c(n, n), hermitian = TRUE)
+    p <- Parameter()
+    value(p) <- 0.5
+    prob <- Problem(Minimize(sum_squares(X - p * C)), list(matrix_trace(X) == 1))
+    psolve(prob, requires_grad = TRUE)
+
+    delta(p) <- 1
+    derivative(prob)
+    dX <- delta(X)
+    expect_equal(Re(dX), Re(D), tolerance = 1e-3)
+    expect_equal(Im(dX), Im(D), tolerance = 1e-3)
+
+    gradient(X) <- G
+    backward(prob)
+    expected <- sum(Re(G) * Re(D)) + sum(triu_rm(Im(G)) * triu_rm(Im(D)))
+    expect_equal(as.numeric(gradient(p)), expected, tolerance = 1e-3)
+  }
+})
+
+## Claims-audit decision 12 (C0622/C0636, repro 21). CvxAttr2Constr.var_backward
+## (cvx_attr2constr.py:313-330) lowers a sparsity variable's gradient to its
+## pattern entries; CVXR passed the full 3x3 gradient to the 3-long reduced
+## variable, so P.gradient came back as recycled garbage.
+## @cvxpy NONE
+test_that("sparsity variable: backward and derivative stay on the pattern", {
+  skip_if_not_installed("scs")
+  pattern <- rbind(c(1L, 1L), c(2L, 3L), c(3L, 2L))
+  x <- Variable(c(3L, 3L), sparsity = pattern)
+  P <- Parameter(c(3L, 3L))
+  value(P) <- matrix(1:9 / 10, 3L, 3L, byrow = TRUE)
+  prob <- Problem(Minimize(sum_squares(x - P)))
+  psolve(prob, requires_grad = TRUE)
+  mask <- matrix(0, 3L, 3L)
+  mask[pattern] <- 1
+  expect_equal(as.matrix(value(x)), value(P) * mask, tolerance = 1e-5)
+
+  G <- matrix(1:9, 3L, 3L, byrow = TRUE)
+  gradient(x) <- G
+  backward(prob)
+  expect_equal(as.matrix(gradient(P)), G * mask, tolerance = 1e-4)
+
+  delta(P) <- matrix(1, 3L, 3L)
+  derivative(prob)
+  expect_equal(as.matrix(delta(x)), mask, tolerance = 1e-4)
 })

@@ -366,7 +366,9 @@ test_that("DPP parity: param quad_form in constraint re-solves with new P", {
   prob <- Problem(Minimize(sum_entries(x)), list(quad_form(x, P) <= 1))
 
   value(P) <- diag(2)
-  psolve(prob, solver = "CLARABEL")
+  ## quad_form(x, P) in a constraint is not DPP; CVXPY 1.9.3 gives the same
+  ## warning, once per problem.
+  expect_warning(psolve(prob, solver = "CLARABEL"), "not DPP")
   first_solution <- as.numeric(value(x))
   expect_equal(first_solution, rep(-1 / sqrt(2), 2), tolerance = 1e-3)
 
@@ -379,7 +381,7 @@ test_that("DPP parity: param quad_form in constraint re-solves with new P", {
 
   ## Re-solve must match a fresh problem with the same P (no stale factors).
   fresh_problem <- Problem(Minimize(sum_entries(x)), list(quad_form(x, P) <= 1))
-  psolve(fresh_problem, solver = "CLARABEL")
+  expect_warning(psolve(fresh_problem, solver = "CLARABEL"), "not DPP")
   expect_false(isTRUE(all.equal(first_solution, resolved_solution, tolerance = 1e-3)))
   expect_equal(resolved_solution, as.numeric(value(x)), tolerance = 1e-3)
 })
@@ -450,7 +452,8 @@ test_that("DPP parity: param quad_form in both objective and constraint re-solve
 
   value(P_obj) <- diag(2)
   value(P_constr) <- diag(2)
-  psolve(prob, solver = "CLARABEL")
+  ## Not DPP (quad_form in a constraint); CVXPY 1.9.3 gives the same warning.
+  expect_warning(psolve(prob, solver = "CLARABEL"), "not DPP")
   first_solution <- as.numeric(value(x))
 
   ## Change the constraint P only -- much tighter on x[1].
@@ -460,7 +463,7 @@ test_that("DPP parity: param quad_form in both objective and constraint re-solve
 
   fresh_problem <- Problem(Minimize(quad_form(x, P_obj)),
                            list(quad_form(x, P_constr) <= 4, sum_entries(x) == 1))
-  psolve(fresh_problem, solver = "CLARABEL")
+  expect_warning(psolve(fresh_problem, solver = "CLARABEL"), "not DPP")
   fresh_solution <- as.numeric(value(x))
 
   expect_false(isTRUE(all.equal(first_solution, resolved_solution, tolerance = 1e-3)))

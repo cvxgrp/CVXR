@@ -210,7 +210,7 @@ cache_clear <- function(x) {
 ## Every `reduction_invert` that renames constraints has to move a solution's
 ## dual variables from the NEW constraint ids back onto the ORIGINAL ones.
 ## CVXPY writes that as a dict comprehension over `cons_id_map.items()`
-## (canonicalization.py:77-83), which is O(n) because Python dict insert and
+## (canonicalization.py:81-83), which is O(n) because Python dict insert and
 ## lookup are O(1).
 ##
 ## Transliterated literally into R it is O(n^2) TWICE OVER, because an R named
@@ -246,6 +246,18 @@ cache_clear <- function(x) {
   null_out <- vapply(out, is.null, logical(1))
   if (any(null_out)) out <- out[!null_out]
   out
+}
+
+## Solver interfaces attach dot-prefixed carriers to the raw solver result on
+## the way from solve_via_data() to reduction_invert() (`.len_eq`, `.n_orig`,
+## ...). When the result itself is handed back as `extra_stats` (CVXPY's
+## EXTRA_STATS = solution), those carriers come off: they are CVXR plumbing,
+## not solver output. A list without names is returned unchanged.
+## @noRd
+.drop_private_fields <- function(x) {
+  nms <- names(x)
+  if (is.null(nms)) return(x)
+  x[!startsWith(nms, ".")]
 }
 
 # -- Argument predicate helpers ----------------------------------------
@@ -285,6 +297,26 @@ as_expr <- function(x) {
   } else {
     cli_abort("Cannot convert object of class {.cls {class(x)}} to a CVXR Expression.")
   }
+}
+
+#' Reject named entries in a variadic operand list
+#'
+#' The CVXPY counterparts of the variadic atoms take positional operands
+#' only (`hstack(arg_list)`, `maximum(arg1, arg2, *args)`), so a keyword is
+#' a TypeError there. In R a named entry in `...` such as `na.rm = TRUE` or
+#' `axis = 1` would otherwise be promoted to a Constant operand and change
+#' the result silently (sweep item 4, pass E).
+#' @param dots `list(...)` as collected by the constructor
+#' @param fn The user-facing function name for the message
+#' @returns `dots`, invisibly, when no entry is named
+#' @noRd
+.abort_named_dots <- function(dots, fn) {
+  nm <- names(dots)
+  if (!is.null(nm) && any(nzchar(nm))) {
+    nm <- nm[nzchar(nm)]
+    cli_abort("{cli::qty(length(nm))}Unused argument{?s} {.arg {nm}} in {.fn {fn}}: operands are positional.")
+  }
+  invisible(dots)
 }
 
 #' Convert a value to a CVXR Expression
@@ -340,7 +372,11 @@ as_cvxr_expr <- function(x) as_expr(x)
 #' @returns A matrix with dimensions matching target_shape
 #' @noRd
 .broadcast_numeric <- function(val, target_shape) {
-  if (!is.matrix(val)) val <- matrix(val, nrow = length(val), ncol = 1L)
+  ## A Matrix-package value is already dimensioned; is.matrix() is FALSE for
+  ## it, and flattening a 2 x 3 dgCMatrix to 6 x 1 was harness finding F2.
+  if (!is.matrix(val) && !inherits(val, "Matrix")) {
+    val <- matrix(val, nrow = length(val), ncol = 1L)
+  }
   vdim <- dim(val)
   if (identical(vdim, as.integer(target_shape))) return(val)
   ## Scalar -> full matrix
@@ -356,6 +392,21 @@ as_cvxr_expr <- function(x) as_expr(x)
     return(matrix(val[1L, ], target_shape[1L], target_shape[2L], byrow = TRUE))
   }
   val
+}
+
+#' Make a dense Matrix-class result a base matrix
+#'
+#' Matrix arithmetic between a sparse and a dense operand returns a dense
+#' Matrix class (dgeMatrix); scipy returns an ndarray there. The value path
+#' deals in two types, base matrix or dgCMatrix (what `intf_convert` stores),
+#' and the other `numeric_value` methods test for exactly those, so a dense
+#' Matrix result becomes a base matrix. Sparse results stay sparse, as in
+#' scipy.
+#' @param val A value returned by Matrix or base arithmetic
+#' @returns `val`, or `as.matrix(val)` when it is a dense Matrix class
+#' @noRd
+.dense_Matrix_to_base <- function(val) {
+  if (inherits(val, "Matrix") && !inherits(val, "sparseMatrix")) as.matrix(val) else val
 }
 
 # -- Shape utilities ---------------------------------------------------
@@ -402,7 +453,7 @@ unique_list <- function(lst) {
   ## as a hash set: one `new.env()` per call plus `exists()`/`assign()` and an
   ## `as.character()` key per item. `variables()`/`parameters()`/`constants()`/
   ## `atoms()` re-dedup each subtree at EVERY node of the expression tree
-  ## (utilities/canonical.R:24-44, matching CVXPY canonical.py:56-73, which
+  ## (utilities/canonical.R:24-44, matching CVXPY canonical.py:58-74, which
   ## deliberately does not cache them), so the call volume is large: 8540 calls
   ## per `large_lp` solve, and the env allocations alone were ~47% of that
   ## cell's 18k `new.env()` calls. Measured on 1000 items / 500 distinct:
@@ -462,13 +513,20 @@ expr_is_matrix <- function(x) {
 
 #' Get the curvature string for an expression
 #' @param x An expression object
-#' @returns Character: "CONSTANT", "AFFINE", "CONVEX", "CONCAVE", or "UNKNOWN"
+#' @returns Character: the first of the DCP, log-log, and quasi curvatures that
+#'   holds, in CVXPY's order, or "UNKNOWN"
 #' @noRd
 expr_curvature <- function(x) {
   if (is_constant(x)) CONSTANT_CURV
   else if (is_affine(x)) AFFINE
   else if (is_convex(x)) CONVEX
   else if (is_concave(x)) CONCAVE
+  else if (is_log_log_affine(x)) LOG_LOG_AFFINE
+  else if (is_log_log_convex(x)) LOG_LOG_CONVEX
+  else if (is_log_log_concave(x)) LOG_LOG_CONCAVE
+  else if (is_quasilinear(x)) QUASILINEAR
+  else if (is_quasiconvex(x)) QUASICONVEX
+  else if (is_quasiconcave(x)) QUASICONCAVE
   else UNKNOWN_CURVATURE
 }
 
@@ -529,4 +587,55 @@ expr_sign_str <- function(x) {
     eig$vectors <- eig$vectors[, ord, drop = FALSE]
   }
   eig
+}
+
+# -- numpy.allclose twin ------------------------------------------------
+## Every entry must satisfy |a - b| <= atol + rtol * |b| (numpy's defaults
+## rtol = 1e-5, atol = 1e-8); non-finite entries must be equal (the same
+## infinity); any NaN makes the answer FALSE.  Elementwise and asymmetric in
+## (a, b), exactly as numpy.  Base R has no equivalent: `all.equal` compares a
+## MEAN relative difference over the differing entries and treats NaN == NaN
+## as equal, `isSymmetric(tol =)` inherits both, and a bare
+## `all(abs(a - b) < tol)` has no relative part.  Added for the symmetry /
+## Hermitian / skew-symmetry tests in interface/matrix_utilities.R (claims
+## audit C0487, decision 22, CVXR 1.9.2.9155); use it wherever CVXPY calls
+## `np.allclose`.
+##
+## Tiered on purpose: `max(|a - b|)` alone settles the common cases (every
+## entry within atol -> TRUE; the largest gap beyond atol + rtol * max|b| ->
+## FALSE), so an exactly symmetric 1000 x 1000 matrix costs two length-n
+## allocations instead of the six of the elementwise form (1.7 ms / 15 MB
+## against 5.2 ms / 46 MB measured, notes/audit/claims_audit_item1.md,
+## decision 22).  Both shortcuts are implied by the elementwise test, so the
+## answer is identical; only the band between them pays for the full
+## comparison, which keeps numpy's exact `d <= atol + rtol * |b|` form.
+
+#' Elementwise closeness with numpy.allclose semantics
+#'
+#' @param a,b Numeric or complex arrays of the same length, or one of them a
+#'   scalar.
+#' @param rtol,atol Relative and absolute tolerances (numpy defaults).
+#' @returns A single \code{TRUE} or \code{FALSE}, never \code{NA}.
+#' @noRd
+.np_allclose <- function(a, b, rtol = 1e-5, atol = 1e-8) {
+  if (length(a) != length(b) && length(a) != 1L && length(b) != 1L) {
+    cli_abort("Cannot compare arrays of lengths {length(a)} and {length(b)}.")
+  }
+  if (length(a) == 0L || length(b) == 0L) return(TRUE)   # np.allclose([], []) is True
+  d <- abs(a - b)
+  dmax <- max(d)                        # NaN when a NaN or an Inf - Inf is present
+  if (!is.finite(dmax)) {
+    if (!is.nan(dmax)) return(FALSE)    # Inf: some entry has an infinite gap
+    ## Non-finite entries must be equal (NaN == NaN is NA, so a NaN fails);
+    ## the finite remainder takes the elementwise test.
+    nonfinite <- !is.finite(a) | !is.finite(b)
+    if (!isTRUE(all((a == b)[nonfinite]))) return(FALSE)
+    if (length(b) == 1L) b <- rep_len(b, length(a))
+    if (length(a) == 1L) d <- rep_len(d, length(b))
+    return(isTRUE(all(d[!nonfinite] <= atol + rtol * abs(b[!nonfinite]))))
+  }
+  if (dmax <= atol) return(TRUE)
+  ab <- abs(b)
+  if (dmax > atol + rtol * max(ab)) return(FALSE)
+  all(d <= atol + rtol * ab)
 }

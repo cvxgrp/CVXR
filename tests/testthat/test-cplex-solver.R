@@ -201,19 +201,130 @@ test_that("CPLEX solves MI-SOCP through Rcplex QCP constraints", {
   expect_equal(sum(as.numeric(value(b))), 1.0, tolerance = 1e-5)
 })
 
-## @cvxpy reductions/solvers/conic_solvers/cplex_conif.py::CPLEX.solve_via_data
-test_that("CPLEX conic path omits SOC duals without Rcplex QCP dual API", {
+## CVXPY SOURCE: cplex_conif.py:255-283 (invert: y = -get_dual_values() over
+## EQ_CONSTR + NEQ_CONSTR, SOC rows last) and :440-522 (each SOC row is the
+## linear row A_i x + s_i = b_i). Expected values measured against CVXPY 1.9.3
+## + cplex 2026-10-15: soc [1], [-0.39384, -0.91918]; lin -0.91918;
+## bnd 0.52534 (CLARABEL: [1], [-0.39392, -0.91915]; -0.91915; 0.52523).
+## Before 9301 CVXR returned no duals at all when any SOC was present.
+## @cvxpy reductions/solvers/conic_solvers/cplex_conif.py::CPLEX.invert
+test_that("CPLEX conic path recovers SOC and linear duals", {
   skip_if_not_installed("Rcplex")
   x <- Variable(2)
   t <- Variable()
   soc <- SOC(t, x)
-  prob <- Problem(Minimize(t), list(soc, x == c(3, 4)))
+  lin <- x[1] + x[2] == 1
+  bnd <- x[1] <= 0.3
+  prob <- Problem(Minimize(t), list(soc, lin, bnd))
 
-  psolve(prob, solver = "CPLEX")
+  val <- psolve(prob, solver = "CPLEX")
   expect_equal(status(prob), OPTIMAL)
+  expect_equal(val, 0.76157731, tolerance = 1e-5)
   dv <- dual_value(soc)
-  expect_true(is.list(dv))
-  expect_true(all(vapply(dv, is.null, logical(1L))))
+  expect_equal(as.numeric(dv[[1]]), 1.0, tolerance = 1e-3)
+  expect_equal(as.numeric(dv[[2]]), c(-0.39383792, -0.91917989), tolerance = 1e-3)
+  expect_equal(as.numeric(dual_value(lin)), -0.91917989, tolerance = 1e-3)
+  expect_equal(as.numeric(dual_value(bnd)), 0.52534199, tolerance = 1e-3)
+})
+
+# ── reoptimize, solve_time, option contract (decision 21, 9156) ─────
+## CVXPY SOURCE: cplex_conif.py:42-62 (set_parameters), :376-396 and
+## cplex_qpif.py:176-199 (reoptimize re-solve, timed), :46-47 /
+## cplex_conif.py:260-261 (SOLVE_TIME). Measured against CVXPY 1.9.3 +
+## cplex 2026-10-10: lp_3 is INFEASIBLE_OR_UNBOUNDED by default and
+## `unbounded` / -inf with reoptimize=True; an unknown keyword raises
+## ValueError. Before 9156 CVXR
+## forwarded every option into the Rcplex control list, Rcplex warned
+## "Unknown CPLEX parameter reoptimize. Ignoring it." and the ambiguous status
+## stood; solver_stats() carried no solve_time.
+
+## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_lp_3
+test_that("CPLEX lp_3: ambiguous by default, unbounded with reoptimize", {
+  skip_if_not_installed("Rcplex")
+  sth <- sth_lp_3()
+  expect_warning(val <- psolve(sth$prob, solver = "CPLEX"),
+                 "infeasible or unbounded")
+  expect_equal(status(sth$prob), INFEASIBLE_OR_UNBOUNDED)
+  expect_true(is.na(val))
+
+  ## QP interface (CVXR routes an LP for a dual-interface solver there)
+  sth <- sth_lp_3()
+  expect_no_warning(val <- psolve(sth$prob, solver = "CPLEX", reoptimize = TRUE))
+  expect_equal(status(sth$prob), UNBOUNDED)
+  expect_equal(val, -Inf)
+
+  ## conic interface, where CVXPY 1.9.3 runs this problem
+  sth <- sth_lp_3()
+  expect_no_warning(val <- psolve(sth$prob, solver = "CPLEX", reoptimize = TRUE,
+                                  use_quad_obj = FALSE))
+  expect_equal(status(sth$prob), UNBOUNDED)
+  expect_equal(val, -Inf)
+})
+
+## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_lp_4
+test_that("CPLEX lp_4: infeasible with and without reoptimize", {
+  skip_if_not_installed("Rcplex")
+  sth <- sth_lp_4()
+  val <- psolve(sth$prob, solver = "CPLEX")
+  expect_equal(status(sth$prob), INFEASIBLE)
+  expect_equal(val, Inf)
+
+  sth <- sth_lp_4()
+  expect_no_warning(val <- psolve(sth$prob, solver = "CPLEX", reoptimize = TRUE))
+  expect_equal(status(sth$prob), INFEASIBLE)
+  expect_equal(val, Inf)
+})
+
+## @cvxpy NONE -- cplex_qpif.py:46-47 and cplex_conif.py:260-261 set
+## SOLVE_TIME; upstream has no test reading it back. NUM_ITERS
+## (cplex_qpif.py:48-51) is not ported: Rcplex returns no iteration count.
+test_that("CPLEX records solve_time on both interfaces; num_iters stays NULL", {
+  skip_if_not_installed("Rcplex")
+  check_stats <- function(prob) {
+    st <- solver_stats(prob)
+    expect_true(is.numeric(st@solve_time))
+    expect_true(is.finite(st@solve_time) && st@solve_time >= 0)
+    expect_null(st@num_iters)
+  }
+  x <- Variable(3)
+  prob <- Problem(Minimize(sum_entries(x)), list(x >= 1))      # QP interface
+  expect_equal(psolve(prob, solver = "CPLEX"), 3, tolerance = 1e-6)
+  check_stats(prob)
+
+  x <- Variable(3)
+  prob <- Problem(Minimize(p_norm(x - 1, 2)), list(x >= 0))   # conic interface
+  expect_equal(psolve(prob, solver = "CPLEX"), 0, tolerance = 1e-6)
+  check_stats(prob)
+
+  w <- Variable(3, integer = TRUE)
+  prob <- Problem(Minimize(sum_entries(w)), list(w >= 0.5))   # MIP
+  expect_equal(psolve(prob, solver = "CPLEX"), 3, tolerance = 1e-6)
+  check_stats(prob)
+
+  sth <- sth_lp_3()                                           # two timed runs
+  psolve(sth$prob, solver = "CPLEX", reoptimize = TRUE)
+  check_stats(sth$prob)
+})
+
+## @cvxpy test_conic_solvers.py::TestCPLEX::test_cplex_params
+test_that("CPLEX options: cplex_params routed, unknown names abort", {
+  skip_if_not_installed("Rcplex")
+  lp <- function() {
+    x <- Variable(3)
+    Problem(Minimize(sum_entries(x)), list(x >= 1))
+  }
+  ## Rcplex's flat control names, either bare or inside cplex_params
+  expect_equal(psolve(lp(), solver = "CPLEX", preind = 0L, itlim = 100L), 3,
+               tolerance = 1e-6)
+  expect_equal(psolve(lp(), solver = "CPLEX", cplex_params = list(preind = 0L)),
+               3, tolerance = 1e-6)
+  ## set_parameters raises on anything else (cplex_conif.py:51-54, :61-62)
+  expect_error(psolve(lp(), solver = "CPLEX", foo = 1), "Invalid option")
+  expect_error(psolve(lp(), solver = "CPLEX", cplex_params = list(no_such = 0)),
+               "Invalid CPLEX parameter")
+  ## model writing has no Rcplex entry point
+  expect_error(psolve(lp(), solver = "CPLEX", cplex_filename = "m.lp"),
+               "cplex_filename")
 })
 
 # ── Infeasible ──────────────────────────────────────────────────────

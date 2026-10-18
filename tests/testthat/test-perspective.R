@@ -213,6 +213,53 @@ test_that("Perspective: monotonicity is FALSE", {
   expect_false(is_decr(p, 1L))
 })
 
+## perspective_canon links a symmetric/PSD variable to its reduced upper
+## triangle. CVXPY pairs `var[np.triu_indices(n)]` (ROW-major,
+## perspective_canon.py:97-100), the order CvxAttr2Constr gives the reduced
+## variable through upper_tri_to_full. CVXR paired the COLUMN-major triangle
+## until 1.9.2.9140, which coincides for n = 2 and swaps the (1,3)/(2,2)
+## entries at n = 3 (claims-audit row C0642, repro 23). CVXPY's own PSD tests
+## use targets (identity, trace) that this swap leaves invariant, so the
+## distinguishing target here is R-specific: upper triangle numbered 1..6.
+## @cvxpy NONE
+test_that("Perspective: symmetric and PSD variables pair the row-major upper triangle", {
+  skip_if_not_installed("clarabel")
+  C <- matrix(c(1, 2, 3, 2, 4, 5, 3, 5, 6), 3, 3)  # C[1, 3] = 3 != C[2, 2] = 4
+  s_fun <- function(X, target) {
+    s <- Variable(nonneg = TRUE)
+    prob <- Problem(Minimize(perspective(sum_squares(X - target), s)), list(s == 1))
+    val <- psolve(prob, solver = "CLARABEL")
+    expect_equal(status(prob), "optimal")
+    expect_equal(val, 0, tolerance = 1e-6)
+    expect_equal(value(X), target, tolerance = 1e-5)
+  }
+  s_fun(Variable(c(3, 3), symmetric = TRUE), C)
+  s_fun(Variable(c(3, 3), PSD = TRUE), C + 9 * diag(3))
+})
+
+## The PSD cone comes from an ATOM inside f, which the outer chain's cone scan
+## does not see, so the PSD -> SvecPSD conversion has to happen in the
+## perspective's own aux chain, built for the outer solver as CVXPY's
+## perspective_canon.py:35-38 does, and perspective_utils.py:55-56 rebuilds
+## the SvecPSD. CVXR built that chain without the solver until 1.9.2.9177, and
+## both solvers here failed on a cone-dimension mismatch. CVXPY's own PSD
+## perspective tests use PSD variables, which the outer scan does see.
+## CVXPY 1.9.3: 3.618034 (= lambda_max(C)) on CLARABEL and SCS (repro 36).
+## @cvxpy NONE
+test_that("Perspective of a PSD-cone atom solves on svec-PSD solvers", {
+  C <- matrix(c(2, 1, 1, 3), 2, 2)
+  expected <- max(eigen(C, symmetric = FALSE, only.values = TRUE)$values)
+  for (solver in c("CLARABEL", "SCS")) {
+    if (!(solver %in% installed_solvers())) next
+    X <- Variable(c(2, 2), symmetric = TRUE)
+    s <- Variable(nonneg = TRUE)
+    prob <- Problem(Minimize(perspective(lambda_max(X), s)), list(X == C, s == 2))
+    val <- psolve(prob, solver = solver)
+    expect_equal(status(prob), "optimal")
+    expect_equal(val, expected, tolerance = 1e-4)
+  }
+})
+
 ## @cvxpy NONE
 test_that("Perspective graph_implementation errors", {
   x <- Variable(nonneg = TRUE)

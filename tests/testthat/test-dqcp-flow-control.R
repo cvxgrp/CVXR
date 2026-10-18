@@ -5,14 +5,14 @@
 ## condition, or dropped one, and so refused a problem CVXPY solves.
 ##
 ## CVXPY SOURCE: dqcp2dcp.py:216-218 (case 2 is the plain `else` of case 1),
-## bisection.py:74,88 (the zero-endpoint guard),
+## bisection.py:73,89 (the zero-endpoint guard),
 ## logic.py:24-34 (_is_boolean_arg).
 
 ## ---------------------------------------------------------------------------
 ## Bisection: an endpoint sitting exactly at 0 must still be able to grow
 ##
-## CVXPY writes `high = high * 2 if high != 0 else 1` (bisection.py:74) and
-## `low = low * 2 if low != 0 else -1` (:88). CVXR used a bare `* 2`, which
+## CVXPY writes `high = high * 2 if high != 0 else 1` (bisection.py:73) and
+## `low = low * 2 if low != 0 else -1` (:89). CVXR used a bare `* 2`, which
 ## cannot move an endpoint off 0 -- the bracket never widens and the search
 ## burns all max_iters before failing with "Unable to find suitable interval".
 ## The defaults only land on 0 in the branch that is skipped, so this is

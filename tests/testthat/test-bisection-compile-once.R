@@ -1,7 +1,7 @@
 ## The compile-once fast path in .lower_problem (ADR D_PERF.9).
 ##
-## CVXPY SOURCE: bisection.py:29-31 reconstructs a fresh Problem for EVERY
-## bisection query, and bisection.py:47-52 is upstream's own TODO wishing it
+## CVXPY SOURCE: bisection.py:25-29 reconstructs a fresh Problem for EVERY
+## bisection query, and bisection.py:51-55 is upstream's own TODO wishing it
 ## did not: each reconstruction forces a full canonicalization, so a DQCP
 ## solve pays ~20-50 compiles for one answer.  When Dqcp2Dcp emits no lazy
 ## constraints, the parameterized problem IS its own lowering and is DPP

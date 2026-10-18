@@ -165,3 +165,50 @@ test_that("DNLP parameters: -sum(log(x) * a) with parametric scalar a (reversed)
   expect_equal(p1, h1, tolerance = 1e-5)
   expect_equal(p2, h2, tolerance = 1e-5)
 })
+
+## CVXPY v1.9.3 #3365: a parametric quad_form P goes to the diff engine's dense quad form.
+## @cvxpy nlp_tests/test_nlp_parameters.py::TestNlpParameters::test_parameter_quad_form
+test_that("DNLP parameters: 0.5 x'Px - b'x with a parametric, updated P", {
+  n <- 5
+  spd <- function(seed) {
+    set.seed(seed); M <- matrix(rnorm(n * n), n, n)
+    M %*% t(M) + n * diag(n)
+  }
+  P1 <- spd(1); P2 <- spd(2)
+  set.seed(0); b <- rnorm(n)
+  x <- Variable(n); start <- rep(0, n)
+
+  h1 <- .par_solve(Problem(Minimize(0.5 * quad_form(x, P1) - t(b) %*% x)), x, start)
+  h2 <- .par_solve(Problem(Minimize(0.5 * quad_form(x, P2) - t(b) %*% x)), x, start)
+
+  P <- Parameter(c(n, n), PSD = TRUE)
+  prob <- Problem(Minimize(0.5 * quad_form(x, P) - t(b) %*% x))
+  value(P) <- P1; p1 <- .par_solve(prob, x, start)
+  nlp_derivative_check(prob)
+  value(P) <- P2; p2 <- .par_solve(prob, x, start)
+  nlp_derivative_check(prob)
+  expect_equal(p1, h1, tolerance = 1e-5)
+  expect_equal(p2, h2, tolerance = 1e-5)
+})
+
+## Regression (1.9.3 plan defect 0.8, SparseDiffEngine #107): a parametric factor
+## that is an EXPRESSION of a Parameter (g * A, emitted as vector_mult(promote(g), A))
+## feeds the dense matmul; with sparsediff < 0.6.1 a re-solve after `value(g) <-`
+## silently returned the previous solution with status "optimal".
+## @cvxpy NONE
+test_that("DNLP parameters: re-solve after updating g in (g * A) %*% x is not stale", {
+  set.seed(3)
+  m <- 6; n <- 3
+  A <- matrix(rnorm(m * n), m, n); b <- rnorm(m)
+  x <- Variable(n); start <- rep(0, n)
+
+  h2 <- .par_solve(Problem(Minimize(sum_squares((2 * A) %*% x - b))), x, start)
+  h3 <- .par_solve(Problem(Minimize(sum_squares((3 * A) %*% x - b))), x, start)
+
+  g <- Parameter()
+  prob <- Problem(Minimize(sum_squares((g * A) %*% x - b)))
+  value(g) <- 2; p2 <- .par_solve(prob, x, start)
+  value(g) <- 3; p3 <- .par_solve(prob, x, start)
+  expect_equal(p2, h2, tolerance = 1e-5)
+  expect_equal(p3, h3, tolerance = 1e-5)
+})

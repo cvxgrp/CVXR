@@ -185,6 +185,51 @@ test_that("GLPK_MI does not return duals", {
   expect_null(dual_value(constr))
 })
 
+## CVXPY's GLPK_MI maps cvxopt's "LP relaxation is primal infeasible" to
+## INFEASIBLE (cvxopt_conif.py STATUS_MAP, used by glpk_mi_conif.py
+## solve_via_data). Rglpk without presolve reports GLP_UNDEF (code 1) when
+## the relaxation is infeasible, which CVXR mapped to SOLVER_ERROR through
+## 1.9.2.9513; with presolve it reports GLP_NOFEAS (code 4). Lifecycle fuzz
+## finding 6.2 (notes/lifecycle_fuzz_2026-10-17.md).
+## @cvxpy glpk_mi_conif.py::GLPK_MI.solve_via_data cvxopt_conif.py::CVXOPT.STATUS_MAP
+test_that("GLPK_MI reports an infeasible MILP as infeasible", {
+  skip_if_not_installed("Rglpk")
+  x <- Variable(3, integer = TRUE)
+  A <- matrix(c(1, 0, 1, 1, 2, 1), 2L, 3L)
+  prob <- Problem(Minimize(sum(x)), list(A %*% x >= c(100, 100), x >= 0, x <= 10))
+  val <- psolve(prob, solver = "GLPK_MI")
+  expect_equal(status(prob), "infeasible")
+  expect_equal(val, Inf)
+})
+
+## Presolve has the opposite effect on a pure LP (every column continuous):
+## Rglpk then reports GLP_UNDEF for an infeasible LP, so the default applies
+## only when an integer or boolean column exists.
+## @cvxpy glpk_mi_conif.py::GLPK_MI.solve_via_data
+test_that("GLPK_MI reports an infeasible continuous LP as infeasible", {
+  skip_if_not_installed("Rglpk")
+  x <- Variable(3)
+  A <- matrix(c(1, 0, 1, 1, 2, 1), 2L, 3L)
+  prob <- Problem(Minimize(sum(x)), list(A %*% x >= c(100, 100), x >= 0, x <= 10))
+  val <- psolve(prob, solver = "GLPK_MI")
+  expect_equal(status(prob), "infeasible")
+  expect_equal(val, Inf)
+})
+
+## @cvxpy glpk_mi_conif.py::GLPK_MI.solve_via_data
+test_that("GLPK_MI feasible MILP is unchanged by the presolve default", {
+  skip_if_not_installed("Rglpk")
+  x <- Variable(3, integer = TRUE)
+  A <- matrix(c(1, 0, 1, 1, 2, 1), 2L, 3L)
+  prob <- Problem(Minimize(sum(x)), list(A %*% x >= c(7, 5), x >= 0, x <= 10))
+  val <- psolve(prob, solver = "GLPK_MI")
+  expect_equal(status(prob), "optimal")
+  expect_equal(val, 5, tolerance = 1e-9)   # enumerated over x in {0..10}^3
+  ## A user-supplied presolve is honored (same optimum either way).
+  prob2 <- Problem(Minimize(sum(x)), list(A %*% x >= c(7, 5), x >= 0, x <= 10))
+  expect_equal(psolve(prob2, solver = "GLPK_MI", presolve = FALSE), 5, tolerance = 1e-9)
+})
+
 # ══════════════════════════════════════════════════════════════════
 # Cross-solver parity
 # ══════════════════════════════════════════════════════════════════

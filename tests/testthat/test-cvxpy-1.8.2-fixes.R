@@ -281,6 +281,18 @@ test_that("real(symmetric) is symmetric", {
   expect_true(is_symmetric(Re(S)))
 })
 
+## @cvxpy NONE
+test_that("real(complex symmetric) is symmetric", {
+  ## real.py:52 is `is_symmetric() or is_hermitian()`. A complex symmetric
+  ## Variable is not Hermitian, so only the first disjunct makes Re(X)
+  ## symmetric; CVXR tested is_hermitian alone. Claims-audit row C0078, ported
+  ## 1.9.2.9137 (CVXPY 1.9.3 oracle measured 2026-10-08: True).
+  X <- Variable(c(3, 3), symmetric = TRUE, complex = TRUE)
+  expect_true(is_symmetric(X))
+  expect_false(is_hermitian(X))
+  expect_true(is_symmetric(Re(X)))
+})
+
 # ══════════════════════════════════════════════════════════════════
 # PSD residual: complex Hermitian uses conjugate transpose
 # ══════════════════════════════════════════════════════════════════

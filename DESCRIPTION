@@ -1,8 +1,8 @@
 Package: CVXR
 Type: Package
 Title: Disciplined Convex Optimization
-Version: 1.9.2
-Date: 2026-08-23
+Version: 1.9.3
+Date: 2026-10-17
 Authors@R: c(
     person("Anqi", "Fu",
            role = c("aut", "cre"),
@@ -53,7 +53,7 @@ Enhances:
     Rmosek,
     gurobi (>= 13.0),
     Rglpk (>= 0.6),
-    ECOSolveR (>= 0.6),
+    ECOSolveR (>= 0.6.2),
     Rcplex (>= 0.3),
     cccp (>= 0.3),
     piqp (>= 0.6),
@@ -61,7 +61,7 @@ Enhances:
     xpress,
     diffcp (>= 0.1.2),
     ipopt,
-    sparsediff,
+    sparsediff (>= 0.6.1),
     Uno
 Additional_repositories:
     https://bnaras.r-universe.dev,

@@ -7,7 +7,7 @@
 ## `triu_indices`/`tril_indices` -- which enumerate ROW-major -- as R's
 ## `upper.tri()`/`lower.tri()`, which are COLUMN-major.  The two orders coincide
 ## only at n = 2, so every PSD dual with n >= 3 came back transposed while the
-## objective stayed correct.  See cvxpy/utilities/psd_utils.py:52-61.
+## objective stayed correct.  See cvxpy/utilities/psd_utils.py:51-60.
 ##
 ## ABSOLUTE ORACLE (deliberately not a self-referential comparison): for
 ##     minimize  tr(C X)   subject to   X >= I  (PSD)

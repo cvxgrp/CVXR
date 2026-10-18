@@ -201,6 +201,41 @@ sth_socp_2 <- function() {
   )
 }
 
+## CVXPY 1.9.3 solver_test_helpers.py socp_4: three SOC constraints of
+## dimension 2, 3 and 4 (the third inactive at the optimum) plus an equality.
+## Interfaces that split the SOC block themselves must get the per-cone
+## offsets and the dual ordering right.
+sth_socp_4 <- function() {
+  x <- Variable(4)
+  A1 <- matrix(c(1, -2, 2, -1), 1L, 4L)
+  A2 <- rbind(c(1, 0, -2, 2),
+              c(0, -2, 2, 2))
+  A3 <- rbind(c(-2, -2, -2, -1),
+              c(0, 1, 1, 1),
+              c(0, 2, -1, 0))
+  b3 <- c(0, 2, 2)
+  cvec <- c(3, 1, 2, -1)
+  constraints <- list(
+    SOC(Constant(1.0), A1 %*% x),
+    SOC(Constant(2.0), A2 %*% x),
+    SOC(Constant(3.0), A3 %*% x - b3),
+    sum(x) == 1
+  )
+  prob <- Problem(Minimize(t(cvec) %*% x), constraints)
+  list(
+    prob = prob,
+    expect_obj = -1.32552809,
+    expect_x = c(-0.69418893, 0.35428326, 0.58088704, 0.75901863),
+    con_duals = list(
+      list(c(1.2), c(1.2)),
+      list(c(0.88776405), c(0.15, -0.875)),
+      list(c(0), c(0, 0, 0)),
+      -1.65
+    ),
+    cone_type = "SOCP"
+  )
+}
+
 sth_socp_3_ax0 <- function() {
   x <- Variable(2)
   cvec <- c(-1, 2)

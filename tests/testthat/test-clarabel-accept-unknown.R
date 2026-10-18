@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/reductions/solvers/conic_solvers/clarabel_conif.py:87,126-134,176-181
+## @cvxpy cvxpy/reductions/solvers/conic_solvers/clarabel_conif.py:87,126-134,180-181
 ##
 ## CLARABEL's `accept_unknown` option: when set, and the solver returned BOTH a
 ## primal and a dual iterate, `InsufficientProgress` is read as
@@ -16,26 +16,53 @@
 
 test_that("accept_unknown does NOT reach DQCP bisection subproblems", {
   ## Pinning a limit rather than a capability, because the obvious assumption
-  ## is wrong and cost real time: `accept_unknown` cannot rescue a DQCP solve.
+  ## is wrong and cost real time: `accept_unknown` cannot change a DQCP solve.
   ##
-  ## bisection.py:32-42 `_solve(problem, solver)` calls
+  ## bisection.py:32-43 `_solve(problem, solver)` calls
   ## `problem.solve(solver=solver)` -- the SOLVER ONLY. Upstream forwards no
   ## solver options into the subproblems, and neither does CVXR's
-  ## .bisect_solve(). So a stall inside bisection stays SOLVER_ERROR however
-  ## the outer psolve() was called, in BOTH libraries. This is parity, not a
-  ## gap: do not "fix" .bisect_solve to forward options unless upstream does.
+  ## .bisect_solve(). So a stall inside bisection is SOLVER_ERROR however the
+  ## outer psolve() was called. Do not "fix" .bisect_solve to forward options
+  ## unless upstream does. (CVXPY goes further and REJECTS the option on the
+  ## qcp path: `**kwargs` reach bisect() and `accept_unknown` is a TypeError,
+  ## problem.py:1104-1105; R drops unknown kwargs there, problem.R:1073-1077.)
   ##
-  ## (CVXPY happens to survive this particular problem, but by drawing
-  ## AlmostSolved on the near-optimum probe -- not via this option. See the
-  ## skip in test-bisection-solver-failure.R.)
-  x <- Variable(nonneg = TRUE)
-  y <- Variable(nonneg = TRUE)
-  prob <- Problem(Maximize(x * y), list(x + y <= 1e-4))
-  expect_error(
-    suppressWarnings(
-      psolve(prob, solver = "CLARABEL", qcp = TRUE, accept_unknown = TRUE)),
-    regexp = "[Ss]olver failed|[Mm]ax iterations"
-  )
+  ## Through CVXR 1.9.2.9153 this test expected an ERROR from this problem.
+  ## That error was an R-only abort in the bisection loop (removed in 9154,
+  ## claims audit C0723 / decision 20), not a consequence of the option: the
+  ## problem itself solves, in CVXPY 1.9.3 and in CVXR, to optimal_inaccurate
+  ## 1.897e-9 along an identical 30-query path (test-bisection-solver-failure.R
+  ## runs it). What the option must NOT do is alter that path, so the pin is
+  ## the comparison: every sub-solve's query point and status, and the final
+  ## value and status, identical with and without the flag.
+  trace_bisection <- function(...) {
+    real <- get(".bisect_solve", envir = asNamespace("CVXR"))
+    log <- new.env()
+    log$rows <- list()
+    tracer <- function(problem, solver) {
+      ps <- parameters(problem)
+      tv <- if (length(ps)) as.numeric(value(ps[[1L]])) else NA_real_
+      real(problem, solver)
+      log$rows[[length(log$rows) + 1L]] <- list(t = tv, status = status(problem))
+      invisible(NULL)
+    }
+    x <- Variable(nonneg = TRUE)
+    y <- Variable(nonneg = TRUE)
+    prob <- Problem(Maximize(x * y), list(x + y <= 1e-4))
+    val <- suppressWarnings(testthat::with_mocked_bindings(
+      psolve(prob, solver = "CLARABEL", qcp = TRUE, ...),
+      .bisect_solve = tracer, .package = "CVXR"))
+    list(value = val, status = status(prob), trace = log$rows)
+  }
+  plain <- trace_bisection()
+  flagged <- trace_bisection(accept_unknown = TRUE)
+  expect_gt(length(plain$trace), 1L)
+  expect_identical(flagged$trace, plain$trace)
+  expect_identical(flagged$status, plain$status)
+  expect_identical(flagged$value, plain$value)
+  ## The flag did not promote anything: a stalled sub-solve stays solver_error
+  ## in the flagged run exactly where it is in the plain one.
+  expect_true(any(vapply(plain$trace, function(r) r$status, "") == "solver_error"))
 })
 
 test_that("the InsufficientProgress remap fires only when opted in", {

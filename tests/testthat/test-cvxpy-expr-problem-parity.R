@@ -254,6 +254,74 @@ test_that("Matrix multiplication, shape, curvature (CVXPY parity)", {
   expect_error(Constant(matrix(c(2, 1, 2, 2), 2, 2)) %*% C)
 })
 
+## The scalar branch of test_matmul_expression (test_expressions.py:905-908,
+## `x @ 2` is "Scalar operands are not allowed, use '*' instead") and the
+## incompatible-dimensions branch with a 1 x 1 operand (`(1, 1) @ (2, 3)` and
+## `(1, 3) @ (1, 1)` are "Incompatible dimensions" in CVXPY 1.9.3; base R
+## says "non-conformable arguments" for all of them).
+## Measured before the fix (differential harness, 2026-10-16): `2 %*% x` and
+## `Constant(matrix(2, 1, 1)) %*% x` with x 2 x 3 were accepted with shape
+## (2, 3) and aborted the R process in `problem_data()`; `x %*% 2` and
+## `Variable(c(1, 3)) %*% matrix(6, 1, 1)` were accepted as scalar products.
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("%*% rejects a scalar operand and a non-conformable 1 x 1 operand", {
+  x <- Variable(c(2, 3))
+  expect_error(2 %*% x, "Scalar operands are not allowed")
+  expect_error(x %*% 2, "Scalar operands are not allowed")
+  expect_error(5 %*% Variable(3), "Scalar operands are not allowed")
+  ## A 1 x 1 Expression is a matrix, not a scalar: the inner dimension fails.
+  expect_error(Constant(matrix(2, 1, 1)) %*% x, "Incompatible dimensions")
+  expect_error(matrix(2, 1, 1) %*% x, "Incompatible dimensions")
+  expect_error(Constant(2) %*% x, "Incompatible dimensions")
+  y <- Variable(c(1, 3))
+  expect_error(y %*% matrix(6, 1, 1), "Incompatible dimensions")
+  expect_error(Constant(matrix(1, 1, 3)) %*% Constant(matrix(2, 1, 1)),
+               "Incompatible dimensions")
+})
+
+## The conformable 1 x 1 case is a matrix product in CVXPY (`(1, 1) @ (1, 3)`
+## has shape (1, 3)) and must keep working; `sum_entries(x, axis = 2)` of a
+## one-row expression builds exactly this product.
+## @cvxpy test_expressions.py::TestExpressions::test_matmul_expression
+test_that("%*% with a conformable 1 x 1 operand is a matrix product", {
+  z <- Variable(c(1, 1))
+  r <- matrix(1:3, 1, 3)
+  e <- z %*% r
+  expect_equal(e@shape, c(1L, 3L))
+  value(z) <- matrix(2, 1, 1)
+  expect_equal(as.matrix(value(e)), matrix(c(2, 4, 6), 1, 3))
+  e2 <- Variable(c(1, 3)) %*% matrix(1:3, 3, 1)
+  expect_equal(e2@shape, c(1L, 1L))
+  ## Minimize z subject to z * (1, 2, 3) >= (1, 2, 3): z = 1.
+  prob <- Problem(Minimize(z), list(z %*% r >= r))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 1, tolerance = 1e-6)
+  expect_equal(as.numeric(value(z)), 1, tolerance = 1e-6)
+})
+
+## R-specific: base R's `%*%` promotes a length-1 vector to 1 x 1 and accepts
+## it when the other operand's inner dimension is 1 (?matmult); CVXPY has no
+## such case, a () operand is always rejected. CVXR follows R. aramappings
+## 0.2.0 does `Pvar[idx, ] %*% v_k` with a length-1 `v_k`, correct on 1.9.2
+## and rejected by 1.9.2.9500 (found by the 1.9.3 revdep check, 2026-10-17).
+## @cvxpy NONE
+test_that("%*% with a conformable bare scalar follows base R", {
+  x <- Variable(c(3, 1))
+  e <- x %*% 2
+  expect_equal(e@shape, c(3L, 1L))
+  value(x) <- matrix(1:3, 3, 1)
+  expect_equal(as.numeric(value(e)), c(2, 4, 6))
+  y <- Variable(c(1, 3))
+  e2 <- 2 %*% y
+  expect_equal(e2@shape, c(1L, 3L))
+  ## min sum(x) s.t. x %*% 2 >= (2, 4, 6): x = (1, 2, 3), objective 6.
+  prob <- Problem(Minimize(sum(x)), list(x %*% 2 >= matrix(c(2, 4, 6), 3, 1)))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(1, 2, 3), tolerance = 1e-6)
+  ## A non-conformable bare scalar is still rejected, as in base R.
+  expect_error(Variable(c(2, 3)) %*% 2, "Scalar operands are not allowed")
+  expect_error(5 %*% Variable(3), "Scalar operands are not allowed")
+})
+
 # ── 8. test_div_expression ───────────────────────────────────────────
 
 ## @cvxpy test_expressions.py::TestExpressions::test_div_expression
@@ -291,6 +359,102 @@ test_that("Division, shape, sign, curvature (CVXPY parity)", {
   expect_equal(expr_sign(rho), "NONNEGATIVE")
   expect_equal(expr_sign(Constant(2)), "NONNEGATIVE")
   expect_true(is_nonneg(rho / 2))
+
+  ## Broadcasting (test_expressions.py:999-1006): a (3, 3) variable divided
+  ## by a (3, 1) column; the column is broadcast across the columns of x.
+  x33 <- Variable(c(3, 3))
+  cc <- matrix(1:3, 3, 1)
+  expr <- x33 / cc
+  expect_equal(expr@shape, c(3L, 3L))
+  value(x33) <- matrix(1, 3, 3)
+  expect_equal(as.matrix(value(expr)), matrix(1, 3, 3) / as.vector(cc),
+               tolerance = 1e-10)
+})
+
+## Division by a non-scalar constant through the compiled canonicalization.
+## The divisor LinOp data is the full constant (a scalar divisor is promoted
+## and constant-folded first), and the C++ side must divide entrywise
+## (cvxcore/src/LinOpOperations.cpp:1054-1071 builds diag(1 / vec(A))).
+## Measured before the fix: both solves divided by A[1, 1] only.
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division by a matrix or vector constant solves entrywise", {
+  A <- matrix(c(2, 3, 5, 7), 2, 2)
+  X <- Variable(c(2, 2))
+  prob <- Problem(Minimize(sum(X)), list(X / A == 1))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.matrix(value(X)), A, tolerance = 1e-6)
+  expect_equal(val, sum(A), tolerance = 1e-6)
+
+  y <- Variable(3)
+  d <- c(2, 4, 8)
+  prob2 <- Problem(Minimize(sum(y)), list(y / d == 1))
+  psolve(prob2, solver = "CLARABEL")
+  expect_equal(as.numeric(value(y)), d, tolerance = 1e-6)
+})
+
+## CVXPY Expression.__div__ (expression.py:862-870) broadcasts both operands
+## and then requires a scalar operand or equal shapes, raising "Incompatible
+## shapes for division (lhs / rhs)" with the broadcast shapes. The upstream
+## test asserts this for x / [2, 2, 3] with a 2-vector x. Measured on the
+## pinned oracle: (2, 3) / (3, 1) and (3, 1) / (2, 3) raise; (2, 3) / (1, 3),
+## (2, 3) / (2, 1), (1, 3) / (2, 3) and (1, 3) / (3, 1) broadcast.
+## Before the fix CVXR built the mismatched quotient with the numerator's
+## shape, so value() failed with "non-conformable arrays" and problem_data()
+## recycled the divisor silently.
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division with non-broadcastable shapes is an error", {
+  x2 <- Variable(2)
+  expect_error(x2 / c(2, 2, 3), "Incompatible shapes for division")
+
+  x <- Variable(c(2, 3))
+  expect_error(x / c(2, 2, 3), "Incompatible shapes for division")
+  expect_error(x / matrix(c(2, 2, 3), 3, 1), "Incompatible shapes for division")
+  expect_error(c(2, 2, 3) / x, "Incompatible shapes for division")
+  expect_error(Constant(matrix(1, 3, 1)) / Constant(matrix(1, 2, 3)),
+               "Incompatible shapes for division")
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_div_expression
+test_that("Division broadcasts a row, a column, or a 1 x 1 operand", {
+  x <- Variable(c(2, 3))
+  value(x) <- matrix(0:5, 2, 3, byrow = TRUE)
+  row <- matrix(c(2, 2, 3), 1, 3)
+  col <- matrix(c(2, 3), 2, 1)
+
+  e1 <- x / row
+  expect_equal(e1@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e1)),
+               sweep(matrix(0:5, 2, 3, byrow = TRUE), 2, as.vector(row), "/"),
+               tolerance = 1e-10)
+
+  e2 <- x / col
+  expect_equal(e2@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e2)),
+               matrix(0:5, 2, 3, byrow = TRUE) / as.vector(col),
+               tolerance = 1e-10)
+
+  e3 <- row / x
+  expect_equal(e3@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e3))[2L, ], c(2, 2, 3) / c(3, 4, 5),
+               tolerance = 1e-10)
+
+  e4 <- x / matrix(2, 1, 1)
+  expect_equal(e4@shape, c(2L, 3L))
+  expect_equal(as.matrix(value(e4)), matrix(0:5, 2, 3, byrow = TRUE) / 2,
+               tolerance = 1e-10)
+
+  ## (1, 3) / (3, 1) broadcasts to 3 x 3, as CVXPY.
+  e5 <- Variable(c(1, 3)) / matrix(c(2, 2, 3), 3, 1)
+  expect_equal(e5@shape, c(3L, 3L))
+
+  ## Through the solver: the row divisor applies to every row.
+  D <- matrix(c(-2, 0, 2, -1, 1, -2), 2, 3, byrow = TRUE)
+  prob <- Problem(Minimize(sum(x / row)), list(x >= D))
+  val <- psolve(prob, solver = "CLARABEL")
+  expect_equal(status(prob), "optimal")
+  expect_equal(as.matrix(value(x)), D, tolerance = 1e-6)
+  expect_equal(val, sum(sweep(D, 2, as.vector(row), "/")), tolerance = 1e-6)
 })
 
 # ── 9. test_neg_expression ───────────────────────────────────────────
@@ -493,6 +657,57 @@ test_that("Comprehensive curvature composition tests (CVXPY parity)", {
   expect_false(is_log_log_concave(posy))
 })
 
+## The upstream test verbatim, on the curvatures() accessor (expression.py:272-290).
+## @cvxpy test_expressions.py::TestExpressions::test_curvatures
+test_that("curvatures() lists every curvature that holds (CVXPY parity)", {
+  mat <- matrix(c(1, -1), 1, 2)
+  expect_identical(curvatures(sum(mat %*% square(Variable(2)))), "UNKNOWN")
+
+  y <- Constant(42)
+  expect_true("CONSTANT" %in% curvatures(y))
+
+  x <- Variable(pos = TRUE)
+  expect_identical(curvatures(x),
+                   c("AFFINE", "CONVEX", "CONCAVE",
+                     "LOG-LOG AFFINE", "LOG-LOG CONVEX", "LOG-LOG CONCAVE",
+                     "QUASILINEAR", "QUASICONVEX", "QUASICONCAVE"))
+
+  monomial <- x * x * x
+  expect_identical(curvatures(monomial),
+                   c("LOG-LOG AFFINE", "LOG-LOG CONVEX", "LOG-LOG CONCAVE"))
+
+  posynomial <- x * x * x + x
+  expect_identical(curvatures(posynomial), "LOG-LOG CONVEX")
+
+  llcv <- 1 / (x * x * x + x)
+  expect_identical(curvatures(llcv), "LOG-LOG CONCAVE")
+})
+
+## The upstream asserts verbatim on curvature() (expression.py:292-318), plus the
+## quasi branch of the same property, measured on CVXPY 1.9.3.
+## @cvxpy test_expressions.py::TestExpressions::test_log_log_curvature
+test_that("curvature() names log-log and quasi curvature (CVXPY parity)", {
+  x <- Variable(pos = TRUE)
+  expect_identical(curvature(x * x * x), "LOG-LOG AFFINE")
+  expect_identical(curvature(x * x * x + x), "LOG-LOG CONVEX")
+  expect_identical(curvature(1 / (x * x * x + x)), "LOG-LOG CONCAVE")
+  expect_identical(curvature(ceiling(Variable())), "QUASILINEAR")
+  expect_identical(curvature(sum(matrix(c(1, -1), 1, 2) %*% square(Variable(2)))),
+                   "UNKNOWN")
+})
+
+## log_log_curvature() (expression.py:321-334), on the expressions of upstream's
+## test_log_log_curvature (whose .curvature asserts are the curvature() test above).
+## @cvxpy NONE
+test_that("log_log_curvature() names the strongest log-log curvature", {
+  x <- Variable(pos = TRUE)
+  expect_identical(log_log_curvature(Constant(2)), "LOG-LOG CONSTANT")
+  expect_identical(log_log_curvature(x * x * x), "LOG-LOG AFFINE")
+  expect_identical(log_log_curvature(x * x * x + x), "LOG-LOG CONVEX")
+  expect_identical(log_log_curvature(1 / (x * x * x + x)), "LOG-LOG CONCAVE")
+  expect_identical(log_log_curvature(Variable(1)), "UNKNOWN")
+})
+
 
 # ====================================================================
 # PROBLEM TESTS (11 critical)
@@ -508,7 +723,7 @@ test_that("Error when param has no value (CVXPY parity)", {
   param <- Parameter(name = "lambda")
   x <- Variable(name = "x")
   problem <- Problem(Minimize(param + x), list(x >= 0))
-  expect_error(psolve(problem, solver = "SCS"), "unspecified")
+  expect_error(psolve(problem, solver = "SCS"), class = "ParameterError")
 })
 
 # ── 2. test_get_problem_data ────────────────────────────────────────
@@ -576,7 +791,7 @@ test_that("Solving with parameters (CVXPY parity)", {
 
   ## Unset parameter should error
   value(p1) <- NULL
-  expect_error(psolve(prob, solver = "SCS", reltol = 1e-6), "unspecified")
+  expect_error(psolve(prob, solver = "SCS", reltol = 1e-6), class = "ParameterError")
 })
 
 # ── 5. test_parameter_expressions ───────────────────────────────────
@@ -1150,6 +1365,22 @@ test_that("quad_form with sparse matrix (CVXPY parity)", {
   result <- psolve(prob, solver = "OSQP")
   ## 1^2 + 2^2 = 5
   expect_equal(result, 5, tolerance = 1e-2)
+
+  ## Second half of the upstream test (test_quad_form.py:184-196): a Constant
+  ## built from a sparse identity, with x left free. The pinned solve above
+  ## cannot see a wrong P (psolve re-evaluates the objective from x); this one
+  ## can. CVXPY 1.9.3: -1, x = 0.5 (measured). Before the fix CVXR reported
+  ## -Inf / unbounded: the unit diagonal's empty @x made P all zeros.
+  A <- Constant(Matrix::Diagonal(4))
+  cc <- matrix(1, 1, 4)
+  x4 <- Variable(4)
+  fn <- quad_form(x4, A) - cc %*% x4
+  prob4 <- Problem(Minimize(fn))
+  val4 <- psolve(prob4, solver = "OSQP")
+  expect_equal(status(prob4), "optimal")
+  expect_equal(val4, -1, tolerance = 1e-3)
+  expect_equal(as.numeric(value(x4)), rep(0.5, 4), tolerance = 1e-3)
+  expect_equal(length(value(fn)), 1L)
 })
 
 # ── Zero matrix quad form ──────────────────────────────────────────
@@ -1898,6 +2129,22 @@ test_that("quadratic: has_quadratic_term detection (CVXPY parity)", {
   expect_true(CVXR:::has_quadratic_term(matrix_frac(y^3, P)))
   P2 <- Parameter(c(2, 2), PSD = TRUE)
   expect_true(CVXR:::has_quadratic_term(matrix_frac(y^3, P2)))
+})
+
+## binary_operators.py:559-567: a quotient is quadratic / has a quadratic term /
+## is QPWA only when the divisor is constant. Expected values measured on
+## cvxpy 1.9.3 (x / y, x^2 / y and abs(x) / y differ from the AffAtom defaults).
+## @cvxpy NONE
+test_that("quadratic: DivExpression quadratic predicates require a constant divisor", {
+  x <- Variable(1)
+  y <- Variable(1)
+  qd <- function(e) c(CVXR:::is_quadratic(e), CVXR:::has_quadratic_term(e), CVXR:::is_qpwa(e))
+  expect_identical(qd(x / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(square(x) / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(square(x) / 2), c(TRUE, TRUE, TRUE))
+  expect_identical(qd(x / 2), c(TRUE, FALSE, TRUE))
+  expect_identical(qd(abs(x) / y), c(FALSE, FALSE, FALSE))
+  expect_identical(qd(abs(x) / 2), c(FALSE, FALSE, TRUE))
 })
 
 # ── test_composite_quad_over_lin ──────────────────────────────────

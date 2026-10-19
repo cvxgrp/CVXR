@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Cumulative sum along an axis</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/059_atoms_affine_cumsum.R" class="external-link"><code>R/059_atoms_affine_cumsum.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/060_atoms_affine_cumsum.R" class="external-link"><code>R/060_atoms_affine_cumsum.R</code></a></small>
       <div class="d-none name"><code>cumsum_axis.Rd</code></div>
     </div>
 
@@ -43,7 +43,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cumsum_axis</span><span class="op">(</span><span class="va">x</span>, axis <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cumsum_axis</span><span class="op">(</span><span class="va">x</span>, axis <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -55,7 +55,9 @@
 
 
 <dt id="arg-axis">axis<a class="anchor" aria-label="anchor" href="#arg-axis"></a></dt>
-<dd><p>NULL (all), 1 (across rows), or 2 (down columns)</p></dd>
+<dd><p>2 (down columns, the default, as CVXPY's <code>axis = 0</code>),
+1 (across rows), or NULL (all entries, in column-major order, as a
+column)</p></dd>
 
 </dl></div>
     <div class="section level2">

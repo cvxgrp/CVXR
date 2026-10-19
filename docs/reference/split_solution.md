@@ -1,7 +1,7 @@
 # Split a primal solution into per-variable arrays
 
 Mirrors `ParamConeProg.split_solution` in
-`cone_matrix_stuffing.py:282-302`.
+`cone_matrix_stuffing.py:330-341`.
 
 ## Usage
 

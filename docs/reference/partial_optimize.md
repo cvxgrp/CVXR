@@ -1,8 +1,8 @@
 # Partial optimization transform
 
 Builds an Expression representing the optimal value of `prob` as a
-function of the variables you choose NOT to optimise over. Useful for
-two-stage / hierarchical optimisation, custom atom definitions, and
+function of the variables you choose NOT to optimize over. Useful for
+two-stage / hierarchical optimization, custom atom definitions, and
 embedding sub-problems inside larger problems.
 
 ## Usage
@@ -22,13 +22,13 @@ partial_optimize(
 - prob:
 
   A [Problem](https://www.cvxgrp.org/CVXR/reference/Problem.md) to
-  partially optimise.
+  partially optimize.
 
 - opt_vars:
 
   Optional list of
   [Variable](https://www.cvxgrp.org/CVXR/reference/Variable.md)s to
-  optimise over.
+  optimize over.
 
 - dont_opt_vars:
 
@@ -77,7 +77,6 @@ handles both layers.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(3)
 t <- Variable(3)
 abs_x <- partial_optimize(
@@ -85,5 +84,4 @@ abs_x <- partial_optimize(
   opt_vars = list(t)
 )
 ## abs_x is now an expression of x alone, equivalent to sum(abs(x)).
-} # }
 ```

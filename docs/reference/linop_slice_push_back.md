@@ -17,3 +17,8 @@ linop_slice_push_back(ptr, int_vector)
 - int_vector:
 
   Integer vector of indices (0-based for C++).
+
+## Value
+
+No return value (`NULL`), called for its side effect: `int_vector` is
+appended to the slice list of the C++ LinOp behind `ptr`.

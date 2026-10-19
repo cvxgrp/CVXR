@@ -87,12 +87,95 @@ other formats: the rendered output (Phase 2+).
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(3, name = "x")
 prob <- Problem(Minimize(p_norm(x, 2)), list(x >= 1))
 visualize(prob)                          # Stages 0-3 only
+#> ── Expression Tree (MINIMIZE) ──────────────────────────────────────────────────
+#> t_1 = PnormApprox(...)  [convex, \mathbb{R}_+, 1x1]
+#> \-- x  [affine, 3x1]
+#> ── Constraints ─────────────────────────────────────────────────────────────────
+#> ✓ [1] Inequality 3x1
+#>       1  [constant, 1x1]
+#>       x  [affine, 3x1]
+#> ── SMITH FORM ──────────────────────────────────────────────────────────────────
+#>   t_{1} = phi^{||.||_2}({x})
+#> ── RELAXED SMITH FORM ──────────────────────────────────────────────────────────
+#>   t_{1} >= phi^{||.||_2}({x})
+#> ── CONIC FORM ──────────────────────────────────────────────────────────────────
+#>   (t_{1}, {x}) in Q^{n+1}
 visualize(prob, solver = TRUE)           # Stages 0-5, default solver
-visualize(prob, solver = "Clarabel")     # Stages 0-5, specific solver
+#> ── Expression Tree (MINIMIZE) ──────────────────────────────────────────────────
+#> t_1 = PnormApprox(...)  [convex, \mathbb{R}_+, 1x1]
+#> \-- x  [affine, 3x1]
+#> ── Constraints ─────────────────────────────────────────────────────────────────
+#> ✓ [1] Inequality 3x1
+#>       1  [constant, 1x1]
+#>       x  [affine, 3x1]
+#> ── SMITH FORM ──────────────────────────────────────────────────────────────────
+#>   t_{1} = phi^{||.||_2}({x})
+#> ── RELAXED SMITH FORM ──────────────────────────────────────────────────────────
+#>   t_{1} >= phi^{||.||_2}({x})
+#> ── CONIC FORM ──────────────────────────────────────────────────────────────────
+#>   (t_{1}, {x}) in Q^{n+1}
+#> ── STANDARD CONE FORM (MOSEK) ──────────────────────────────────────────────────
+#>   minimize  c'x
+#>   s.t.      Ax + s = b,  s in K
+#> 
+#>   Variables (n):     4
+#>   Constraints (m):   7
+#>   nnz(A):           7
+#>   Density:          25.0%
+#> 
+#>   K = R+^3 x Q^4
+#> 
+#>   Variable Mapping:
+#>     x[1:1]  aux_781       auxiliary (canonicalization)
+#>     x[2:4]  x             user variable (3x1)
+#> 
+#>   Block Structure of A:
+#>     rows 1-3  (3 rows)  inequalities
+#>     rows 4-7  (4 rows)  SOC(4)
+#> ── SOLVER DATA MATRICES ────────────────────────────────────────────────────────
+#>   A: 7 x 4, nnz 7 (25.0%)
+#>   b: vector, length 7, nnz 3, range [   -1,     0]
+#>   c: vector, length 4, nnz 1, range [    0,     1]
+visualize(prob, solver = "CLARABEL")     # Stages 0-5, specific solver
+#> ── Expression Tree (MINIMIZE) ──────────────────────────────────────────────────
+#> t_1 = PnormApprox(...)  [convex, \mathbb{R}_+, 1x1]
+#> \-- x  [affine, 3x1]
+#> ── Constraints ─────────────────────────────────────────────────────────────────
+#> ✓ [1] Inequality 3x1
+#>       1  [constant, 1x1]
+#>       x  [affine, 3x1]
+#> ── SMITH FORM ──────────────────────────────────────────────────────────────────
+#>   t_{1} = phi^{||.||_2}({x})
+#> ── RELAXED SMITH FORM ──────────────────────────────────────────────────────────
+#>   t_{1} >= phi^{||.||_2}({x})
+#> ── CONIC FORM ──────────────────────────────────────────────────────────────────
+#>   (t_{1}, {x}) in Q^{n+1}
+#> ── STANDARD CONE FORM (CLARABEL) ───────────────────────────────────────────────
+#>   minimize  c'x
+#>   s.t.      Ax + s = b,  s in K
+#> 
+#>   Variables (n):     4
+#>   Constraints (m):   7
+#>   nnz(A):           7
+#>   Density:          25.0%
+#> 
+#>   K = R+^3 x Q^4
+#> 
+#>   Variable Mapping:
+#>     x[1:1]  aux_798       auxiliary (canonicalization)
+#>     x[2:4]  x             user variable (3x1)
+#> 
+#>   Block Structure of A:
+#>     rows 1-3  (3 rows)  inequalities
+#>     rows 4-7  (4 rows)  SOC(4)
+#> ── SOLVER DATA MATRICES ────────────────────────────────────────────────────────
+#>   A: 7 x 4, nnz 7 (25.0%)
+#>   b: vector, length 7, nnz 3, range [   -1,     0]
+#>   c: vector, length 4, nnz 1, range [    0,     1]
+if (FALSE) { # \dontrun{
 visualize(prob, output = "html", solver = TRUE)
 } # }
 ```

@@ -37,11 +37,10 @@ An `Or` expression.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 y <- Variable(boolean = TRUE)
+z <- Variable(boolean = TRUE)
 either <- x | y          # operator syntax
 either <- Or(x, y)       # functional syntax
 any3 <- Or(x, y, z)      # n-ary
-} # }
 ```

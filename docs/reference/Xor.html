@@ -9,7 +9,7 @@ For n arguments: result is 1 iff an odd number are 1 (parity)."><meta property="
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,7 @@ For n arguments: result is 1 iff an odd number are 1 (parity)."><meta property="
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Logical XOR</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/086_atoms_elementwise_logic.R" class="external-link"><code>R/086_atoms_elementwise_logic.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/087_atoms_elementwise_logic.R" class="external-link"><code>R/087_atoms_elementwise_logic.R</code></a></small>
       <div class="d-none name"><code>Xor.Rd</code></div>
     </div>
 
@@ -67,7 +67,7 @@ For n arguments: result is 1 iff an odd number are 1 (parity).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Note: R's <code>^</code> operator is used for <code><a href="power.html">power()</a></code>, so <code>Xor</code> is functional syntax only.</p>
+    <p>Note: R's <code>^</code> operator is used for <code><a href="cvxr_power.html">power()</a></code>, so <code>Xor</code> is functional syntax only.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -76,11 +76,9 @@ For n arguments: result is 1 iff an odd number are 1 (parity).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span>boolean <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span>boolean <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span>boolean <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">exclusive</span> <span class="op">&lt;-</span> <span class="fu">Xor</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

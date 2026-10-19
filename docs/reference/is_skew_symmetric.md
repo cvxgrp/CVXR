@@ -1,7 +1,7 @@
 # Check if Expression is Skew-Symmetric
 
 Tests whether `X + t(X) == 0` (real matrices only). CVXPY SOURCE:
-expression.py line 470-473
+expression.py line 515-518
 
 ## Usage
 

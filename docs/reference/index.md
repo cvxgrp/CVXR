@@ -204,8 +204,9 @@ Functions applied element-by-element
   part: -min(x, 0)
 - [`pos()`](https://www.cvxgrp.org/CVXR/reference/pos.md) : Positive
   part: max(x, 0)
-- [`power()`](https://www.cvxgrp.org/CVXR/reference/power.md) : Create a
-  Power atom
+- [`cvxr_power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md)
+  [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md) :
+  Create a Power atom
 - [`scalene()`](https://www.cvxgrp.org/CVXR/reference/scalene.md) :
   Scalene penalty: alpha \* pos(x) + beta \* neg(x)
 - [`square()`](https://www.cvxgrp.org/CVXR/reference/square.md) : Square
@@ -242,7 +243,7 @@ Functions that reduce or summarize entries
 - [`sum_smallest()`](https://www.cvxgrp.org/CVXR/reference/sum_smallest.md)
   : Sum of k smallest entries
 - [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md) :
-  (Weighted) geometric mean of a vector
+  (Weighted) geometric mean
 - [`harmonic_mean()`](https://www.cvxgrp.org/CVXR/reference/harmonic_mean.md)
   : Harmonic mean: n / sum(1/x_i)
 - [`ptp()`](https://www.cvxgrp.org/CVXR/reference/ptp.md) : Peak-to-peak
@@ -416,6 +417,8 @@ Query properties of CVXR expressions
 
 - [`curvature()`](https://www.cvxgrp.org/CVXR/reference/curvature.md) :
   Get Expression Curvature
+- [`curvatures()`](https://www.cvxgrp.org/CVXR/reference/curvatures.md)
+  : All Curvatures of an Expression
 - [`expr_sign()`](https://www.cvxgrp.org/CVXR/reference/expr_sign.md) :
   Get the DCP Sign of an Expression
 - [`is_affine()`](https://www.cvxgrp.org/CVXR/reference/is_affine.md) :
@@ -430,6 +433,8 @@ Query properties of CVXR expressions
   if an Expression is DCP-Compliant
 - [`is_dgp()`](https://www.cvxgrp.org/CVXR/reference/is_dgp.md) : Check
   if a Constraint is DGP-Compliant
+- [`is_diag()`](https://www.cvxgrp.org/CVXR/reference/is_diag.md) :
+  Check if a Leaf is Diagonal
 - [`is_dnlp()`](https://www.cvxgrp.org/CVXR/reference/is_dnlp.md) :
   Check if an Expression or Problem is DNLP-Compliant
 - [`is_dpp()`](https://www.cvxgrp.org/CVXR/reference/is_dpp.md) : Check
@@ -444,6 +449,8 @@ Query properties of CVXR expressions
   : Check if Expression is Log-Log Convex
 - [`is_lp()`](https://www.cvxgrp.org/CVXR/reference/is_lp.md) : Check if
   a Problem is a Linear Program
+- [`log_log_curvature()`](https://www.cvxgrp.org/CVXR/reference/log_log_curvature.md)
+  : Log-Log Curvature of an Expression
 - [`is_matrix()`](https://www.cvxgrp.org/CVXR/reference/is_matrix.md) :
   Is the Expression a Matrix?
 - [`is_mixed_integer()`](https://www.cvxgrp.org/CVXR/reference/is_mixed_integer.md)

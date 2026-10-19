@@ -19,7 +19,7 @@ need not match."><meta property="og:image" content="https://www.cvxgrp.org/CVXR/
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ need not match."><meta property="og:image" content="https://www.cvxgrp.org/CVXR/
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Vector dot product (inner product)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/045_atoms_affine_binary_operators.R" class="external-link"><code>R/045_atoms_affine_binary_operators.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/046_atoms_affine_binary_operators.R" class="external-link"><code>R/046_atoms_affine_binary_operators.R</code></a></small>
       <div class="d-none name"><code>vdot.Rd</code></div>
     </div>
 
@@ -91,11 +91,11 @@ argument.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">vdot</span><span class="op">(</span><span class="va">x</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> SumEntries(CVXR::Conj_(Reshape(var171, c(3, 1))) * Reshape([3x1 matrix], c(3, 1)), NULL, FALSE)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SumEntries(CVXR::Conj_(Reshape(var755, c(3, 1))) * Reshape([3x1 matrix], c(3, 1)), NULL, FALSE)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span>; <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">vdot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> SumEntries(CVXR::Conj_(CVXR::VStack(Reshape(var178, c(1, 1)), Reshape(var179, c(1, 1)))) * Reshape([2x1 matrix], c(2, 1)), NULL, FALSE)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SumEntries(CVXR::Conj_(CVXR::VStack(Reshape(var762, c(1, 1)), Reshape(var763, c(1, 1)))) * Reshape([2x1 matrix], c(2, 1)), NULL, FALSE)</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

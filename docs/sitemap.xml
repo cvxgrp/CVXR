@@ -59,11 +59,13 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cummax_expr.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cumsum_axis.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/curvature.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/curvatures.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvar.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_diff.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_mean.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_norm.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_outer.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_power.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_promote.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_std.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/cvxr_var.html</loc></url>
@@ -119,6 +121,8 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/intf_is_psd.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/intf_is_skew_symmetric.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/intf_is_sparse.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/intf_is_sparse_skew_symmetric.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/intf_is_sparse_symmetric.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/intf_shape.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/intf_sign.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/inv_pos.html</loc></url>
@@ -138,6 +142,7 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_dcp.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_decr.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_dgp.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/is_diag.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_dnlp.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_dpp.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/is_dqcp.html</loc></url>
@@ -193,6 +198,7 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/linop_slice_push_back.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/log1p_atom.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/log_det.html</loc></url>
+<url><loc>https://www.cvxgrp.org/CVXR/reference/log_log_curvature.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/log_normcdf.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/log_sum_exp.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/loggamma.html</loc></url>
@@ -228,7 +234,6 @@
 <url><loc>https://www.cvxgrp.org/CVXR/reference/perspective.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/pf_eigenvalue.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/pos.html</loc></url>
-<url><loc>https://www.cvxgrp.org/CVXR/reference/power.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/problem_data.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/problem_solution.html</loc></url>
 <url><loc>https://www.cvxgrp.org/CVXR/reference/problem_status.html</loc></url>

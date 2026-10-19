@@ -36,11 +36,10 @@ An `And` expression.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 y <- Variable(boolean = TRUE)
+z <- Variable(boolean = TRUE)
 both <- x & y            # operator syntax
 both <- And(x, y)        # functional syntax
 all3 <- And(x, y, z)     # n-ary
-} # }
 ```

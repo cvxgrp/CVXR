@@ -5,7 +5,7 @@ Cumulative sum along an axis
 ## Usage
 
 ``` r
-cumsum_axis(x, axis = NULL)
+cumsum_axis(x, axis = 2L)
 ```
 
 ## Arguments
@@ -16,7 +16,8 @@ cumsum_axis(x, axis = NULL)
 
 - axis:
 
-  NULL (all), 1 (across rows), or 2 (down columns)
+  2 (down columns, the default, as CVXPY's `axis = 0`), 1 (across rows),
+  or NULL (all entries, in column-major order, as a column)
 
 ## Value
 

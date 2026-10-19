@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
                         <h4 data-toc-skip class="author">Anqi Fu,
 Balasubramanian Narasimhan, and Stephen Boyd</h4>
             
-            <h4 data-toc-skip class="date">2026-08-23</h4>
+            <h4 data-toc-skip class="date">2026-10-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/vignettes/whats_new.Rmd" class="external-link"><code>vignettes/whats_new.Rmd</code></a></small>
       <div class="d-none name"><code>whats_new.Rmd</code></div>
@@ -81,6 +81,9 @@ see <code><a href="../articles/cvxr_intro.html">vignette("cvxr_intro")</a></code
 <a href="https://cvxr.rbind.io" class="external-link">CVXR website</a>.</p>
 <ul>
 <li>
+<a href="#cvxr-193">CVXR 1.9.3</a> — correctness fixes, matrix norms
+as in base R, CVXPY 1.9 solver selection</li>
+<li>
 <a href="#cvxr-192">CVXR 1.9.2</a> — correctness fixes,
 solver-options overhaul, faster solves</li>
 <li>
@@ -89,6 +92,264 @@ programming, derivatives, bounds propagation, new atoms</li>
 <li>
 <a href="#cvxr-18x">CVXR 1.8.x</a> — the ground-up S7 rewrite</li>
 </ul>
+<div class="section level2">
+<h2 id="cvxr-193">CVXR 1.9.3<a class="anchor" aria-label="anchor" href="#cvxr-193"></a>
+</h2>
+<p><code>CVXR</code> 1.9.3 tracks CVXPY 1.9.3. Like 1.9.2, it is chiefly
+a <strong>correctness release</strong>: several defects that returned
+wrong answers with no error or warning are fixed. Matrix norms now mean
+what they mean in base R, and the solver is chosen the way CVXPY 1.9
+chooses it.</p>
+<div class="section level3">
+<h3 id="correctness">Correctness<a class="anchor" aria-label="anchor" href="#correctness"></a>
+</h3>
+<p>These fixes change results. The new results are the answers to the
+problem you wrote.</p>
+<ul>
+<li>
+<strong>Gurobi</strong> solved quadratic objectives with cross
+terms, such as <code>quad_form(w, Sigma)</code> in a portfolio problem,
+with every cross term halved. This was present in 1.9.2. Gurobi’s
+second-order-cone duals also had the wrong sign.</li>
+<li>
+<strong>CVXOPT</strong> reported feasible problems with only
+equality constraints as infeasible, and unbounded problems as
+optimal.</li>
+<li>
+<code><a href="../reference/perspective.html">perspective()</a></code> of a function of a
+<code>symmetric</code>, <code>PSD</code> or <code>NSD</code> matrix
+variable returned a wrong optimum.</li>
+<li>A DGP problem with parameters could be reported DPP and solved with
+wrong solver data.</li>
+<li>
+<code><a href="../reference/gmatmul.html">gmatmul()</a></code> with parameters on both sides gave a wrong
+answer under <code>gp = TRUE</code>.</li>
+<li>
+<code>psolve(solver = "CLARABEL", warm_start = TRUE)</code> returned
+the previous optimum when the cones had changed.</li>
+<li>A complex variable declared <code>PSD</code> or <code>NSD</code>
+lost its cone.</li>
+<li>
+<code>sum_entries(x, axis = 2)</code> of a one-row expression gave
+wrong answers or crashed R. Present in 1.9.2.</li>
+<li>
+<code>%*%</code> with a scalar operand that does not conform, as in
+<code>2 %*% x</code> for a 2 x 3 <code>x</code>, or with a 1 x 1 operand
+that does not conform, built a product that gave a scalar product or
+crashed R. Both are now errors, as in base R; use <code>*</code> to
+multiply by a scalar. A scalar operand that conforms, as in
+<code>x %*% 2</code> for a 3 x 1 <code>x</code>, is a product, as in
+base R.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code> and
+<code><a href="https://rdrr.io/r/base/prod.html" class="external-link">prod()</a></code> of an expression took a named <code>axis</code> as
+one more operand, so <code>sum(x, axis = 2)</code> was
+<code>sum(x + 2)</code>. They now honor <code>axis</code> and
+<code>keepdims</code>.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/prod.html" class="external-link">prod()</a></code>, <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code> and
+<code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code> with more than one operand now mean what they mean in
+base R: <code>sum(x, 2)</code> is <code>sum(x) + 2</code> and
+<code>max(x, y)</code> is one scalar, the largest entry of either. They
+were <code>sum(x + 2)</code>, <code>prod(x * y)</code> and the
+elementwise maximum and minimum; use <code><a href="../reference/max_elemwise.html">max_elemwise()</a></code> and
+<code><a href="../reference/min_elemwise.html">min_elemwise()</a></code> for those.</li>
+<li>
+<code><a href="../reference/max_elemwise.html">max_elemwise()</a></code> and <code><a href="../reference/min_elemwise.html">min_elemwise()</a></code> take
+<code>na.rm</code>, and <code><a href="../reference/hstack.html">hstack()</a></code> and <code><a href="../reference/vstack.html">vstack()</a></code>
+take <code>deparse.level</code>, as <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax()</a></code> and
+<code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind()</a></code> do, with no effect.
+<code>max_elemwise(u, v, na.rm = TRUE)</code> used to take
+<code>TRUE</code> as a third operand. Named operands, as from
+<code>do.call(vstack, split(...))</code>, are accepted as before.</li>
+<li>
+<code>x / A</code> with a matrix or vector <code>A</code> divided
+every entry of <code>x</code> by <code>A[1, 1]</code>. It is now
+entrywise, as in CVXPY. Present in 1.9.2.</li>
+<li>
+<code>x / d</code> with shapes that do not broadcast, such as a 2 x
+3 <code>x</code> and a length-3 <code>d</code>, recycled the divisor
+silently. It is now an error, as in CVXPY; a row or column divisor still
+broadcasts.</li>
+<li>
+<code><a href="../reference/value.html">value()</a></code> of a sum, a product or an index of a
+sparse-matrix constant failed with “non-conformable arrays” or
+“subscript out of bounds”, and a sum of two sparse constants came back
+flattened to one column. These now evaluate; a mixed sparse and dense
+result is a base matrix, a sparse one stays sparse.</li>
+<li>Constants from Matrix classes other than <code>dgCMatrix</code> were
+misread: a unit <code>Diagonal(n)</code> was all zeros, so
+<code>quad_form(x, Diagonal(n))</code> was unbounded. Present in
+1.9.2.</li>
+<li>A sparse <code>bounds</code> matrix bound only its stored entries.
+As in CVXPY, it is now accepted only on a <code>sparsity</code> variable
+with the same pattern. Present in 1.9.2.</li>
+<li>A CLARABEL or OSQP warm re-solve after a parameter became zero, or
+nonzero, returned the previous optimum as optimal. Present in
+1.9.2.</li>
+<li>
+<code><a href="../reference/conv.html">conv()</a></code>, <code><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum()</a></code> and <code><a href="../reference/kron.html">kron()</a></code>
+were treated as log-log affine, so a geometric program containing them
+was accepted and could solve to a wrong value. Such a problem is now
+rejected, as in CVXPY.</li>
+<li>Calling <code><a href="../reference/problem_data.html">problem_data()</a></code> on a geometric program between
+two solves made the next solve after a parameter change return the
+previous optimum. <code><a href="../reference/problem_data.html">problem_data()</a></code> now goes through the same
+compile cache as <code><a href="../reference/psolve.html">psolve()</a></code>.</li>
+<li>
+<code><a href="../reference/max_elemwise.html">max_elemwise()</a></code> and <code><a href="../reference/min_elemwise.html">min_elemwise()</a></code> of a
+column and a row recycled instead of broadcasting, so
+<code><a href="../reference/psolve.html">psolve()</a></code> returned a wrong objective.</li>
+<li>On an expression, <code>log(x, base)</code> ignored
+<code>base</code>, <code>outer(x, y, FUN)</code> ignored
+<code>FUN</code> and <code>diag(x, nrow)</code> ignored
+<code>nrow</code>. <code>base</code> is now honored; a <code>FUN</code>
+other than <code>"*"</code>, or a <code>nrow</code>, is an error.</li>
+<li>
+<code>x[NULL, ]</code> of an expression returned all of
+<code>x</code>, and <code>x[c(TRUE, NA, FALSE), ]</code> dropped the
+<code>NA</code>. Both are now errors.</li>
+<li>
+<code>cumsum(X)</code> of a matrix expression is now column-wise, as
+in CVXPY and as <code><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumprod()</a></code> and <code><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cummax()</a></code> already
+were.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="matrix-norms-follow-base-r">Matrix norms follow base R<a class="anchor" aria-label="anchor" href="#matrix-norms-follow-base-r"></a>
+</h3>
+<p>With no <code>axis</code>, <code>cvxr_norm(X, p)</code> and
+<code>norm(X, type)</code> on a matrix now agree with base R’s
+<code><a href="../reference/math_atoms.html">norm()</a></code> and with CVXPY:</p>
+<ul>
+<li>
+<code>p = 1</code> is the maximum absolute column sum.</li>
+<li>
+<code>p = 2</code> is the largest singular value.</li>
+<li>
+<code>p = Inf</code> is the maximum absolute row sum.</li>
+</ul>
+<p>They used to be entrywise. A row vector is a 1 x n matrix, as in base
+R. Any other <code>p</code> on a matrix is now an error. For the
+entrywise norms use <code>cvxr_norm(X, "fro")</code>,
+<code>norm1(X)</code> or <code>p_norm(X, p)</code>.
+<code>cvxr_norm(X, "nuc")</code> now gives the nuclear norm. With no
+<code>type</code>, <code>norm(X)</code> of an expression is the spectral
+norm, as in CVXPY; on an ordinary R matrix it is base R’s one-norm.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="fu"><a href="../reference/cvxr_norm.html">cvxr_norm</a></span><span class="op">(</span><span class="fu"><a href="../reference/Constant.html">Constant</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>   <span class="co"># 7, as norm(X, "1")</span></span>
+<span><span class="fu"><a href="../reference/value.html">value</a></span><span class="op">(</span><span class="fu"><a href="../reference/norm1.html">norm1</a></span><span class="op">(</span><span class="fu"><a href="../reference/Constant.html">Constant</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>          <span class="co"># 10, the entrywise 1-norm</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="base-r-functions-keep-their-meaning">Base R functions keep their meaning<a class="anchor" aria-label="anchor" href="#base-r-functions-keep-their-meaning"></a>
+</h3>
+<p><code>CVXR</code> masks <code><a href="../reference/math_atoms.html">diag()</a></code>, <code><a href="../reference/math_atoms.html">norm()</a></code>,
+<code><a href="../reference/math_atoms.html">outer()</a></code>, <code><a href="../reference/math_atoms.html">sd()</a></code>, <code><a href="../reference/math_atoms.html">var()</a></code> and
+<code><a href="../reference/convolve.html">convolve()</a></code> so that they also work on expressions. On
+anything that is not an expression, each is now exactly the base R or
+stats function, called as written. On an expression each follows CVXPY,
+and an argument meant only for ordinary data, such as
+<code>na.rm</code>, is an error.</p>
+<p><code><a href="../reference/cvxr_power.html">power()</a></code> is different: it is CVXPY’s
+<code>power(x, p)</code> for any argument, as before, and the new
+<code><a href="../reference/cvxr_power.html">cvxr_power()</a></code> is the same function. It masks the unrelated
+<code><a href="https://rdrr.io/r/stats/power.html" class="external-link">stats::power()</a></code>, a <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> link, so with
+<code>CVXR</code> attached write <code><a href="https://rdrr.io/r/stats/power.html" class="external-link">stats::power()</a></code> in a
+<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> family.</p>
+</div>
+<div class="section level3">
+<h3 id="solver-selection">Solver selection<a class="anchor" aria-label="anchor" href="#solver-selection"></a>
+</h3>
+<p>The solver is now chosen as in CVXPY 1.9: first from the problem’s
+structure, and then the solver’s QP or conic interface follows. As a
+result, a problem may be solved by a different installed solver than in
+1.9.2:</p>
+<ul>
+<li>Commercial solvers are preferred for QPs and mixed-integer QPs
+too.</li>
+<li>SCIP solves mixed-integer QPs.</li>
+<li>A named HiGHS, Gurobi, CPLEX or Xpress solves an LP through its
+conic interface.</li>
+<li>Falling back to a non-default solver warns.</li>
+<li>ECOS_BB is never chosen unless you name it.</li>
+</ul>
+<p>When no installed solver fits, the error reads “No installed solver
+could handle this problem.”</p>
+</div>
+<div class="section level3">
+<h3 id="solvers">Solvers<a class="anchor" aria-label="anchor" href="#solvers"></a>
+</h3>
+<ul>
+<li>
+<strong>MOSEK</strong> takes its status from the solution status, as
+CVXPY does, so an iteration or time limit is no longer an error by
+itself. The simplex optimizers work.</li>
+<li>
+<strong>HiGHS</strong> accepts options nested in a
+<code>highs_options</code> list. An option HiGHS rejects is now an error
+rather than being dropped.</li>
+<li>
+<strong>Gurobi</strong> <code>warm_start = TRUE</code> seeds the
+start point from the variables’ values.</li>
+<li>
+<strong>CPLEX</strong> returns dual values for continuous problems
+with second-order cones; they were all missing.</li>
+<li>
+<strong>SCS</strong> exposes the infeasibility certificate of an
+infeasible solve through <code><a href="../reference/dual_value.html">dual_value()</a></code>.</li>
+<li>
+<code>solver_stats(prob)@extra_stats</code> now carries the raw
+solver result for OSQP, ECOS, Gurobi, HiGHS and PIQP as well.</li>
+<li>
+<strong>GLPK_MI</strong> reports an infeasible mixed-integer problem
+as <code>infeasible</code>; it was a solver error.</li>
+<li>Solving no longer advances R’s random number stream, so
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> followed by a solve and then random draws gives
+the same draws as without the solve. Present in every earlier
+version.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="new-features">New features<a class="anchor" aria-label="anchor" href="#new-features"></a>
+</h3>
+<ul>
+<li>
+<code><a href="../reference/geo_mean.html">geo_mean()</a></code> accepts arguments of any shape and gains
+<code>axis</code> and <code>keepdims</code>. <code><a href="../reference/cvxr_var.html">cvxr_var()</a></code>
+gains them too.</li>
+<li>Exact <code>geo_mean(x, approx = FALSE)</code> and
+<code>PowConeND</code> constraints now solve on SCS and MOSEK as well as
+Clarabel.</li>
+<li>
+<code><a href="../reference/curvature.html">curvature()</a></code> reports log-log and quasi curvature instead
+of <code>"UNKNOWN"</code>. The new <code><a href="../reference/curvatures.html">curvatures()</a></code> returns
+every curvature that applies, and <code><a href="../reference/log_log_curvature.html">log_log_curvature()</a></code> and
+<code><a href="../reference/is_diag.html">is_diag()</a></code> are new as well.</li>
+<li>A quadratic objective over a structured variable
+(<code>symmetric</code>, <code>PSD</code>, <code>diag</code>, …) now
+solves on QP solvers.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span>pos <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/curvature.html">curvature</a></span><span class="op">(</span><span class="va">x</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span>                <span class="co"># "LOG-LOG AFFINE"</span></span>
+<span><span class="fu"><a href="../reference/curvature.html">curvature</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">ceiling</a></span><span class="op">(</span><span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>  <span class="co"># "QUASILINEAR"</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+</h3>
+<ul>
+<li>The first solve of a parametric (DPP) problem compiles about twice
+as fast and uses far less memory.</li>
+<li>A DPP problem with a parametric quadratic objective keeps its
+compiled form across solves.</li>
+<li>
+<code>psolve(nlp = TRUE)</code> no longer makes dense copies of
+sparse constant matrices.</li>
+</ul>
+</div>
+</div>
 <div class="section level2">
 <h2 id="cvxr-192">CVXR 1.9.2<a class="anchor" aria-label="anchor" href="#cvxr-192"></a>
 </h2>
@@ -146,7 +407,7 @@ parameters exactly as in CVXPY; all options are routed to the correct
 <strong>SCS</strong> accepts <code>eps</code>, which sets both
 <code>eps_abs</code> and <code>eps_rel</code>.</li>
 </ul>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"MOSEK"</span>, eps <span class="op">=</span> <span class="fl">1e-8</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, solver <span class="op">=</span> <span class="st">"SCS"</span>, eps <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -178,7 +439,7 @@ appeared to solve with a continuous solver; they now require a
 mixed-integer-capable solver and say so if none is installed.</p>
 </div>
 <div class="section level3">
-<h3 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+<h3 id="performance-1">Performance<a class="anchor" aria-label="anchor" href="#performance-1"></a>
 </h3>
 <p>1.9.2 is roughly a third faster than 1.9.1 overall, with
 substantially lower memory use on larger problems, and DQCP problems
@@ -206,7 +467,7 @@ You build the problem from differentiable atoms, check it with
 and the disciplined nonlinear grammar additionally allows smooth atoms
 in forms DCP forbids (for example, a product of two variable-dependent
 expressions).</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/is_dnlp.html">is_dnlp</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>                       <span class="co"># TRUE</span></span>
@@ -249,14 +510,14 @@ Request derivatives at solve time with
 <code>requires_grad = TRUE</code>.</p>
 <p><strong>Forward mode</strong> (perturb parameters, see the change in
 the solution):</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, requires_grad <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/delta.html">delta</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">da</span>                      <span class="co"># perturbation of parameter a</span></span>
 <span><span class="fu"><a href="../reference/derivative.html">derivative</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span>                 <span class="co"># propagate forward</span></span>
 <span><span class="fu"><a href="../reference/delta.html">delta</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>                            <span class="co"># resulting change in variable x</span></span></code></pre></div>
 <p><strong>Reverse mode</strong> (gradient of the solution with respect
 to parameters):</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/psolve.html">psolve</a></span><span class="op">(</span><span class="va">problem</span>, requires_grad <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/backward.html">backward</a></span><span class="op">(</span><span class="va">problem</span><span class="op">)</span>                   <span class="co"># propagate backward</span></span>
 <span><span class="fu"><a href="../reference/gradient.html">gradient</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>                         <span class="co"># d(solution) / d(a)</span></span></code></pre></div>
@@ -273,7 +534,7 @@ Analysis</a>.</p>
 <p><code><a href="../reference/get_bounds.html">get_bounds()</a></code> now works on <strong>any
 expression</strong>, not just variables, propagating interval bounds
 through affine, elementwise, and piecewise-linear atoms:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">3</span>, bounds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/get_bounds.html">get_bounds</a></span><span class="op">(</span><span class="va">A</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">x</span> <span class="op">+</span> <span class="va">b</span><span class="op">)</span>         <span class="co"># bounds propagated through the affine map</span></span>
 <span><span class="fu"><a href="../reference/get_bounds.html">get_bounds</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>             <span class="co"># and through atoms</span></span></code></pre></div>
@@ -298,7 +559,7 @@ CVXPY’s <code>is_dpp(context = ...)</code>.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="solvers">Solvers<a class="anchor" aria-label="anchor" href="#solvers"></a>
+<h3 id="solvers-1">Solvers<a class="anchor" aria-label="anchor" href="#solvers-1"></a>
 </h3>
 <ul>
 <li>
@@ -328,7 +589,7 @@ and <code>ignore_dpp</code> arguments, matching CVXPY’s
 </ul>
 </div>
 <div class="section level3">
-<h3 id="performance-1">Performance<a class="anchor" aria-label="anchor" href="#performance-1"></a>
+<h3 id="performance-2">Performance<a class="anchor" aria-label="anchor" href="#performance-2"></a>
 </h3>
 <p>Canonicalization and solving are now faster than the 1.8.2 CRAN
 release (roughly 5–13% lower wall-clock on solve-dominated problems such
@@ -349,7 +610,7 @@ previous S4-based release. This section summarizes the key changes from
 CVXR 1.x that may affect users.</p>
 </div>
 <div class="section level3">
-<h3 id="new-features">New Features<a class="anchor" aria-label="anchor" href="#new-features"></a>
+<h3 id="new-features-1">New Features<a class="anchor" aria-label="anchor" href="#new-features-1"></a>
 </h3>
 <ul>
 <li>
@@ -402,7 +663,7 @@ and <code>numeric</code> objects work natively without wrapping.</li>
 </h3>
 <p>The primary solve function is now <code><a href="../reference/psolve.html">psolve()</a></code>, which
 returns the optimal value directly:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cvxr.rbind.io" class="external-link">CVXR</a></span><span class="op">)</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="../reference/Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="../reference/sum_squares.html">sum_squares</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">x</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
@@ -411,7 +672,7 @@ returns the optimal value directly:</p>
 <span><span class="va">prob_status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span>   <span class="co"># check status</span></span></code></pre></div>
 <p>The old <code><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve()</a></code> still works but returns a
 backward-compatible list:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/solve.html" class="external-link">solve</a></span><span class="op">(</span><span class="va">prob</span><span class="op">)</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">value</span>       <span class="co"># optimal value</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="fu">getValue</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="co"># variable value (deprecated)</span></span>
@@ -521,106 +782,9 @@ MIP), CVXOPT (LP, SOCP), PIQP (QP), SCIP, and XPRESS</li>
 <div class="section level4">
 <h4 id="supported-solvers">Supported solvers<a class="anchor" aria-label="anchor" href="#supported-solvers"></a>
 </h4>
-<table class="table">
-<thead><tr class="header">
-<th>Solver</th>
-<th>R Package</th>
-<th>Type</th>
-<th>Problem Classes</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>CLARABEL</td>
-<td><code>clarabel</code></td>
-<td>Conic</td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
-</tr>
-<tr class="even">
-<td>SCS</td>
-<td><code>scs</code></td>
-<td>Conic</td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
-</tr>
-<tr class="odd">
-<td>MOSEK</td>
-<td><code>Rmosek</code></td>
-<td>Conic</td>
-<td>LP, QP, SOCP, SDP, ExpCone, PowCone</td>
-</tr>
-<tr class="even">
-<td>ECOS</td>
-<td><code>ECOSolveR</code></td>
-<td>Conic</td>
-<td>LP, SOCP, ExpCone</td>
-</tr>
-<tr class="odd">
-<td>ECOS_BB</td>
-<td><code>ECOSolveR</code></td>
-<td>Conic</td>
-<td>LP, SOCP, ExpCone + MI</td>
-</tr>
-<tr class="even">
-<td>GUROBI</td>
-<td><code>gurobi</code></td>
-<td>Conic/QP</td>
-<td>LP, QP, SOCP, MI</td>
-</tr>
-<tr class="odd">
-<td>GLPK</td>
-<td><code>Rglpk</code></td>
-<td>Conic</td>
-<td>LP</td>
-</tr>
-<tr class="even">
-<td>GLPK_MI</td>
-<td><code>Rglpk</code></td>
-<td>Conic</td>
-<td>LP, MILP</td>
-</tr>
-<tr class="odd">
-<td>HIGHS</td>
-<td><code>highs</code></td>
-<td>Conic/QP</td>
-<td>LP, QP, MILP</td>
-</tr>
-<tr class="even">
-<td>CVXOPT</td>
-<td><code>cccp</code></td>
-<td>Conic</td>
-<td>LP, SOCP</td>
-</tr>
-<tr class="odd">
-<td>OSQP</td>
-<td><code>osqp</code></td>
-<td>QP</td>
-<td>LP, QP</td>
-</tr>
-<tr class="even">
-<td>CPLEX</td>
-<td><code>Rcplex</code></td>
-<td>Conic/QP</td>
-<td>LP, QP, SOCP, MI</td>
-</tr>
-<tr class="odd">
-<td>PIQP</td>
-<td><code>piqp</code></td>
-<td>QP</td>
-<td>LP, QP</td>
-</tr>
-<tr class="even">
-<td>SCIP</td>
-<td><code>scip</code></td>
-<td>Conic</td>
-<td>LP, MILP, SOCP, MI-SOCP</td>
-</tr>
-<tr class="odd">
-<td>XPRESS</td>
-<td><code>xpress</code></td>
-<td>Conic/QP</td>
-<td>LP, QP, SOCP, MI</td>
-</tr>
-</tbody>
-</table>
+<p>The current table of solvers and the problem classes each one handles
+is kept on the website: <a href="https://cvxr.rbind.io/examples/solvers/using-other-solvers.html#solver-capabilities" class="external-link">Solver
+Capabilities</a>.</p>
 <p>Smooth nonlinear programs additionally use the <code>IPOPT</code> and
 <code>UNO</code> NLP solvers (see <a href="#cvxr-19x">CVXR
 1.9.1</a>).</p>
@@ -690,7 +854,7 @@ MIP), CVXOPT (LP, SOCP), PIQP (QP), SCIP, and XPRESS</li>
 <h4 id="math-function-dispatch">Math function dispatch<a class="anchor" aria-label="anchor" href="#math-function-dispatch"></a>
 </h4>
 <p>Standard R math functions work directly on CVXR expressions:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Variable.html">Variable</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>        <span class="co"># elementwise absolute value</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>       <span class="co"># elementwise square root</span></span>
@@ -779,7 +943,7 @@ proper row vector of shape <code>(1, n)</code> rather than collapsing to
 a 1D vector. When comparing such a result with an R numeric vector
 (which CVXR treats as a column), you may need to use <code><a href="https://rdrr.io/r/base/t.html" class="external-link">t()</a></code> or
 <code>matrix(..., nrow = 1)</code> to match shapes:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Old (worked in CVXR 1.x because axis reductions were 1D):</span></span>
 <span><span class="fu"><a href="../reference/sum_entries.html">sum_entries</a></span><span class="op">(</span><span class="va">X</span>, axis <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">==</span> <span class="va">target_vec</span></span>
 <span><span class="co">## New (wrap target as row vector to match the (1, n) shape):</span></span>
@@ -796,7 +960,7 @@ dimensions.</p>
 <p>If you encounter issues involving the <code>Rmosek</code> package
 while submitting your package to CRAN, include the following code in
 <code>&lt;your_pkg&gt;/R/zzz.R</code> to resolve the issue.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Content of &lt;your_pkg&gt;/R/zzz.R</span></span>
 <span></span>
 <span><span class="va">.onLoad</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">libname</span>, <span class="va">pkgname</span><span class="op">)</span> <span class="op">{</span></span>

@@ -1,8 +1,8 @@
 # Get Size Metrics for a Problem
 
 Mirrors CVXPY's `Problem.size_metrics` property
-(`cvxpy/problems/problem.py:486-490`, class at lines 1690-1752): returns
-a `SizeMetrics` object summarising the problem's scale.
+(`cvxpy/problems/problem.py:515-521`, class at lines 1592-1654): returns
+a `SizeMetrics` object summarizing the problem's scale.
 
 ## Usage
 
@@ -23,4 +23,4 @@ size_metrics(x, ...)
 
 ## Value
 
-A `SizeMetrics` object with seven numeric fields.
+A `SizeMetrics` object with six numeric fields.

@@ -3,7 +3,7 @@
 Given derivatives `(delc, delA, delb)` of a downstream objective with
 respect to the conic problem data, returns derivatives with respect to
 each `Parameter` (keyed by parameter id). Mirrors
-`ParamConeProg.apply_param_jac` in `cone_matrix_stuffing.py:242-280`.
+`ParamConeProg.apply_param_jac` in `cone_matrix_stuffing.py:289-328`.
 
 ## Usage
 

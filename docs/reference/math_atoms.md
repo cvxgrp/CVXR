@@ -3,10 +3,12 @@
 CVXR registers methods so that standard R functions create the
 appropriate atoms when applied to `Expression` objects.
 
-For CVXR expressions, computes the matrix/vector norm atom. For other
-inputs, falls through to
-[`Matrix::norm`](https://rdrr.io/pkg/Matrix/man/norm-methods.html) which
-dispatches via S4 for both Matrix and base matrix objects.
+For CVXR expressions, computes the norm atom with the same meaning as
+base R [`norm`](https://rdrr.io/r/base/norm.html) for every type: a
+vector is a one-column or one-row matrix. For any other input the call
+is forwarded as written to
+[`Matrix::norm`](https://rdrr.io/pkg/Matrix/man/norm-methods.html), so
+the result is exactly base R's (including its default type `"O"`).
 
 For CVXR expressions, computes the standard deviation atom (ddof=0 by
 default, matching CVXPY/numpy convention). For numeric inputs, falls
@@ -25,8 +27,8 @@ For CVXR expressions, dispatches to
 diagonal matrix) or
 [`DiagMat`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) (extract
 diagonal from matrix), matching CVXPY's `cp.diag()` behavior. For other
-inputs, falls through to `Matrix::diag` which dispatches via S4 for both
-Matrix and base matrix objects.
+inputs, falls through to `Matrix::diag`, called exactly as written,
+which dispatches via S4 for both Matrix and base matrix objects.
 
 ## Usage
 
@@ -39,7 +41,7 @@ var(x, ...)
 
 outer(X, Y, ...)
 
-diag(x, nrow, ncol, names = TRUE, k = 0L)
+diag(x = 1, nrow, ncol, names = TRUE, k = NULL)
 ```
 
 ## Arguments
@@ -50,13 +52,19 @@ diag(x, nrow, ncol, names = TRUE, k = 0L)
 
 - type:
 
-  Norm type: `"1"`, `"2"` (default), `"I"`/`"i"` (infinity), `"F"`/`"f"`
-  (Frobenius).
+  Norm type, as in base R: `"O"`/`"o"`/`"1"` (maximum absolute column
+  sum), `"I"`/`"i"` (maximum absolute row sum), `"F"`/`"f"`/`"E"`/`"e"`
+  (Frobenius), `"M"`/`"m"` (largest absolute entry), `"2"` (largest
+  singular value; the default for an expression only). For an
+  expression, any other value is passed to
+  [`cvxr_norm`](https://www.cvxgrp.org/CVXR/reference/cvxr_norm.md) as
+  `p`.
 
 - ...:
 
   For non-Expression inputs: passed to
-  [`outer`](https://rdrr.io/r/base/outer.html).
+  [`outer`](https://rdrr.io/r/base/outer.html). For expressions, only
+  `FUN = "*"` is accepted; any other `FUN` or argument is an error.
 
 - X:
 
@@ -68,20 +76,23 @@ diag(x, nrow, ncol, names = TRUE, k = 0L)
 
 - nrow:
 
-  For non-Expression: passed to `Matrix::diag`.
+  For non-Expression: passed to `Matrix::diag`; an error with an
+  Expression.
 
 - ncol:
 
-  For non-Expression: passed to `Matrix::diag`.
+  For non-Expression: passed to `Matrix::diag`; an error with an
+  Expression.
 
 - names:
 
-  For non-Expression: passed to `Matrix::diag`.
+  For non-Expression: passed to `Matrix::diag`; an error with an
+  Expression.
 
 - k:
 
-  Integer diagonal offset for Expressions only. `k = 0` (default) is the
-  main diagonal.
+  Integer diagonal offset for Expressions only. `NULL` (default) means
+  `0`, the main diagonal.
 
 ## Value
 
@@ -98,9 +109,7 @@ An Expression, matrix, or vector.
 ## Details
 
 The `k` parameter (off-diagonal offset) is only available for Expression
-inputs. For the full-featured version with `k` on non-Expression inputs,
-use [`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) or
-[`DiagMat`](https://www.cvxgrp.org/CVXR/reference/DiagMat.md) directly.
+inputs; giving it with a non-Expression `x` is an error.
 
 ## Math group (elementwise, via S3 group generic)
 
@@ -119,7 +128,7 @@ use [`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) or
 - `sqrt(x)`:
 
   Square root via
-  [`power`](https://www.cvxgrp.org/CVXR/reference/power.md)`(x, 0.5)`
+  [`power`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md)`(x, 0.5)`
   (concave)
 
 - `log1p(x)`:
@@ -144,7 +153,22 @@ use [`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) or
 
 - `ceiling(x)`, `floor(x)`:
 
-  Round up/down (MIP)
+  Round up/down (quasilinear, DQCP). As in CVXPY, the value rounds `x`
+  to 4 decimal places first, so `floor(-3e-10)` of an expression is 0,
+  not -1.
+
+- `sign(x)`:
+
+  Sign (quasilinear for a scalar, DQCP). As in CVXPY, it is -1 for
+  `x <= 0`, so `sign(0)` of an expression is -1, not 0.
+
+On a matrix expression,
+[`cumsum()`](https://rdrr.io/r/base/cumsum.html),
+[`cummax()`](https://rdrr.io/r/base/cumsum.html) and
+[`cumprod()`](https://rdrr.io/r/base/cumsum.html) run down each column,
+as in CVXPY; use
+[`cumsum_axis`](https://www.cvxgrp.org/CVXR/reference/cumsum_axis.md)`(x, axis = NULL)`
+for all entries in column-major order.
 
 ## Summary group (via S3 group generic)
 
@@ -159,6 +183,19 @@ use [`DiagVec`](https://www.cvxgrp.org/CVXR/reference/DiagVec.md) or
 - `min(x)`:
 
   Minimum entry (concave)
+
+- `prod(x)`:
+
+  Product of entries
+
+Each also takes `axis` and `keepdims`, as in CVXPY: `sum(x, axis = 2)`
+is
+[`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)`(x, axis = 2)`,
+and likewise
+[`max_entries`](https://www.cvxgrp.org/CVXR/reference/max_entries.md),
+[`min_entries`](https://www.cvxgrp.org/CVXR/reference/min_entries.md)
+and
+[`prod_entries`](https://www.cvxgrp.org/CVXR/reference/prod_entries.md).
 
 ## S3 generic methods
 
@@ -204,7 +241,7 @@ through the standard interface, use the explicit functions:
 
 ## See also
 
-[`power`](https://www.cvxgrp.org/CVXR/reference/power.md),
+[`power`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md),
 [`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md),
 [`max_entries`](https://www.cvxgrp.org/CVXR/reference/max_entries.md),
 [`min_entries`](https://www.cvxgrp.org/CVXR/reference/min_entries.md)

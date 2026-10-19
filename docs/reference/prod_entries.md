@@ -32,5 +32,6 @@ A Prod atom
 ``` r
 x <- Variable(3, pos = TRUE)
 prob <- Problem(Minimize(prod_entries(x)), list(x >= 2))
-if (FALSE) psolve(prob, gp = TRUE) # \dontrun{}
+psolve(prob, gp = TRUE)
+#> [1] 8
 ```

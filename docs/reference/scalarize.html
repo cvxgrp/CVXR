@@ -11,7 +11,7 @@ cvxpy.transforms.scalarize submodule; access members with $:"><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,7 @@ cvxpy.transforms.scalarize submodule; access members with $:"><meta property="og
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Scalarize multiple objectives into a single objective</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/253_transforms_scalarize.R" class="external-link"><code>R/253_transforms_scalarize.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/254_transforms_scalarize.R" class="external-link"><code>R/254_transforms_scalarize.R</code></a></small>
       <div class="d-none name"><code>scalarize.Rd</code></div>
     </div>
 
@@ -55,6 +55,18 @@ into one objective for multi-objective optimization. Mirrors CVXPY's
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
     <p>A named list of four functions.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p><code>scalarize</code> itself is a named list of the four functions
+above. Each function returns a single <code>Objective</code> combining the
+inputs: <code>max</code> and <code>log_sum_exp</code> always return a
+<code>Minimize</code>; <code>weighted_sum</code> returns a <code>Minimize</code> when all
+objectives are <code>Minimize</code> and a <code>Maximize</code> when all are
+<code>Maximize</code> (mixing the two is an error); <code>targets_and_priorities</code>
+returns a <code>Minimize</code> or <code>Maximize</code> according to the objective
+senses (after negative priorities flip them) and the curvature of the
+combined expression.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -77,7 +89,8 @@ smooth maximum; <code>gamma -&gt; 0</code> approaches <code>weighted_sum</code>,
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">objs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="square.html">square</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu"><a href="square.html">square</a></span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">obj</span> <span class="op">&lt;-</span> <span class="va">scalarize</span><span class="op">$</span><span class="fu">weighted_sum</span><span class="op">(</span><span class="va">objs</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="fu"><a href="psolve.html">psolve</a></span><span class="op">(</span><span class="fu"><a href="Problem.html">Problem</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span> <span class="co"># \dontrun{}</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="psolve.html">psolve</a></span><span class="op">(</span><span class="fu"><a href="Problem.html">Problem</a></span><span class="op">(</span><span class="va">obj</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

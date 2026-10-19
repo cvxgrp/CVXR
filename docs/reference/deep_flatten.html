@@ -13,7 +13,7 @@ nested lists: vdot(list(a, b), c(1, 2)) is a * 1 + b * 2."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@ nested lists: vdot(list(a, b), c(1, 2)) is a * 1 + b * 2."><meta property="og:im
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Recursively flatten a nested list of expressions into one column vector</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/049_atoms_affine_reshape.R" class="external-link"><code>R/049_atoms_affine_reshape.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/050_atoms_affine_reshape.R" class="external-link"><code>R/050_atoms_affine_reshape.R</code></a></small>
       <div class="d-none name"><code>deep_flatten.Rd</code></div>
     </div>
 
@@ -76,7 +76,7 @@ nested lists: <code>vdot(list(a, b), c(1, 2))</code> is <code>a * 1 + b * 2</cod
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span>; <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">deep_flatten</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">a</span>, <span class="va">b</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CVXR::VStack(Reshape(var57, c(1, 1)), Reshape(var58, c(1, 1)))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> CVXR::VStack(Reshape(var75, c(1, 1)), Reshape(var76, c(1, 1)))</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

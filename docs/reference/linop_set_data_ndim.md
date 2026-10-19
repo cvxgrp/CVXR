@@ -17,3 +17,8 @@ linop_set_data_ndim(ptr, value)
 - value:
 
   Integer dimensionality (0 = scalar, 2 = matrix).
+
+## Value
+
+No return value (`NULL`), called for its side effect: the data
+dimensionality of the C++ LinOp behind `ptr` is set in place.

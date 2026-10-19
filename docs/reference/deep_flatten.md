@@ -32,5 +32,5 @@ An Expression of shape `c(n, 1)`.
 ``` r
 a <- Variable(); b <- Variable()
 deep_flatten(list(a, b))
-#> CVXR::VStack(Reshape(var57, c(1, 1)), Reshape(var58, c(1, 1)))
+#> CVXR::VStack(Reshape(var75, c(1, 1)), Reshape(var76, c(1, 1)))
 ```

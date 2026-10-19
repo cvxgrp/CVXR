@@ -32,9 +32,7 @@ representing `!x | y`.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 y <- Variable(boolean = TRUE)
 expr <- implies(x, y)
-} # }
 ```

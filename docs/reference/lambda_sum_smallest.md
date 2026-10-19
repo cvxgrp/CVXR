@@ -16,7 +16,8 @@ lambda_sum_smallest(A, k)
 
 - k:
 
-  Number of smallest eigenvalues to sum (positive integer)
+  Number of smallest eigenvalues to sum (positive number; a fractional
+  part weights the next eigenvalue, as in CVXPY)
 
 ## Value
 

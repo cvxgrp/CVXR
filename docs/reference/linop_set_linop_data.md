@@ -17,3 +17,8 @@ linop_set_linop_data(ptr, data_ptr)
 - data_ptr:
 
   External pointer to the data LinOp sub-tree.
+
+## Value
+
+No return value (`NULL`), called for its side effect: the sub-tree
+becomes the data of the C++ LinOp behind `ptr`.

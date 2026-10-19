@@ -3,7 +3,7 @@
 Given a named list mapping variable ids to their (shape-aligned) deltas,
 packs them into a single length-`x_length` numeric vector in
 `var_id_to_col` order. Mirrors `ParamConeProg.split_adjoint` in
-`cone_matrix_stuffing.py:304-318`.
+`cone_matrix_stuffing.py:343-351`.
 
 ## Usage
 

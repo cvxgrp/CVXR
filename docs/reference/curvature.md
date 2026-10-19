@@ -1,6 +1,6 @@
 # Get Expression Curvature
 
-Returns the DCP curvature of an expression as a string.
+Returns the curvature of an expression as a string.
 
 ## Usage
 
@@ -16,11 +16,15 @@ curvature(x)
 
 ## Value
 
-Character: `"CONSTANT"`, `"AFFINE"`, `"CONVEX"`, `"CONCAVE"`, or
-`"UNKNOWN"`.
+Character: the first curvature that holds, checked in the order
+`"CONSTANT"`, `"AFFINE"`, `"CONVEX"`, `"CONCAVE"`, `"LOG-LOG AFFINE"`,
+`"LOG-LOG CONVEX"`, `"LOG-LOG CONCAVE"`, `"QUASILINEAR"`,
+`"QUASICONVEX"`, `"QUASICONCAVE"`; `"UNKNOWN"` if none does.
 
 ## See also
 
+[`curvatures()`](https://www.cvxgrp.org/CVXR/reference/curvatures.md),
+[`log_log_curvature()`](https://www.cvxgrp.org/CVXR/reference/log_log_curvature.md),
 [`is_convex()`](https://www.cvxgrp.org/CVXR/reference/is_convex.md),
 [`is_concave()`](https://www.cvxgrp.org/CVXR/reference/is_concave.md),
 [`is_affine()`](https://www.cvxgrp.org/CVXR/reference/is_affine.md),

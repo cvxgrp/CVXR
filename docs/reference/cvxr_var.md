@@ -1,6 +1,7 @@
 # Variance of an expression
 
-Computes the variance. Only supports full reduction (axis = NULL).
+Computes the variance of an expression, over all entries or along an
+axis.
 
 ## Usage
 
@@ -16,7 +17,7 @@ cvxr_var(x, axis = NULL, keepdims = FALSE, ddof = 0)
 
 - axis:
 
-  NULL only (axis reduction not yet supported).
+  NULL (all), 1 (row-wise), or 2 (column-wise).
 
 - keepdims:
 

@@ -28,8 +28,8 @@ A `Xor` expression.
 ## Details
 
 Note: R's `^` operator is used for
-[`power()`](https://www.cvxgrp.org/CVXR/reference/power.md), so `Xor` is
-functional syntax only.
+[`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md), so
+`Xor` is functional syntax only.
 
 ## See also
 
@@ -42,9 +42,7 @@ functional syntax only.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 y <- Variable(boolean = TRUE)
 exclusive <- Xor(x, y)
-} # }
 ```

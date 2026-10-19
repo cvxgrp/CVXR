@@ -17,3 +17,8 @@ linop_size_push_back(ptr, value)
 - value:
 
   Integer dimension value.
+
+## Value
+
+No return value (`NULL`), called for its side effect: `value` is
+appended to the size vector of the C++ LinOp behind `ptr`.

@@ -43,9 +43,9 @@ A scalar Expression representing `sum(Conj(x) * y)`.
 ``` r
 x <- Variable(3)
 vdot(x, c(1, 2, 3))
-#> SumEntries(CVXR::Conj_(Reshape(var171, c(3, 1))) * Reshape([3x1 matrix], c(3, 1)), NULL, FALSE)
+#> SumEntries(CVXR::Conj_(Reshape(var755, c(3, 1))) * Reshape([3x1 matrix], c(3, 1)), NULL, FALSE)
 
 a <- Variable(); b <- Variable()
 vdot(list(a, b), c(1, 2))
-#> SumEntries(CVXR::Conj_(CVXR::VStack(Reshape(var178, c(1, 1)), Reshape(var179, c(1, 1)))) * Reshape([2x1 matrix], c(2, 1)), NULL, FALSE)
+#> SumEntries(CVXR::Conj_(CVXR::VStack(Reshape(var762, c(1, 1)), Reshape(var763, c(1, 1)))) * Reshape([2x1 matrix], c(2, 1)), NULL, FALSE)
 ```

@@ -9,7 +9,7 @@ psolve(problem, gp = TRUE)."><meta property="og:image" content="https://www.cvxg
 
     <a class="navbar-brand me-2" href="../index.html">CVXR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,7 +35,7 @@ psolve(problem, gp = TRUE)."><meta property="og:image" content="https://www.cvxg
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Perron-Frobenius eigenvalue of a positive matrix</h1>
-      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/121_atoms_pf_eigenvalue.R" class="external-link"><code>R/121_atoms_pf_eigenvalue.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/cvxgrp/CVXR/blob/HEAD/R/122_atoms_pf_eigenvalue.R" class="external-link"><code>R/122_atoms_pf_eigenvalue.R</code></a></small>
       <div class="d-none name"><code>pf_eigenvalue.Rd</code></div>
     </div>
 
@@ -67,7 +67,8 @@ psolve(problem, gp = TRUE)."><meta property="og:image" content="https://www.cvxg
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="Variable.html">Variable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, pos <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="Problem.html">Problem</a></span><span class="op">(</span><span class="fu"><a href="Minimize.html">Minimize</a></span><span class="op">(</span><span class="fu">pf_eigenvalue</span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">X</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span> <span class="op">&gt;=</span> <span class="fl">0.1</span>, <span class="va">X</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">&gt;=</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="fu"><a href="psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, gp <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># \dontrun{}</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="psolve.html">psolve</a></span><span class="op">(</span><span class="va">prob</span>, gp <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,10 +1,20 @@
 # Create a Power atom
 
-Create a Power atom
+CVXPY's `power(x, p)`: `x` raised to the power `p`, for any argument (a
+plain number becomes a constant). `cvxr_power()` is the preferred name.
+`power()` is the same function, kept because existing code uses it; it
+masks [`power`](https://rdrr.io/r/stats/power.html), the unrelated
+[`glm()`](https://rdrr.io/r/stats/glm.html) link constructor, so with
+CVXR attached write
+[`stats::power()`](https://rdrr.io/r/stats/power.html) in a
+[`glm()`](https://rdrr.io/r/stats/glm.html) family. `x^p` is the same
+atom for an expression `x`.
 
 ## Usage
 
 ``` r
+cvxr_power(x, p, max_denom = 1024L, approx = TRUE)
+
 power(x, p, max_denom = 1024L, approx = TRUE)
 ```
 

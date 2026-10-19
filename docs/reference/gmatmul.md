@@ -30,5 +30,6 @@ A Gmatmul atom
 x <- Variable(2, pos = TRUE)
 A <- matrix(c(1, 0, 0, 1), 2, 2)
 prob <- Problem(Minimize(sum(gmatmul(A, x))), list(x >= 0.5))
-if (FALSE) psolve(prob, gp = TRUE) # \dontrun{}
+psolve(prob, gp = TRUE)
+#> [1] 1
 ```

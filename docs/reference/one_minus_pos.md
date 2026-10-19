@@ -23,5 +23,6 @@ A OneMInusPos atom
 ``` r
 x <- Variable(pos = TRUE)
 prob <- Problem(Maximize(one_minus_pos(x)), list(x >= 0.1, x <= 0.5))
-if (FALSE) psolve(prob, gp = TRUE) # \dontrun{}
+psolve(prob, gp = TRUE)
+#> [1] 0.9
 ```

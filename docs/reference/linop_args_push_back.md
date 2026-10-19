@@ -17,3 +17,8 @@ linop_args_push_back(ptr, child_ptr)
 - child_ptr:
 
   External pointer to the child LinOp.
+
+## Value
+
+No return value (`NULL`), called for its side effect: the child LinOp is
+appended to the argument list of the C++ LinOp behind `ptr`.

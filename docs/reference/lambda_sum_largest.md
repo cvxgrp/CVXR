@@ -16,7 +16,8 @@ lambda_sum_largest(A, k)
 
 - k:
 
-  Number of largest eigenvalues to sum (positive integer)
+  Number of largest eigenvalues to sum (positive number; a fractional
+  part weights the next eigenvalue, as in CVXPY)
 
 ## Value
 

@@ -27,8 +27,6 @@ A `PSD` constraint object.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 X <- Variable(c(3, 3), symmetric = TRUE)
 constr <- X %<<% diag(3)  # I - X is PSD (X is NSD relative to I)
-} # }
 ```

@@ -14,6 +14,17 @@ scalarize
 
 A named list of four functions.
 
+## Value
+
+`scalarize` itself is a named list of the four functions above. Each
+function returns a single `Objective` combining the inputs: `max` and
+`log_sum_exp` always return a `Minimize`; `weighted_sum` returns a
+`Minimize` when all objectives are `Minimize` and a `Maximize` when all
+are `Maximize` (mixing the two is an error); `targets_and_priorities`
+returns a `Minimize` or `Maximize` according to the objective senses
+(after negative priorities flip them) and the curvature of the combined
+expression.
+
 ## Details
 
 - `scalarize$weighted_sum(objectives, weights)` – weighted sum of
@@ -36,5 +47,6 @@ A named list of four functions.
 x <- Variable()
 objs <- list(Minimize(square(x)), Minimize(square(x - 1)))
 obj <- scalarize$weighted_sum(objs, c(1, 1))
-if (FALSE) psolve(Problem(obj)) # \dontrun{}
+psolve(Problem(obj))
+#> [1] 0.5
 ```

@@ -23,5 +23,6 @@ An EyeMinusInv atom
 ``` r
 X <- Variable(c(2, 2), pos = TRUE)
 prob <- Problem(Minimize(sum(eye_minus_inv(X))), list(X <= 0.4))
-if (FALSE) psolve(prob, gp = TRUE, solver = "SCS") # \dontrun{}
+psolve(prob, gp = TRUE, solver = "SCS")
+#> [1] 2.000013
 ```

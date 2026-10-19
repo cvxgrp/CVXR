@@ -32,9 +32,7 @@ wrapping [Xor](https://www.cvxgrp.org/CVXR/reference/Xor.md).
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 y <- Variable(boolean = TRUE)
 expr <- iff(x, y)
-} # }
 ```

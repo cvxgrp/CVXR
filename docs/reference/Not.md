@@ -36,9 +36,7 @@ A `Not` expression.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
 x <- Variable(boolean = TRUE)
 not_x <- !x          # operator syntax
 not_x <- Not(x)      # functional syntax
-} # }
 ```

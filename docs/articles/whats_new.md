@@ -7,11 +7,244 @@ introductory tutorial, see
 [`vignette("cvxr_intro")`](https://www.cvxgrp.org/CVXR/articles/cvxr_intro.md);
 for worked examples, visit the [CVXR website](https://cvxr.rbind.io).
 
+- [CVXR 1.9.3](#cvxr-193) — correctness fixes, matrix norms as in base
+  R, CVXPY 1.9 solver selection
 - [CVXR 1.9.2](#cvxr-192) — correctness fixes, solver-options overhaul,
   faster solves
 - [CVXR 1.9.1](#cvxr-19x) — disciplined nonlinear programming,
   derivatives, bounds propagation, new atoms
 - [CVXR 1.8.x](#cvxr-18x) — the ground-up S7 rewrite
+
+## CVXR 1.9.3
+
+`CVXR` 1.9.3 tracks CVXPY 1.9.3. Like 1.9.2, it is chiefly a
+**correctness release**: several defects that returned wrong answers
+with no error or warning are fixed. Matrix norms now mean what they mean
+in base R, and the solver is chosen the way CVXPY 1.9 chooses it.
+
+### Correctness
+
+These fixes change results. The new results are the answers to the
+problem you wrote.
+
+- **Gurobi** solved quadratic objectives with cross terms, such as
+  `quad_form(w, Sigma)` in a portfolio problem, with every cross term
+  halved. This was present in 1.9.2. Gurobi’s second-order-cone duals
+  also had the wrong sign.
+- **CVXOPT** reported feasible problems with only equality constraints
+  as infeasible, and unbounded problems as optimal.
+- [`perspective()`](https://www.cvxgrp.org/CVXR/reference/perspective.md)
+  of a function of a `symmetric`, `PSD` or `NSD` matrix variable
+  returned a wrong optimum.
+- A DGP problem with parameters could be reported DPP and solved with
+  wrong solver data.
+- [`gmatmul()`](https://www.cvxgrp.org/CVXR/reference/gmatmul.md) with
+  parameters on both sides gave a wrong answer under `gp = TRUE`.
+- `psolve(solver = "CLARABEL", warm_start = TRUE)` returned the previous
+  optimum when the cones had changed.
+- A complex variable declared `PSD` or `NSD` lost its cone.
+- `sum_entries(x, axis = 2)` of a one-row expression gave wrong answers
+  or crashed R. Present in 1.9.2.
+- `%*%` with a scalar operand that does not conform, as in `2 %*% x` for
+  a 2 x 3 `x`, or with a 1 x 1 operand that does not conform, built a
+  product that gave a scalar product or crashed R. Both are now errors,
+  as in base R; use `*` to multiply by a scalar. A scalar operand that
+  conforms, as in `x %*% 2` for a 3 x 1 `x`, is a product, as in base R.
+- [`sum()`](https://rdrr.io/r/base/sum.html),
+  [`max()`](https://rdrr.io/r/base/Extremes.html),
+  [`min()`](https://rdrr.io/r/base/Extremes.html) and
+  [`prod()`](https://rdrr.io/r/base/prod.html) of an expression took a
+  named `axis` as one more operand, so `sum(x, axis = 2)` was
+  `sum(x + 2)`. They now honor `axis` and `keepdims`.
+- [`sum()`](https://rdrr.io/r/base/sum.html),
+  [`prod()`](https://rdrr.io/r/base/prod.html),
+  [`max()`](https://rdrr.io/r/base/Extremes.html) and
+  [`min()`](https://rdrr.io/r/base/Extremes.html) with more than one
+  operand now mean what they mean in base R: `sum(x, 2)` is `sum(x) + 2`
+  and `max(x, y)` is one scalar, the largest entry of either. They were
+  `sum(x + 2)`, `prod(x * y)` and the elementwise maximum and minimum;
+  use
+  [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  for those.
+- [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  take `na.rm`, and
+  [`hstack()`](https://www.cvxgrp.org/CVXR/reference/hstack.md) and
+  [`vstack()`](https://www.cvxgrp.org/CVXR/reference/vstack.md) take
+  `deparse.level`, as [`pmax()`](https://rdrr.io/r/base/Extremes.html)
+  and [`rbind()`](https://rdrr.io/r/base/cbind.html) do, with no effect.
+  `max_elemwise(u, v, na.rm = TRUE)` used to take `TRUE` as a third
+  operand. Named operands, as from `do.call(vstack, split(...))`, are
+  accepted as before.
+- `x / A` with a matrix or vector `A` divided every entry of `x` by
+  `A[1, 1]`. It is now entrywise, as in CVXPY. Present in 1.9.2.
+- `x / d` with shapes that do not broadcast, such as a 2 x 3 `x` and a
+  length-3 `d`, recycled the divisor silently. It is now an error, as in
+  CVXPY; a row or column divisor still broadcasts.
+- [`value()`](https://www.cvxgrp.org/CVXR/reference/value.md) of a sum,
+  a product or an index of a sparse-matrix constant failed with
+  “non-conformable arrays” or “subscript out of bounds”, and a sum of
+  two sparse constants came back flattened to one column. These now
+  evaluate; a mixed sparse and dense result is a base matrix, a sparse
+  one stays sparse.
+- Constants from Matrix classes other than `dgCMatrix` were misread: a
+  unit `Diagonal(n)` was all zeros, so `quad_form(x, Diagonal(n))` was
+  unbounded. Present in 1.9.2.
+- A sparse `bounds` matrix bound only its stored entries. As in CVXPY,
+  it is now accepted only on a `sparsity` variable with the same
+  pattern. Present in 1.9.2.
+- A CLARABEL or OSQP warm re-solve after a parameter became zero, or
+  nonzero, returned the previous optimum as optimal. Present in 1.9.2.
+- [`conv()`](https://www.cvxgrp.org/CVXR/reference/conv.md),
+  [`cumsum()`](https://rdrr.io/r/base/cumsum.html) and
+  [`kron()`](https://www.cvxgrp.org/CVXR/reference/kron.md) were treated
+  as log-log affine, so a geometric program containing them was accepted
+  and could solve to a wrong value. Such a problem is now rejected, as
+  in CVXPY.
+- Calling
+  [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
+  on a geometric program between two solves made the next solve after a
+  parameter change return the previous optimum.
+  [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
+  now goes through the same compile cache as
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md).
+- [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  of a column and a row recycled instead of broadcasting, so
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) returned
+  a wrong objective.
+- On an expression, `log(x, base)` ignored `base`, `outer(x, y, FUN)`
+  ignored `FUN` and `diag(x, nrow)` ignored `nrow`. `base` is now
+  honored; a `FUN` other than `"*"`, or a `nrow`, is an error.
+- `x[NULL, ]` of an expression returned all of `x`, and
+  `x[c(TRUE, NA, FALSE), ]` dropped the `NA`. Both are now errors.
+- `cumsum(X)` of a matrix expression is now column-wise, as in CVXPY and
+  as [`cumprod()`](https://rdrr.io/r/base/cumsum.html) and
+  [`cummax()`](https://rdrr.io/r/base/cumsum.html) already were.
+
+### Matrix norms follow base R
+
+With no `axis`, `cvxr_norm(X, p)` and `norm(X, type)` on a matrix now
+agree with base R’s
+[`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) and with
+CVXPY:
+
+- `p = 1` is the maximum absolute column sum.
+- `p = 2` is the largest singular value.
+- `p = Inf` is the maximum absolute row sum.
+
+They used to be entrywise. A row vector is a 1 x n matrix, as in base R.
+Any other `p` on a matrix is now an error. For the entrywise norms use
+`cvxr_norm(X, "fro")`, `norm1(X)` or `p_norm(X, p)`.
+`cvxr_norm(X, "nuc")` now gives the nuclear norm. With no `type`,
+`norm(X)` of an expression is the spectral norm, as in CVXPY; on an
+ordinary R matrix it is base R’s one-norm.
+
+\
+`X`` ``<-`` `[`matrix`](https://rdrr.io/r/base/matrix.html)`(`[`c`](https://rdrr.io/r/base/c.html)`(``1``, ``-``2``, ``3``, ``4``)``, ``2``, ``2``)`\
+[`value`](https://www.cvxgrp.org/CVXR/reference/value.md)`(`[`cvxr_norm`](https://www.cvxgrp.org/CVXR/reference/cvxr_norm.md)`(`[`Constant`](https://www.cvxgrp.org/CVXR/reference/Constant.md)`(``X``)``, ``1``)``)``   ``# 7, as norm(X, "1")`\
+[`value`](https://www.cvxgrp.org/CVXR/reference/value.md)`(`[`norm1`](https://www.cvxgrp.org/CVXR/reference/norm1.md)`(`[`Constant`](https://www.cvxgrp.org/CVXR/reference/Constant.md)`(``X``)``)``)``          ``# 10, the entrywise 1-norm`
+
+### Base R functions keep their meaning
+
+`CVXR` masks
+[`diag()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md),
+[`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md),
+[`outer()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md),
+[`sd()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md),
+[`var()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) and
+[`convolve()`](https://www.cvxgrp.org/CVXR/reference/convolve.md) so
+that they also work on expressions. On anything that is not an
+expression, each is now exactly the base R or stats function, called as
+written. On an expression each follows CVXPY, and an argument meant only
+for ordinary data, such as `na.rm`, is an error.
+
+[`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md) is
+different: it is CVXPY’s `power(x, p)` for any argument, as before, and
+the new
+[`cvxr_power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md) is
+the same function. It masks the unrelated
+[`stats::power()`](https://rdrr.io/r/stats/power.html), a
+[`glm()`](https://rdrr.io/r/stats/glm.html) link, so with `CVXR`
+attached write [`stats::power()`](https://rdrr.io/r/stats/power.html) in
+a [`glm()`](https://rdrr.io/r/stats/glm.html) family.
+
+### Solver selection
+
+The solver is now chosen as in CVXPY 1.9: first from the problem’s
+structure, and then the solver’s QP or conic interface follows. As a
+result, a problem may be solved by a different installed solver than in
+1.9.2:
+
+- Commercial solvers are preferred for QPs and mixed-integer QPs too.
+- SCIP solves mixed-integer QPs.
+- A named HiGHS, Gurobi, CPLEX or Xpress solves an LP through its conic
+  interface.
+- Falling back to a non-default solver warns.
+- ECOS_BB is never chosen unless you name it.
+
+When no installed solver fits, the error reads “No installed solver
+could handle this problem.”
+
+### Solvers
+
+- **MOSEK** takes its status from the solution status, as CVXPY does, so
+  an iteration or time limit is no longer an error by itself. The
+  simplex optimizers work.
+- **HiGHS** accepts options nested in a `highs_options` list. An option
+  HiGHS rejects is now an error rather than being dropped.
+- **Gurobi** `warm_start = TRUE` seeds the start point from the
+  variables’ values.
+- **CPLEX** returns dual values for continuous problems with
+  second-order cones; they were all missing.
+- **SCS** exposes the infeasibility certificate of an infeasible solve
+  through
+  [`dual_value()`](https://www.cvxgrp.org/CVXR/reference/dual_value.md).
+- `solver_stats(prob)@extra_stats` now carries the raw solver result for
+  OSQP, ECOS, Gurobi, HiGHS and PIQP as well.
+- **GLPK_MI** reports an infeasible mixed-integer problem as
+  `infeasible`; it was a solver error.
+- Solving no longer advances R’s random number stream, so
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) followed by a solve
+  and then random draws gives the same draws as without the solve.
+  Present in every earlier version.
+
+### New features
+
+- [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md)
+  accepts arguments of any shape and gains `axis` and `keepdims`.
+  [`cvxr_var()`](https://www.cvxgrp.org/CVXR/reference/cvxr_var.md)
+  gains them too.
+- Exact `geo_mean(x, approx = FALSE)` and `PowConeND` constraints now
+  solve on SCS and MOSEK as well as Clarabel.
+- [`curvature()`](https://www.cvxgrp.org/CVXR/reference/curvature.md)
+  reports log-log and quasi curvature instead of `"UNKNOWN"`. The new
+  [`curvatures()`](https://www.cvxgrp.org/CVXR/reference/curvatures.md)
+  returns every curvature that applies, and
+  [`log_log_curvature()`](https://www.cvxgrp.org/CVXR/reference/log_log_curvature.md)
+  and [`is_diag()`](https://www.cvxgrp.org/CVXR/reference/is_diag.md)
+  are new as well.
+- A quadratic objective over a structured variable (`symmetric`, `PSD`,
+  `diag`, …) now solves on QP solvers.
+
+\
+`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``pos ``=`` ``TRUE``)`\
+`y`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``pos ``=`` ``TRUE``)`\
+[`curvature`](https://www.cvxgrp.org/CVXR/reference/curvature.md)`(``x`` ``*`` ``y``)``                ``# "LOG-LOG AFFINE"`\
+[`curvature`](https://www.cvxgrp.org/CVXR/reference/curvature.md)`(`[`ceiling`](https://rdrr.io/r/base/Round.html)`(`[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``)``)``)``  ``# "QUASILINEAR"`
+
+### Performance
+
+- The first solve of a parametric (DPP) problem compiles about twice as
+  fast and uses far less memory.
+- A DPP problem with a parametric quadratic objective keeps its compiled
+  form across solves.
+- `psolve(nlp = TRUE)` no longer makes dense copies of sparse constant
+  matrices.
 
 ## CVXR 1.9.2
 
@@ -59,7 +292,9 @@ vanish silently:
   all options are routed to the correct `Rmosek` parameter groups.
 - **SCS** accepts `eps`, which sets both `eps_abs` and `eps_rel`.
 
-[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"MOSEK"``, eps ``=`` ``1e-8``)`` `[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"SCS"``, eps ``=`` ``1e-6``)`
+\
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"MOSEK"``, eps ``=`` ``1e-8``)`\
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, solver ``=`` ``"SCS"``, eps ``=`` ``1e-6``)`
 
 ### New warnings and catchable errors
 
@@ -108,7 +343,11 @@ DNLP, and the disciplined nonlinear grammar additionally allows smooth
 atoms in forms DCP forbids (for example, a product of two
 variable-dependent expressions).
 
-`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``2``)`` ``prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(`[`sum_squares`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)`(``x`` ``-`` `[`c`](https://rdrr.io/r/base/c.html)`(``1``, ``2``)``)``)``)`` `[`is_dnlp`](https://www.cvxgrp.org/CVXR/reference/is_dnlp.md)`(``prob``)`` ``# TRUE`` `[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, nlp ``=`` ``TRUE``)`` ``# solved through the NLP path`
+\
+`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``2``)`\
+`prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(`[`sum_squares`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)`(``x`` ``-`` `[`c`](https://rdrr.io/r/base/c.html)`(``1``, ``2``)``)``)``)`\
+[`is_dnlp`](https://www.cvxgrp.org/CVXR/reference/is_dnlp.md)`(``prob``)``                       ``# TRUE`\
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``, nlp ``=`` ``TRUE``)``            ``# solved through the NLP path`
 
 - **New smooth atoms** usable anywhere in a DNLP:
   [`sin()`](https://rdrr.io/r/base/Trig.html),
@@ -151,11 +390,18 @@ solve time with `requires_grad = TRUE`.
 
 **Forward mode** (perturb parameters, see the change in the solution):
 
-[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``problem``, requires_grad ``=`` ``TRUE``)`` `[`delta`](https://www.cvxgrp.org/CVXR/reference/delta.md)`(``a``)`` ``<-`` ``da`` ``# perturbation of parameter a`` `[`derivative`](https://www.cvxgrp.org/CVXR/reference/derivative.md)`(``problem``)`` ``# propagate forward`` `[`delta`](https://www.cvxgrp.org/CVXR/reference/delta.md)`(``x``)`` ``# resulting change in variable x`
+\
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``problem``, requires_grad ``=`` ``TRUE``)`\
+[`delta`](https://www.cvxgrp.org/CVXR/reference/delta.md)`(``a``)`` ``<-`` ``da``                      ``# perturbation of parameter a`\
+[`derivative`](https://www.cvxgrp.org/CVXR/reference/derivative.md)`(``problem``)``                 ``# propagate forward`\
+[`delta`](https://www.cvxgrp.org/CVXR/reference/delta.md)`(``x``)``                            ``# resulting change in variable x`
 
 **Reverse mode** (gradient of the solution with respect to parameters):
 
-[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``problem``, requires_grad ``=`` ``TRUE``)`` `[`backward`](https://www.cvxgrp.org/CVXR/reference/backward.md)`(``problem``)`` ``# propagate backward`` `[`gradient`](https://www.cvxgrp.org/CVXR/reference/gradient.md)`(``a``)`` ``# d(solution) / d(a)`
+\
+[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``problem``, requires_grad ``=`` ``TRUE``)`\
+[`backward`](https://www.cvxgrp.org/CVXR/reference/backward.md)`(``problem``)``                   ``# propagate backward`\
+[`gradient`](https://www.cvxgrp.org/CVXR/reference/gradient.md)`(``a``)``                         ``# d(solution) / d(a)`
 
 The chain rule is wired through the `Dgp2Dcp` (log/exp) and
 `Complex2Real` reductions, so geometric and complex problems
@@ -171,7 +417,10 @@ Analysis](https://cvxr.rbind.io/examples/dpp/sensitivity-analysis.html).
 now works on **any expression**, not just variables, propagating
 interval bounds through affine, elementwise, and piecewise-linear atoms:
 
-`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``3``, bounds ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``-``1``, ``2``)``)`` `[`get_bounds`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)`(``A`` `[`%*%`](https://rdrr.io/r/base/matmult.html)` ``x`` ``+`` ``b``)`` ``# bounds propagated through the affine map`` `[`get_bounds`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)`(`[`abs`](https://rdrr.io/r/base/MathFun.html)`(``x``)``)`` ``# and through atoms`
+\
+`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``3``, bounds ``=`` `[`list`](https://rdrr.io/r/base/list.html)`(``-``1``, ``2``)``)`\
+[`get_bounds`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)`(``A`` `[`%*%`](https://rdrr.io/r/base/matmult.html)` ``x`` ``+`` ``b``)``         ``# bounds propagated through the affine map`\
+[`get_bounds`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md)`(`[`abs`](https://rdrr.io/r/base/MathFun.html)`(``x``)``)``             ``# and through atoms`
 
 Variable bounds may also be **sparse `Matrix` objects** or **symbolic
 bounds** involving `Parameter`s; symbolic bounds are enforced at solve
@@ -271,12 +520,22 @@ The primary solve function is now
 [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md), which
 returns the optimal value directly:
 
-[`library`](https://rdrr.io/r/base/library.html)`(`[`CVXR`](https://cvxr.rbind.io)`)`` ``x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``2``)`` ``prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(`[`sum_squares`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)`(``x``)``)``, `[`list`](https://rdrr.io/r/base/list.html)`(``x`` ``>=`` ``1``)``)`` ``opt_val`` ``<-`` `[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``)`` ``# returns optimal value directly`` ``x_val`` ``<-`` `[`value`](https://www.cvxgrp.org/CVXR/reference/value.md)`(``x``)`` ``# extract variable value`` ``prob_status`` ``<-`` `[`status`](https://www.cvxgrp.org/CVXR/reference/status.md)`(``prob``)`` ``# check status`
+\
+[`library`](https://rdrr.io/r/base/library.html)`(`[`CVXR`](https://cvxr.rbind.io)`)`\
+`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``2``)`\
+`prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(`[`sum_squares`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)`(``x``)``)``, `[`list`](https://rdrr.io/r/base/list.html)`(``x`` ``>=`` ``1``)``)`\
+`opt_val`` ``<-`` `[`psolve`](https://www.cvxgrp.org/CVXR/reference/psolve.md)`(``prob``)``       ``# returns optimal value directly`\
+`x_val`` ``<-`` `[`value`](https://www.cvxgrp.org/CVXR/reference/value.md)`(``x``)``             ``# extract variable value`\
+`prob_status`` ``<-`` `[`status`](https://www.cvxgrp.org/CVXR/reference/status.md)`(``prob``)``   ``# check status`
 
 The old [`solve()`](https://rdrr.io/r/base/solve.html) still works but
 returns a backward-compatible list:
 
-`result`` ``<-`` `[`solve`](https://rdrr.io/r/base/solve.html)`(``prob``)`` ``result``$``value`` ``# optimal value`` ``result``$``getValue``(``x``)`` ``# variable value (deprecated)`` ``result``$``status`` ``# problem status`
+\
+`result`` ``<-`` `[`solve`](https://rdrr.io/r/base/solve.html)`(``prob``)`\
+`result``$``value``       ``# optimal value`\
+`result``$``getValue``(``x``)`` ``# variable value (deprecated)`\
+`result``$``status``      ``# problem status`
 
 ### Breaking Changes from CVXR 1.x
 
@@ -322,23 +581,9 @@ and `%<<%` operators are still available for backward compatibility).
 
 #### Supported solvers
 
-| Solver   | R Package   | Type     | Problem Classes                     |
-|----------|-------------|----------|-------------------------------------|
-| CLARABEL | `clarabel`  | Conic    | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| SCS      | `scs`       | Conic    | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| MOSEK    | `Rmosek`    | Conic    | LP, QP, SOCP, SDP, ExpCone, PowCone |
-| ECOS     | `ECOSolveR` | Conic    | LP, SOCP, ExpCone                   |
-| ECOS_BB  | `ECOSolveR` | Conic    | LP, SOCP, ExpCone + MI              |
-| GUROBI   | `gurobi`    | Conic/QP | LP, QP, SOCP, MI                    |
-| GLPK     | `Rglpk`     | Conic    | LP                                  |
-| GLPK_MI  | `Rglpk`     | Conic    | LP, MILP                            |
-| HIGHS    | `highs`     | Conic/QP | LP, QP, MILP                        |
-| CVXOPT   | `cccp`      | Conic    | LP, SOCP                            |
-| OSQP     | `osqp`      | QP       | LP, QP                              |
-| CPLEX    | `Rcplex`    | Conic/QP | LP, QP, SOCP, MI                    |
-| PIQP     | `piqp`      | QP       | LP, QP                              |
-| SCIP     | `scip`      | Conic    | LP, MILP, SOCP, MI-SOCP             |
-| XPRESS   | `xpress`    | Conic/QP | LP, QP, SOCP, MI                    |
+The current table of solvers and the problem classes each one handles is
+kept on the website: [Solver
+Capabilities](https://cvxr.rbind.io/examples/solvers/using-other-solvers.html#solver-capabilities).
 
 Smooth nonlinear programs additionally use the `IPOPT` and `UNO` NLP
 solvers (see [CVXR 1.9.1](#cvxr-19x)).
@@ -365,7 +610,13 @@ solvers (see [CVXR 1.9.1](#cvxr-19x)).
 
 Standard R math functions work directly on CVXR expressions:
 
-`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``3``)`` `[`abs`](https://rdrr.io/r/base/MathFun.html)`(``x``)`` ``# elementwise absolute value`` `[`sqrt`](https://rdrr.io/r/base/MathFun.html)`(``x``)`` ``# elementwise square root`` `[`sum`](https://rdrr.io/r/base/sum.html)`(``x``)`` ``# sum of entries`` `[`max`](https://rdrr.io/r/base/Extremes.html)`(``x``)`` ``# maximum entry`` `[`norm`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)`(``x``, ``"2"``)`` ``# Euclidean norm`
+\
+`x`` ``<-`` `[`Variable`](https://www.cvxgrp.org/CVXR/reference/Variable.md)`(``3``)`\
+[`abs`](https://rdrr.io/r/base/MathFun.html)`(``x``)``        ``# elementwise absolute value`\
+[`sqrt`](https://rdrr.io/r/base/MathFun.html)`(``x``)``       ``# elementwise square root`\
+[`sum`](https://rdrr.io/r/base/sum.html)`(``x``)``        ``# sum of entries`\
+[`max`](https://rdrr.io/r/base/Extremes.html)`(``x``)``        ``# maximum entry`\
+[`norm`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md)`(``x``, ``"2"``)``  ``# Euclidean norm`
 
 #### Boolean logic atoms
 
@@ -440,7 +691,11 @@ To migrate code from CVXR 1.x to 1.8.x:
     you may need to use [`t()`](https://rdrr.io/r/base/t.html) or
     `matrix(..., nrow = 1)` to match shapes:
 
-    `## Old (worked in CVXR 1.x because axis reductions were 1D):`` `[`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)`(``X``, axis ``=`` ``2``)`` ``==`` ``target_vec`` ``## New (wrap target as row vector to match the (1, n) shape):`` `[`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)`(``X``, axis ``=`` ``2``)`` ``==`` `[`t`](https://rdrr.io/r/base/t.html)`(``target_vec``)`
+    \
+    `## Old (worked in CVXR 1.x because axis reductions were 1D):`\
+    [`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)`(``X``, axis ``=`` ``2``)`` ``==`` ``target_vec`\
+    `## New (wrap target as row vector to match the (1, n) shape):`\
+    [`sum_entries`](https://www.cvxgrp.org/CVXR/reference/sum_entries.md)`(``X``, axis ``=`` ``2``)`` ``==`` `[`t`](https://rdrr.io/r/base/t.html)`(``target_vec``)`
 
     Similarly, if you extract a scalar from a CVXR result and need a
     plain numeric value, use
@@ -453,7 +708,15 @@ If you encounter issues involving the `Rmosek` package while submitting
 your package to CRAN, include the following code in `<your_pkg>/R/zzz.R`
 to resolve the issue.
 
-`## Content of <your_pkg>/R/zzz.R`` `` ``.onLoad`` ``<-`` ``function``(``libname``, ``pkgname``)`` ``{`` `` ``CVXR``::`[`exclude_solvers`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)`(``"MOSEK"``)`` ``}`` ``.onUnload`` ``<-`` ``function``(``libname``, ``pkgname``)`` ``{`` `` ``CVXR``::`[`include_solvers`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)`(``"MOSEK"``)`` ``}`
+\
+`## Content of <your_pkg>/R/zzz.R`\
+\
+`.onLoad`` ``<-`` ``function``(``libname``, ``pkgname``)`` ``{`\
+`  ``CVXR``::`[`exclude_solvers`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)`(``"MOSEK"``)`\
+`}`\
+`.onUnload`` ``<-`` ``function``(``libname``, ``pkgname``)`` ``{`\
+`  ``CVXR``::`[`include_solvers`](https://www.cvxgrp.org/CVXR/reference/available_solvers.md)`(``"MOSEK"``)`\
+`}`
 
 ### Further Reading
 

@@ -1,7 +1,7 @@
 # Get all Parameters of a Problem as a Named List
 
 Mirrors CVXPY's `Problem.param_dict` property
-(`cvxpy/problems/problem.py:260-264`): returns a named list keyed by
+(`cvxpy/problems/problem.py:257-262`): returns a named list keyed by
 each parameter's name, where the value is the
 [`Parameter`](https://www.cvxgrp.org/CVXR/reference/Parameter.md) object
 itself.

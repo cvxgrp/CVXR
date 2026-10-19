@@ -24,5 +24,6 @@ A PfEigenvalue atom (scalar)
 X <- Variable(c(2, 2), pos = TRUE)
 prob <- Problem(Minimize(pf_eigenvalue(X)),
                 list(X[1,1] >= 0.1, X[2,2] >= 0.1))
-if (FALSE) psolve(prob, gp = TRUE) # \dontrun{}
+psolve(prob, gp = TRUE)
+#> [1] 0.1
 ```

@@ -1,11 +1,13 @@
 # Horizontal concatenation of expressions
 
-Horizontal concatenation of expressions
+Named operands are accepted, as in
+[`cbind()`](https://rdrr.io/r/base/cbind.html), and the names are
+dropped.
 
 ## Usage
 
 ``` r
-hstack(...)
+hstack(..., deparse.level = 1)
 ```
 
 ## Arguments
@@ -13,6 +15,12 @@ hstack(...)
 - ...:
 
   Expressions (same number of rows)
+
+- deparse.level:
+
+  Accepted for compatibility with
+  [`cbind()`](https://rdrr.io/r/base/cbind.html); expressions have no
+  dimnames, so it has no effect
 
 ## Value
 

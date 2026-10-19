@@ -1,6 +1,478 @@
 # Changelog
 
+## CVXR 1.9.3
+
+### Changed results
+
+These fix wrong answers, so code that relied on the old results will see
+different numbers.
+
+- GUROBI solved quadratic objectives with cross terms (e.g.
+  `quad_form(w, Sigma)`) with every cross term halved. Gurobi now
+  receives the full matrix, as in CVXPY. Present in 1.9.2.
+- CVXOPT returned wrong answers on problems with no inequality
+  constraints (feasible equality-constrained problems were reported
+  infeasible) and reported unbounded problems as optimal. These now
+  solve correctly or fail with a solver error, as in CVXPY.
+- GUROBI second-order-cone dual values had the wrong sign; they now
+  agree with CVXPY and with every other solver.
+- `cvxr_norm(X, p)` and `norm(X, type)` now agree with base R’s
+  [`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) and
+  CVXPY on matrices: with no `axis`, `p = 1`, `2` and `Inf` are the
+  maximum absolute column sum, the largest singular value and the
+  maximum absolute row sum. They were entrywise; use
+  `cvxr_norm(X, "fro")` or `norm1(X)` for those.
+  - A row vector is a 1 x n matrix, as in base R, so its 1- and
+    Inf-norms are the other way round from before.
+  - Any other `p` on a matrix or row vector is now an error,
+    “Unsupported matrix norm.”, as in CVXPY; use `p_norm(x, p)` for the
+    entrywise norm.
+  - [`norm()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) on
+    an expression accepts every base R type (`"O"`, `"M"` and `"E"`
+    failed, and `"I"` was the largest absolute entry). With no `type` it
+    is the spectral norm (`"2"`), as in CVXPY.
+- `gmatmul(A, X)` with a `Parameter` in both `A` and `X` gave a wrong
+  answer under `gp = TRUE`, and parameter substitution rebuilt it with
+  `A` and `X` swapped. Both fixed (CVXPY 1.9.3 still has the swap).
+- `x / A` with a matrix or vector `A` divided every entry of `x` by
+  `A[1, 1]`. It now divides entrywise, as in CVXPY. Division by a scalar
+  is unchanged. Present in 1.9.2.
+- Constants built from Matrix classes other than `dgCMatrix` gave wrong
+  answers or errors: a unit `Diagonal(n)` was read as all zeros, so
+  `quad_form(x, Diagonal(n))` was unbounded, and symmetric, triangular,
+  triplet, pattern and logical sparse matrices failed in
+  canonicalization. Every sparse input is now stored as a general double
+  `dgCMatrix`, as in CVXPY, and a logical matrix constant keeps its
+  shape instead of becoming a column. Present in 1.9.2.
+- A sparse `bounds` matrix was applied only at its stored entries, so a
+  symmetric (`dsCMatrix`) bound on a dense variable left half the
+  entries unbounded and a triplet matrix with repeated entries used the
+  first copy. As in CVXPY, a sparse bound is now accepted only on a
+  `sparsity` variable with the same pattern, and repeated entries are
+  summed. Solvers that take variable bounds natively (HiGHS, GUROBI,
+  SCIP, XPRESS) now receive such bounds as bounds rather than as
+  constraints. Present in 1.9.2.
+- A warm re-solve with CLARABEL or OSQP after a parameter became zero
+  (or nonzero) pushed the new coefficients into the solver’s old
+  sparsity pattern, returning the previous optimum with status optimal,
+  or an OSQP error. Both now start a fresh solver when the pattern
+  changes, as PIQP already did. Present in 1.9.2.
+- The cached DGP, DQCP and problem-level curvature queries ignored
+  whether a DPP check was running, so a DGP problem with parameters
+  could be reported DPP and solved with wrong solver data. All caches
+  are now keyed on the DPP scope, as CVXPY’s are.
+- [`perspective()`](https://www.cvxgrp.org/CVXR/reference/perspective.md)
+  of a function of a `symmetric`, `PSD` or `NSD` matrix variable of size
+  3 or more returned a wrong optimum.
+- `sum_entries(x, axis = 2)` of a one-row expression gave wrong results
+  or crashed R. Present in 1.9.2.
+- `%*%` with a scalar operand that does not conform (`2 %*% x` for a 2 x
+  3 `x`) or a non-conforming 1 x 1 operand built a product that gave a
+  scalar product or crashed R. Both are now errors, as in base R; use
+  `*` to multiply by a scalar. A scalar operand that conforms (`x %*% 2`
+  for a 3 x 1 `x`) is a product, as in base R.
+- `x / d` with shapes that do not broadcast, such as a 2 x 3 `x` and a
+  length-3 `d`, recycled the divisor silently. It is now an error, as in
+  CVXPY; a row or column divisor still broadcasts.
+- [`value()`](https://www.cvxgrp.org/CVXR/reference/value.md) of a sum,
+  a product or an index of a sparse-matrix constant failed with
+  “non-conformable arrays” or “subscript out of bounds”, and a sum of
+  two sparse constants came back flattened to one column. These now
+  evaluate; a mixed sparse and dense result is a base matrix, a sparse
+  one stays sparse.
+- [`sum()`](https://rdrr.io/r/base/sum.html),
+  [`max()`](https://rdrr.io/r/base/Extremes.html),
+  [`min()`](https://rdrr.io/r/base/Extremes.html) and
+  [`prod()`](https://rdrr.io/r/base/prod.html) of an expression now
+  honor `axis` and `keepdims`, as in CVXPY. A named `axis` was taken as
+  one more operand, so `sum(x, axis = 2)` returned `sum(x + 2)`. Any
+  other name labels an operand, as in
+  [`base::sum()`](https://rdrr.io/r/base/sum.html), so `sum(a = x)` and
+  `do.call(sum, parts)` with a named list work as before.
+- [`sum()`](https://rdrr.io/r/base/sum.html),
+  [`prod()`](https://rdrr.io/r/base/prod.html),
+  [`max()`](https://rdrr.io/r/base/Extremes.html) and
+  [`min()`](https://rdrr.io/r/base/Extremes.html) with more than one
+  operand now mean what they mean in base R: each operand is reduced on
+  its own and the results combined, so `sum(x, 2)` is `sum(x) + 2` and
+  `max(x, y)` is one scalar, the largest entry of either. They were
+  `sum(x + 2)`, `prod(x * y)` and the elementwise maximum and minimum;
+  use
+  [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  for those.
+- `matrix_trace(A * B)` returned the trace of the matrix product (CVXPY
+  1.9.3, [\#3492](https://github.com/cvxgrp/CVXR/issues/3492)).
+- `cumsum(X)` of a matrix expression is now column-wise, as in CVXPY and
+  as [`cumprod()`](https://rdrr.io/r/base/cumsum.html) and
+  [`cummax()`](https://rdrr.io/r/base/cumsum.html) already were;
+  [`value()`](https://www.cvxgrp.org/CVXR/reference/value.md) and the
+  solver used to disagree. `cumsum_axis(X, axis = NULL)` gives all
+  entries in column-major order as a column.
+- `lambda_sum_largest(X, k)` accepts a fractional `k`, as CVXPY does;
+  `k` was silently truncated.
+- Bounds through
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  and
+  [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  with operands of different shapes now broadcast as NumPy does; a row
+  operand was permuted.
+- [`derivative()`](https://www.cvxgrp.org/CVXR/reference/derivative.md)
+  and [`backward()`](https://www.cvxgrp.org/CVXR/reference/backward.md)
+  through a Hermitian variable or parameter of size 4 or more had
+  imaginary entries transposed.
+- [`backward()`](https://www.cvxgrp.org/CVXR/reference/backward.md)
+  through a `sparsity` variable returned garbage, and on the NLP path
+  the bounds of a `sparsity` variable were dropped. A recovered variable
+  value is now projected onto its attribute (a `nonneg` -1e-9 reads back
+  as 0), as in CVXPY.
+- `psolve(solver = "CLARABEL", warm_start = TRUE)` re-solves from
+  scratch when the cones changed (e.g. a parametric power-cone
+  exponent), instead of returning the previous optimum. CVXPY 1.9.3
+  still has this defect.
+- A complex variable declared `PSD`/`NSD` lost its cone
+  ([\#3342](https://github.com/cvxgrp/CVXR/issues/3342)), and one
+  declared `diag` or with a `sparsity` pattern solved as dense (CVXPY
+  1.9.3 still ignores those). Both are now enforced.
+- [`conv()`](https://www.cvxgrp.org/CVXR/reference/conv.md),
+  [`cumsum()`](https://rdrr.io/r/base/cumsum.html) and
+  [`kron()`](https://www.cvxgrp.org/CVXR/reference/kron.md) were treated
+  as log-log affine, so a geometric program containing them was accepted
+  and could solve to a wrong value. They are now not DGP, as in CVXPY,
+  and such a problem is rejected.
+- Calling
+  [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
+  (or
+  [`get_problem_data()`](https://www.cvxgrp.org/CVXR/reference/get_problem_data.md))
+  on a geometric program between two solves made the next solve after a
+  parameter change return the previous optimum.
+  [`problem_data()`](https://www.cvxgrp.org/CVXR/reference/problem_data.md)
+  now goes through the same compile cache as
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md), as in
+  CVXPY.
+- [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  of a column and a row recycled instead of broadcasting, so
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) returned
+  a wrong objective and a second solve failed.
+- `log(x, base)` on an expression ignored `base` and gave the natural
+  log. It now honors `base`, which must be a positive number other than
+  1.
+- `outer(x, y, FUN)` on an expression ignored `FUN` and gave the
+  product. Any `FUN` other than `"*"` is now an error.
+- `x[NULL, ]` and `x[NULL]` on an expression returned all of `x`. A
+  `NULL` subscript is now an error.
+- `x[c(TRUE, NA, FALSE), ]` on an expression dropped the `NA`. An `NA`
+  or character subscript is now a clear error instead of an obscure one.
+- `diag(x, nrow)` on an expression ignored `nrow`. `nrow`, `ncol` and
+  `names` are now errors there; the offset is `k`.
+- `log1p(x)` on an expression is now the `log1p` atom instead of
+  `log(x + 1)`, so it is accurate near 0 and keeps the sign of `x`.
+
+### New features
+
+- [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md)
+  accepts an argument of any shape and gains `axis` and `keepdims`
+  (CVXPY 1.9.3, [\#3493](https://github.com/cvxgrp/CVXR/issues/3493)).
+- [`cvxr_var()`](https://www.cvxgrp.org/CVXR/reference/cvxr_var.md)
+  supports `axis` and `keepdims`, like
+  [`cvxr_mean()`](https://www.cvxgrp.org/CVXR/reference/cvxr_mean.md)
+  and [`cvxr_std()`](https://www.cvxgrp.org/CVXR/reference/cvxr_std.md)
+  ([\#3496](https://github.com/cvxgrp/CVXR/issues/3496)).
+- `cvxr_norm(X, "nuc")` returns the nuclear norm (it errored).
+- Exact `geo_mean(x, approx = FALSE)`, and any `PowConeND` constraint,
+  now solve on SCS and MOSEK, not just Clarabel.
+  [`PowConeND()`](https://www.cvxgrp.org/CVXR/reference/PowConeND.md)
+  with a row-vector `z`, or a 1 x n `W` with `axis = 1`, now works and
+  has correct duals.
+- `perspective(f, s)` where `f` needs a positive semidefinite cone (for
+  example
+  [`lambda_max()`](https://www.cvxgrp.org/CVXR/reference/lambda_max.md)
+  or
+  [`sigma_max()`](https://www.cvxgrp.org/CVXR/reference/sigma_max.md))
+  now solves on Clarabel, SCS and MOSEK.
+- [`grad()`](https://www.cvxgrp.org/CVXR/reference/grad.md) works for
+  [`partial_optimize()`](https://www.cvxgrp.org/CVXR/reference/partial_optimize.md)
+  expressions and
+  [`lambda_sum_largest()`](https://www.cvxgrp.org/CVXR/reference/lambda_sum_largest.md),
+  and is correct for complex arguments of
+  [`norm_nuc()`](https://www.cvxgrp.org/CVXR/reference/norm_nuc.md),
+  [`sigma_max()`](https://www.cvxgrp.org/CVXR/reference/sigma_max.md),
+  [`quad_form()`](https://www.cvxgrp.org/CVXR/reference/quad_form.md),
+  [`quad_over_lin()`](https://www.cvxgrp.org/CVXR/reference/quad_over_lin.md)
+  and
+  [`matrix_frac()`](https://www.cvxgrp.org/CVXR/reference/matrix_frac.md).
+- [`indicator()`](https://www.cvxgrp.org/CVXR/reference/indicator.md)
+  and
+  [`partial_optimize()`](https://www.cvxgrp.org/CVXR/reference/partial_optimize.md)
+  expressions now have bounds, as in CVXPY: `(0, Inf)` for an indicator
+  and unbounded for a partial problem.
+- A quadratic objective over a `symmetric`, `PSD`, `NSD`, `diag` or
+  `sparsity` variable now solves on QP-capable solvers
+  ([\#3384](https://github.com/cvxgrp/CVXR/issues/3384)), and
+  [`quad_over_lin()`](https://www.cvxgrp.org/CVXR/reference/quad_over_lin.md)
+  /
+  [`sum_squares()`](https://www.cvxgrp.org/CVXR/reference/sum_squares.md)
+  with an `axis` take the QP path, so OSQP accepts them.
+- DNLP (`psolve(..., nlp = TRUE)`) now needs `sparsediff (>= 0.6.1)` and
+  consequences thereof. It also accepts
+  [`NonNeg()`](https://www.cvxgrp.org/CVXR/reference/NonNeg.md),
+  [`NonPos()`](https://www.cvxgrp.org/CVXR/reference/NonPos.md) and
+  [`Zero()`](https://www.cvxgrp.org/CVXR/reference/Zero.md) constraints,
+  which it used to abort on.
+- New
+  [`curvatures()`](https://www.cvxgrp.org/CVXR/reference/curvatures.md),
+  [`log_log_curvature()`](https://www.cvxgrp.org/CVXR/reference/log_log_curvature.md)
+  and [`is_diag()`](https://www.cvxgrp.org/CVXR/reference/is_diag.md),
+  as CVXPY’s `Expression.curvatures`, `Expression.log_log_curvature` and
+  `Leaf.is_diag()`.
+- [`curvature()`](https://www.cvxgrp.org/CVXR/reference/curvature.md)
+  now reports log-log and quasi curvature (e.g. `"LOG-LOG CONVEX"`,
+  `"QUASILINEAR"`) instead of `"UNKNOWN"`, as in CVXPY.
+
+### DPP, DGP and DQCP
+
+- [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) now
+  checks that every `Parameter` has a value before it starts any solve,
+  as CVXPY does.
+- `psolve(gp = TRUE)` now checks variable bounds when deciding whether a
+  parameterized problem is DPP, as CVXPY does, and requires a conic
+  solver.
+- [`is_dpp()`](https://www.cvxgrp.org/CVXR/reference/is_dpp.md) is now
+  one DCP pass inside the DPP scope, as in CVXPY, instead of that pass
+  plus a recursion over every argument.
+- These are no longer DPP, as in CVXPY: `quad_over_lin(x, p)` with a
+  `Parameter` denominator
+  ([\#2433](https://github.com/cvxgrp/CVXR/issues/2433)), a
+  [`PowCone3D()`](https://www.cvxgrp.org/CVXR/reference/PowCone3D.md)/[`PowConeND()`](https://www.cvxgrp.org/CVXR/reference/PowConeND.md)
+  with a `Parameter` exponent, and `dotsort(x, W)` with a non-affine
+  parametric `W`. `gmatmul(A, X)` requires a parametric `A` to be the
+  `Parameter` itself. [`cumsum()`](https://rdrr.io/r/base/cumsum.html)
+  of a `Parameter` is DPP
+  ([\#3398](https://github.com/cvxgrp/CVXR/issues/3398)).
+- `psolve(requires_grad = TRUE)` checks match CVXPY: a non-DPP problem
+  is a `DPPError`, `qcp = TRUE` is refused, and `solver = "SCS"` routes
+  to DIFFCP.
+- DQCP bisection now follows CVXPY: no extra solve at the upper end of
+  an automatically found interval, sub-solve warnings reach the user, a
+  failed query point warns and bisection continues, and its aborts carry
+  class `SolverError`.
+
+### Solvers
+
+- Solver selection now follows CVXPY 1.9: the solver is chosen from the
+  problem’s structure first, and its interface (QP or conic) follows.
+  The commercial-first default covers QPs and mixed-integer QPs, SCIP
+  solves mixed-integer QPs, a named HiGHS, Gurobi, CPLEX or Xpress
+  solves an LP through its conic interface, and falling back to a
+  non-default solver warns. ECOS_BB is never chosen unless named.
+- When no installed (or non-excluded) solver can be used, the error now
+  reads “No installed solver could handle this problem.”, as in CVXPY.
+- `psolve(solver_path = ...)` forwards every
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) argument
+  to each attempt (`enforce_dpp`, `ignore_dpp` and `nlp` were dropped),
+  and only a `SolverError` moves on to the next solver, as in CVXPY. The
+  conditions CVXPY raises as `SolverError` now carry that class in R
+  too.
+- MOSEK: the status comes from the solution status, as in CVXPY, so a
+  termination code such as an iteration or time limit is no longer an
+  error by itself. The simplex optimizers work, and `bfs = TRUE` and
+  `save_file = <path>` are accepted.
+- HiGHS: options may be nested in a `highs_options` list, as in CVXPY,
+  and an option HiGHS rejects is an error instead of being dropped. A
+  stop on `mip_max_improving_sols` returns the incumbent with status
+  `user_limit`.
+- Gurobi: `warm_start = TRUE` seeds the start point from the variables’
+  values, `save_file` writes the model, and `env` is rejected, as in
+  CVXPY. `solver_stats(prob)@num_iters` is 0 instead of `NULL` when
+  presolve finished the problem.
+- CPLEX: `reoptimize = TRUE` re-solves with presolve off on “infeasible
+  or unbounded”, as in CVXPY; `solve_time` is set; unknown options
+  abort. A continuous problem with a second-order cone now returns dual
+  values (all were missing), as in CVXPY.
+- SCS: an infeasible solve exposes the infeasibility certificate through
+  [`dual_value()`](https://www.cvxgrp.org/CVXR/reference/dual_value.md)
+  ([\#3197](https://github.com/cvxgrp/CVXR/issues/3197)), and
+  `extra_stats` is the full SCS result.
+- `solver_stats(prob)@extra_stats` now carries the raw solver result for
+  OSQP, ECOS, ECOS_BB, Gurobi, DIFFCP, HiGHS and PIQP, as CVXPY does,
+  and `solution(prob)` holds only the problem’s own variables.
+- PIQP: `backend = "dense"` builds a dense model (it was silently
+  sparse).
+- XPRESS: a `write_mps` path that cannot be written is an error (it was
+  silently skipped), and a failed optimization reports the solver’s
+  message as a warning before the solver-error status.
+- GLPK_MI: an infeasible mixed-integer problem has status `infeasible`,
+  as in CVXPY; it failed with a solver error. GLPK’s presolve is now on
+  by default (pass `presolve = FALSE` to turn it off).
+- Solving no longer advances R’s random number stream. Compilation drew
+  from it (sixteen uniforms per expression node, for an internal
+  debugging label), so random draws after
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) differed
+  from the same draws without the solve. Present in every earlier
+  version.
+
+### Errors, warnings and other changes
+
+- [`diag()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) on an
+  ordinary R matrix or vector now behaves exactly as base R’s
+  [`diag()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md):
+  `diag(nrow = 3)` and `names = FALSE` work, and `k` (expressions only)
+  is an error instead of being ignored.
+- `norm(A)` on an ordinary R matrix without a `type` now uses base R’s
+  default one-norm (`"O"`), not the spectral norm; expressions keep
+  `"2"`.
+- [`convolve()`](https://www.cvxgrp.org/CVXR/reference/convolve.md) on
+  ordinary numeric vectors now returns exactly
+  [`stats::convolve()`](https://rdrr.io/r/stats/convolve.html)’s result,
+  with its `conj` and `type` arguments, as the 1.9.2 NEWS promised;
+  expressions still get the numpy-style convolution.
+- [`sd()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) and
+  [`var()`](https://www.cvxgrp.org/CVXR/reference/math_atoms.md) on an
+  expression are
+  [`cvxr_std()`](https://www.cvxgrp.org/CVXR/reference/cvxr_std.md) and
+  [`cvxr_var()`](https://www.cvxgrp.org/CVXR/reference/cvxr_var.md)
+  (ddof 0, as in CVXPY); `na.rm`, `use` and a second variable `y` now
+  give a clear error instead of an obscure one.
+- [`mean()`](https://rdrr.io/r/base/mean.html) on an expression is
+  [`cvxr_mean()`](https://www.cvxgrp.org/CVXR/reference/cvxr_mean.md);
+  `trim` and `na.rm` now give a clear error, and an axis other than 1 or
+  2 (such as `1.5`) is an error instead of being truncated.
+- A non-scalar constant exponent (`x^c(1, 2)`, `power(x, c(1, 2))`) is
+  now a clear error; with `approx = FALSE` it was silently accepted.
+- New
+  [`cvxr_power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md),
+  the same function as
+  [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md).
+  [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md) masks
+  the unrelated [`stats::power()`](https://rdrr.io/r/stats/power.html),
+  a [`glm()`](https://rdrr.io/r/stats/glm.html) link, so with CVXR
+  attached write [`stats::power()`](https://rdrr.io/r/stats/power.html)
+  in a [`glm()`](https://rdrr.io/r/stats/glm.html) family.
+- Variable `bounds` accept a 1-d array, a `sparseVector` and a sparse
+  matrix with unsorted row indices, which
+  [`Constant()`](https://www.cvxgrp.org/CVXR/reference/Constant.md)
+  already accepted.
+- `power(x, p)` now takes its sign, curvature, domain, value and printed
+  name from `p` as written, as CVXPY does, rather than from the rational
+  approximation used to solve it.
+- Calling `NonPos(expr)` explicitly now warns, once per session, that it
+  is deprecated in favor of operator overloading (`expr <= 0`) or
+  `NonNeg(-expr)`, in CVXPY’s words and with class
+  `CvxpyDeprecationWarning`.
+- Now errors, as in CVXPY: a negative `axis`; an `axis` with
+  `cvxr_norm(X, "fro")` or `"nuc"`
+  ([\#3501](https://github.com/cvxgrp/CVXR/issues/3501)); a complex
+  variable declared `nonneg`, `nonpos`, `pos`, `neg` or with `bounds`,
+  which were silently ignored
+  ([\#3342](https://github.com/cvxgrp/CVXR/issues/3342));
+  [`partial_optimize()`](https://www.cvxgrp.org/CVXR/reference/partial_optimize.md)
+  of a complex inner problem.
+- Whether a constant matrix is symmetric, Hermitian or skew-symmetric is
+  now decided with NumPy’s `allclose` tolerance (relative 1e-5, absolute
+  1e-8), as in CVXPY; `quad_form(x, P)` used to reject a `P` that CVXPY
+  accepts.
+- Smaller alignments with CVXPY 1.9.3 in
+  [`get_bounds()`](https://www.cvxgrp.org/CVXR/reference/get_bounds.md),
+  [`grad()`](https://www.cvxgrp.org/CVXR/reference/grad.md) and
+  [`domain()`](https://www.cvxgrp.org/CVXR/reference/domain.md) of
+  several atoms,
+  [`dual_cone()`](https://www.cvxgrp.org/CVXR/reference/dual_cone.md),
+  [`is_symmetric()`](https://www.cvxgrp.org/CVXR/reference/is_symmetric.md)
+  of `Re(X)`,
+  [`constr_size()`](https://www.cvxgrp.org/CVXR/reference/constr_size.md),
+  [`is_dpp()`](https://www.cvxgrp.org/CVXR/reference/is_dpp.md) with an
+  unsupported context, interval bounds of matrix products, and
+  [`is_quadratic()`](https://www.cvxgrp.org/CVXR/reference/is_quadratic.md)
+  of `x / y` with a non-constant `y` (now `FALSE`).
+  `value(constraint, tolerance = )` exposes the violation tolerance.
+- [`visualize()`](https://www.cvxgrp.org/CVXR/reference/visualize.md) no
+  longer errors on a problem containing
+  [`sqrt()`](https://rdrr.io/r/base/MathFun.html),
+  [`inv_pos()`](https://www.cvxgrp.org/CVXR/reference/inv_pos.md) or a
+  fractional
+  [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md)
+  (broken in 1.9.2).
+- `cvxr_norm(x, p)` with a string `p` that is not a norm name reports
+  “Unsupported norm option”, as CVXPY does; it was an R internal error.
+  Assigning a sparse value containing `Inf` to a sparsity variable
+  works; it was an R internal error.
+- [`max_elemwise()`](https://www.cvxgrp.org/CVXR/reference/max_elemwise.md)
+  and
+  [`min_elemwise()`](https://www.cvxgrp.org/CVXR/reference/min_elemwise.md)
+  take `na.rm`, and
+  [`hstack()`](https://www.cvxgrp.org/CVXR/reference/hstack.md) and
+  [`vstack()`](https://www.cvxgrp.org/CVXR/reference/vstack.md) take
+  `deparse.level`, as [`pmax()`](https://rdrr.io/r/base/Extremes.html)
+  and [`rbind()`](https://rdrr.io/r/base/cbind.html) do; neither has an
+  effect. `max_elemwise(u, v, na.rm = TRUE)` used to take `TRUE` as a
+  third operand. Named operands, as from `do.call(vstack, split(...))`,
+  are accepted as before.
+- [`residual()`](https://www.cvxgrp.org/CVXR/reference/residual.md) and
+  [`violation()`](https://www.cvxgrp.org/CVXR/reference/violation.md) of
+  an `SOC` constraint whose value is a sparse matrix are right; they
+  were garbage or an error. A `PowConeND` with a sparse `alpha` keeps
+  one cone per column on solvers with native N-dimensional power cones.
+  A sparse constant prints as `[n x m matrix]`.
+- [`norm1()`](https://www.cvxgrp.org/CVXR/reference/norm1.md) and
+  [`log_sum_exp()`](https://www.cvxgrp.org/CVXR/reference/log_sum_exp.md)
+  with an `axis` evaluate on a sparse value; they were an error. So do
+  [`length_expr()`](https://www.cvxgrp.org/CVXR/reference/length_expr.md)
+  and [`log_det()`](https://www.cvxgrp.org/CVXR/reference/log_det.md),
+  and
+  [`visualize()`](https://www.cvxgrp.org/CVXR/reference/visualize.md)
+  shows a 1x1 sparse constant as its number.
+- `matrix_frac(x, P)` with a non-square constant `P` reports the shape
+  error; it said `P` was singular.
+- [`length_expr()`](https://www.cvxgrp.org/CVXR/reference/length_expr.md),
+  [`eye_minus_inv()`](https://www.cvxgrp.org/CVXR/reference/eye_minus_inv.md),
+  [`huber()`](https://www.cvxgrp.org/CVXR/reference/huber.md) and
+  [`dotsort()`](https://www.cvxgrp.org/CVXR/reference/dotsort.md) reject
+  a complex argument, as CVXPY does; they accepted one.
+- Problems with no constraint rows no longer trigger the Matrix
+  deprecation warning `as(<ngCMatrix>, "dgCMatrix") is deprecated`, and
+  Gurobi QPs no longer trigger the `dtCMatrix` one.
+- Internal: a conic solver’s
+  [`reduction_accepts()`](https://www.cvxgrp.org/CVXR/reference/reduction_accepts.md)
+  now refuses a mixed-integer problem when the solver is not
+  MIP-capable, as CVXPY’s `ConicSolver.accepts` does.
+  [`psolve()`](https://www.cvxgrp.org/CVXR/reference/psolve.md) already
+  refused such a solve while choosing the solver, so no solve changes.
+  `constr_expr()` returns `lhs - rhs` for `==`, `<=` and `>=`, as
+  CVXPY’s `.expr` does.
+
+### Performance
+
+- The first solve of a parametric (DPP) problem compiles about twice as
+  fast and allocates a small fraction of the memory it did: at 500
+  variables with CLARABEL, `sum_squares(w - q)` goes from 21 ms / 24 MB
+  to 11 ms / 0.9 MB, an SOC problem from 17.5 ms / 12.7 MB to 12 ms /
+  0.9 MB, an LP with a 100 x 500 dense matrix from 55 ms / 23 MB to 50
+  ms / 8 MB.
+- A DPP problem whose objective is quadratic in the variables and
+  depends on parameters (`sum_squares(y - q)`,
+  `quad_form(y, P) + t(q) %*% y`, …) now keeps its parameter program
+  across solves, as in CVXPY.
+- The compiled-chain cache is keyed as CVXPY’s is, on the solver, `gp`,
+  `ignore_dpp` and `use_quad_obj`; `enforce_dpp` no longer takes part.
+- DQCP bisections are 7 percent and medium LPs 4 percent faster than in
+  CVXR 1.9.2.
+- Bounds propagation keeps a sparse constant sparse, as CVXPY does; it
+  densified it, so `abs(A %*% x)` with a large sparse `A` on HiGHS,
+  Gurobi, SCIP or XPRESS allocated two dense copies of `A`.
+- `psolve(nlp = TRUE)` hands a dense constant matrix with at least 5
+  percent nonzeros to the derivative engine as dense, as CVXPY does: 1.7
+  to 2.6 times faster for a dense 1000 x 1000 `A`. Pass a sparse
+  `Matrix` to keep the sparse form for a structured matrix.
+- `psolve(nlp = TRUE)` no longer makes dense copies of a sparse constant
+  matrix while building the problem: a solve with a 3000 x 3000 one
+  allocated 208 MB and now allocates 2 MB.
+
 ## CVXR 1.9.2
+
+CRAN release: 2026-08-24
 
 This release tracks CVXPY 1.9.2. It is chiefly a correctness release: a
 number of bugs that returned plausible wrong answers without any error
@@ -196,7 +668,7 @@ constraint.
   constraints (was quadratic), cutting memory up to ~60% on
   constraint-heavy problems.
 - [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md),
-  [`power()`](https://www.cvxgrp.org/CVXR/reference/power.md), and
+  [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md), and
   [`p_norm()`](https://www.cvxgrp.org/CVXR/reference/p_norm.md) with
   fractional exponents are 15-37% faster end to end.
 
@@ -385,7 +857,7 @@ support.
   `label<-` /
   [`format_labeled()`](https://www.cvxgrp.org/CVXR/reference/format_labeled.md)
   for attaching user-supplied labels to expressions.
-- [`power()`](https://www.cvxgrp.org/CVXR/reference/power.md),
+- [`power()`](https://www.cvxgrp.org/CVXR/reference/cvxr_power.md),
   [`geo_mean()`](https://www.cvxgrp.org/CVXR/reference/geo_mean.md), and
   [`p_norm()`](https://www.cvxgrp.org/CVXR/reference/p_norm.md) with
   `approx = TRUE` now warn when the selected solver supports power cones
@@ -535,7 +1007,9 @@ annotated with `## CVXPY v1.8.2 fix:` in the source.
 - This makes it natural to constrain specific entries of a matrix
   variable, e.g., fixing observed entries of a partially-known matrix:
 
-  `ind`` ``<-`` `[`which`](https://rdrr.io/r/base/which.html)`(``!`[`is.na`](https://rdrr.io/r/base/NA.html)`(``Rmiss``)``, arr.ind ``=`` ``TRUE``)`` ``prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(``obj``)``, `[`list`](https://rdrr.io/r/base/list.html)`(``X``[``ind``]`` ``==`` ``Rmiss``[``ind``]``)``)`
+  \
+  `ind`` ``<-`` `[`which`](https://rdrr.io/r/base/which.html)`(``!`[`is.na`](https://rdrr.io/r/base/NA.html)`(``Rmiss``)``, arr.ind ``=`` ``TRUE``)`\
+  `prob`` ``<-`` `[`Problem`](https://www.cvxgrp.org/CVXR/reference/Problem.md)`(`[`Minimize`](https://www.cvxgrp.org/CVXR/reference/Minimize.md)`(``obj``)``, `[`list`](https://rdrr.io/r/base/list.html)`(``X``[``ind``]`` ``==`` ``Rmiss``[``ind``]``)``)`
 
 - Previously, `x[i]` on a matrix expression errored with “Single-index
   selection on matrices not supported.” The workaround required an

@@ -46,6 +46,9 @@ Power <- new_class("Power", parent = Elementwise, package = "CVXR",
     ## Compute p_used (float value for DCP)
     if (.s7_is(p_const, Constant)) {
       p_used <- as.numeric(value(p_const))
+      ## power.py:183 float(self.p.value) rejects a non-scalar exponent.
+      if (length(p_used) != 1L)
+        cli_abort("The exponent must be a scalar, not of length {length(p_used)}.")
     } else {
       p_used <- NULL
     }
@@ -344,6 +347,9 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
     ## Compute p_used (float value for DCP)
     if (.s7_is(p_const, Constant)) {
       p_used <- as.numeric(value(p_const))
+      ## power.py:183 float(self.p.value) rejects a non-scalar exponent.
+      if (length(p_used) != 1L)
+        cli_abort("The exponent must be a scalar, not of length {length(p_used)}.")
     } else {
       p_used <- NULL
     }
@@ -390,6 +396,14 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
 # -- Factory function ---------------------------------------------
 #' Create a Power atom
 #'
+#' CVXPY's \code{power(x, p)}: \code{x} raised to the power \code{p}, for
+#' any argument (a plain number becomes a constant). \code{cvxr_power()} is
+#' the preferred name. \code{power()} is the same function, kept because
+#' existing code uses it; it masks \code{\link[stats]{power}}, the unrelated
+#' \code{glm()} link constructor, so with CVXR attached write
+#' \code{stats::power()} in a \code{glm()} family. \code{x^p} is the same
+#' atom for an expression \code{x}.
+#'
 #' @param x An Expression (the base), OR a positive constant if \code{p} is a
 #'   variable (the identity \code{b^x = exp(x * log(b))} is used).
 #' @param p Numeric exponent, Parameter, or Expression. If \code{p} is a
@@ -402,7 +416,17 @@ PowerApprox <- new_class("PowerApprox", parent = Power, package = "CVXR",
 #'   \code{Power(x, 0.5)} via the Math group generic.
 #'   See \code{\link{math_atoms}} for all standard R function dispatch.
 #' @export
-power <- function(x, p, max_denom = 1024L, approx = TRUE) {
+cvxr_power <- function(x, p, max_denom = 1024L, approx = TRUE) {
+  .power_atom(x, p, max_denom, approx)
+}
+
+#' @rdname cvxr_power
+#' @export
+power <- cvxr_power
+
+## CVXPY SOURCE: power.py:31 -- def power(x, p, max_denom=1024, approx=True).
+## Internal callers use this directly.
+.power_atom <- function(x, p, max_denom = 1024L, approx = TRUE) {
   ## CVXPY v1.9.0 fix: #3180 (power.py:58-62) -- b^x where b is constant and x
   ## is a (non-constant) variable: dispatch to exp(x * log(b)).
   x_expr <- as_expr(x)

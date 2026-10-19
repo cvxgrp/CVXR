@@ -24,7 +24,8 @@ different numbers.
   - Any other `p` on a matrix or row vector is now an error, "Unsupported
     matrix norm.", as in CVXPY; use `p_norm(x, p)` for the entrywise norm.
   - `norm()` on an expression accepts every base R type (`"O"`, `"M"` and
-    `"E"` failed, and `"I"` was the largest absolute entry).
+    `"E"` failed, and `"I"` was the largest absolute entry). With no `type`
+    it is the spectral norm (`"2"`), as in CVXPY.
 * `gmatmul(A, X)` with a `Parameter` in both `A` and `X` gave a wrong answer
   under `gp = TRUE`, and parameter substitution rebuilt it with `A` and `X`
   swapped. Both fixed (CVXPY 1.9.3 still has the swap).
@@ -83,9 +84,10 @@ different numbers.
   `min_elemwise()` for those.
 * `matrix_trace(A * B)` returned the trace of the matrix product (CVXPY
   1.9.3, #3492).
-* `cumsum(X)` of a matrix is now a column of `length(X)` entries in
-  column-major order, as base R's `cumsum()` returns; `value()` and the
-  solver used to disagree.
+* `cumsum(X)` of a matrix expression is now column-wise, as in CVXPY and as
+  `cumprod()` and `cummax()` already were; `value()` and the solver used to
+  disagree. `cumsum_axis(X, axis = NULL)` gives all entries in column-major
+  order as a column.
 * `lambda_sum_largest(X, k)` accepts a fractional `k`, as CVXPY does; `k`
   was silently truncated.
 * Bounds through `min_elemwise()` and `max_elemwise()` with operands of
@@ -109,6 +111,21 @@ different numbers.
   between two solves made the next solve after a parameter change return the
   previous optimum. `problem_data()` now goes through the same compile cache
   as `psolve()`, as in CVXPY.
+* `max_elemwise()` and `min_elemwise()` of a column and a row recycled
+  instead of broadcasting, so `psolve()` returned a wrong objective and a
+  second solve failed.
+* `log(x, base)` on an expression ignored `base` and gave the natural log.
+  It now honors `base`, which must be a positive number other than 1.
+* `outer(x, y, FUN)` on an expression ignored `FUN` and gave the product. Any
+  `FUN` other than `"*"` is now an error.
+* `x[NULL, ]` and `x[NULL]` on an expression returned all of `x`. A `NULL`
+  subscript is now an error.
+* `x[c(TRUE, NA, FALSE), ]` on an expression dropped the `NA`. An `NA` or
+  character subscript is now a clear error instead of an obscure one.
+* `diag(x, nrow)` on an expression ignored `nrow`. `nrow`, `ncol` and `names`
+  are now errors there; the offset is `k`.
+* `log1p(x)` on an expression is now the `log1p` atom instead of `log(x + 1)`,
+  so it is accurate near 0 and keeps the sign of `x`.
 
 ## New features
 
@@ -211,6 +228,25 @@ different numbers.
 
 ## Errors, warnings and other changes
 
+* `diag()` on an ordinary R matrix or vector now behaves exactly as base R's
+  `diag()`: `diag(nrow = 3)` and `names = FALSE` work, and `k` (expressions
+  only) is an error instead of being ignored.
+* `norm(A)` on an ordinary R matrix without a `type` now uses base R's
+  default one-norm (`"O"`), not the spectral norm; expressions keep `"2"`.
+* `convolve()` on ordinary numeric vectors now returns exactly
+  `stats::convolve()`'s result, with its `conj` and `type` arguments, as the
+  1.9.2 NEWS promised; expressions still get the numpy-style convolution.
+* `sd()` and `var()` on an expression are `cvxr_std()` and `cvxr_var()`
+  (ddof 0, as in CVXPY); `na.rm`, `use` and a second variable `y` now give a
+  clear error instead of an obscure one.
+* `mean()` on an expression is `cvxr_mean()`; `trim` and `na.rm` now give a
+  clear error, and an axis other than 1 or 2 (such as `1.5`) is an error
+  instead of being truncated.
+* A non-scalar constant exponent (`x^c(1, 2)`, `power(x, c(1, 2))`) is now a
+  clear error; with `approx = FALSE` it was silently accepted.
+* New `cvxr_power()`, the same function as `power()`. `power()` masks the
+  unrelated `stats::power()`, a `glm()` link, so with CVXR attached write
+  `stats::power()` in a `glm()` family.
 * Variable `bounds` accept a 1-d array, a `sparseVector` and a sparse matrix
   with unsorted row indices, which `Constant()` already accepted.
 * `power(x, p)` now takes its sign, curvature, domain, value and printed name

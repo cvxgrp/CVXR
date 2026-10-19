@@ -141,25 +141,28 @@ conv <- function(a, b) {
 #'
 #' \code{convolve()} is CVXPY 1.9's preferred name for \code{\link{conv}}
 #' (CVXPY's \code{conv} class is deprecated in favor of \code{convolve}). For a
-#' CVXR \code{Expression} argument it builds a \code{Convolve} atom; for plain
-#' numeric input it computes the same numpy-style convolution the atom does
-#' (\code{numpy.convolve(a, b) == stats::convolve(a, rev(b), type = "open")}),
-#' so the numeric and Expression paths agree.
+#' CVXR \code{Expression} argument it builds a \code{Convolve} atom, the
+#' numpy-style convolution
+#' (\code{numpy.convolve(x, y) == stats::convolve(x, rev(y), type = "open")}).
+#' If neither argument is an Expression the call is forwarded as written to
+#' \code{\link[stats]{convolve}}, so the result is exactly \pkg{stats}'
+#' (circular by default).
 #'
-#' CVXR masks \code{stats::convolve} when attached (R reports this on load). If
-#' you specifically want \pkg{stats}' circular cross-correlation or its other
-#' options, call \code{\link[stats]{convolve}} directly.
-#'
-#' @param a,b Expressions or numeric vectors; at least one must be constant
+#' @param x,y Expressions or numeric vectors; at least one must be constant
 #'   when building an atom.
+#' @param conj,type As in \code{\link[stats]{convolve}}; only for plain
+#'   numeric input, an error with an Expression.
 #' @returns A \code{Convolve} atom (for expressions) or a numeric vector.
 #' @export
-convolve <- function(a, b) {
-  if (inherits(a, "CVXR::Expression") || inherits(b, "CVXR::Expression")) {
-    Convolve(a, b)
+convolve <- function(x, y, conj = TRUE, type = c("circular", "open", "filter")) {
+  if (inherits(x, "CVXR::Expression") || inherits(y, "CVXR::Expression")) {
+    if (!missing(conj) || !missing(type))
+      cli_abort("{.arg conj} and {.arg type} are {.fn stats::convolve} options, only for plain numeric input; an Expression gets the numpy-style convolution.")
+    Convolve(x, y)
   } else {
-    ## numpy-style ("open") convolution, identical to what the Convolve atom
-    ## computes: numpy.convolve(a, b) == stats::convolve(a, rev(b), type = "open")
-    stats::convolve(a, rev(b), type = "open")
+    ## Forward the call as written: stats' defaults and argument matching apply.
+    cl <- match.call()
+    cl[[1L]] <- quote(stats::convolve)
+    eval(cl, parent.frame())
   }
 }

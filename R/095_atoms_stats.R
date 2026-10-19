@@ -20,12 +20,18 @@ cvxr_mean <- function(x, axis = NULL, keepdims = FALSE) {
   if (is.null(axis)) {
     sum_entries(x, axis = NULL, keepdims = keepdims) / expr_size(x)
   } else {
-    axis <- as.integer(axis)
-    if (!axis %in% c(1L, 2L)) {
+    if (!.is_axis_1_2(axis)) {
       cli_abort("{.fn cvxr_mean} only supports axis = NULL, 1, or 2.")
     }
+    axis <- as.integer(axis)
     sum_entries(x, axis = axis, keepdims = keepdims) / .shape(x)[3L - axis]
   }
+}
+
+## A scalar 1 or 2; an expression or vector reaching axis (var(x, y)) is
+## rejected here rather than by as.integer() (stats.py:50-54 raises too).
+.is_axis_1_2 <- function(axis) {
+  is.numeric(axis) && length(axis) == 1L && !is.na(axis) && axis %in% c(1, 2)
 }
 
 #' Standard deviation of an expression
@@ -45,10 +51,10 @@ cvxr_std <- function(x, axis = NULL, keepdims = FALSE, ddof = 0) {
     centered <- vec(x - cvxr_mean(x))
     cvxr_norm(centered, p = 2) / sqrt(expr_size(x) - ddof)
   } else {
-    axis <- as.integer(axis)
-    if (!axis %in% c(1L, 2L)) {
+    if (!.is_axis_1_2(axis)) {
       cli_abort("{.fn cvxr_std} only supports axis = NULL, 1, or 2.")
     }
+    axis <- as.integer(axis)
     n <- .shape(x)[3L - axis]
     centered <- x - cvxr_mean(x, axis = axis, keepdims = TRUE)
     cvxr_norm(centered, p = 2, axis = axis, keepdims = keepdims) / sqrt(n - ddof)
@@ -72,10 +78,10 @@ cvxr_var <- function(x, axis = NULL, keepdims = FALSE, ddof = 0) {
     return(sum_squares(x - cvxr_mean(x)) / (expr_size(x) - ddof))
   }
   ## CVXPY v1.9.3 fix: #3496 -- var reduces along an axis (stats.py var).
-  axis <- as.integer(axis)
-  if (!axis %in% c(1L, 2L)) {
+  if (!.is_axis_1_2(axis)) {
     cli_abort("{.fn cvxr_var} only supports axis = NULL, 1, or 2.")
   }
+  axis <- as.integer(axis)
   n <- .shape(x)[3L - axis]
   centered <- x - cvxr_mean(x, axis = axis, keepdims = TRUE)
   sum_squares(centered, axis = axis, keepdims = keepdims) / (n - ddof)

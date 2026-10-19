@@ -20,6 +20,13 @@
     ## NULL means "all" -- return full sequence
     return(seq_len(dim_len))
   }
+  ## key_utils.py:26 validate_key: NumPy rejects string and NaN keys.
+  if (is.character(idx)) {
+    cli_abort("A character subscript is not supported on an expression, which has no dimnames.")
+  }
+  if (anyNA(idx)) {
+    cli_abort("Index key contains NA values.")
+  }
   if (is.logical(idx)) {
     if (length(idx) != dim_len) {
       cli_abort("Logical index length ({length(idx)}) must match dimension ({dim_len}).")

@@ -100,6 +100,15 @@ you wrote.
 * Calling `problem_data()` on a geometric program between two solves made
   the next solve after a parameter change return the previous optimum.
   `problem_data()` now goes through the same compile cache as `psolve()`.
+* `max_elemwise()` and `min_elemwise()` of a column and a row recycled
+  instead of broadcasting, so `psolve()` returned a wrong objective.
+* On an expression, `log(x, base)` ignored `base`, `outer(x, y, FUN)` ignored
+  `FUN` and `diag(x, nrow)` ignored `nrow`. `base` is now honored; a `FUN`
+  other than `"*"`, or a `nrow`, is an error.
+* `x[NULL, ]` of an expression returned all of `x`, and
+  `x[c(TRUE, NA, FALSE), ]` dropped the `NA`. Both are now errors.
+* `cumsum(X)` of a matrix expression is now column-wise, as in CVXPY and as
+  `cumprod()` and `cummax()` already were.
 
 ## Matrix norms follow base R
 
@@ -113,13 +122,27 @@ with base R's `norm()` and with CVXPY:
 They used to be entrywise. A row vector is a 1 x n matrix, as in base R. Any
 other `p` on a matrix is now an error. For the entrywise norms use
 `cvxr_norm(X, "fro")`, `norm1(X)` or `p_norm(X, p)`. `cvxr_norm(X, "nuc")`
-now gives the nuclear norm.
+now gives the nuclear norm. With no `type`, `norm(X)` of an expression is the
+spectral norm, as in CVXPY; on an ordinary R matrix it is base R's one-norm.
 
 ```{r norms, eval = FALSE}
 X <- matrix(c(1, -2, 3, 4), 2, 2)
 value(cvxr_norm(Constant(X), 1))   # 7, as norm(X, "1")
 value(norm1(Constant(X)))          # 10, the entrywise 1-norm
 ```
+
+## Base R functions keep their meaning
+
+`CVXR` masks `diag()`, `norm()`, `outer()`, `sd()`, `var()` and
+`convolve()` so that they also work on expressions. On anything that is not
+an expression, each is now exactly the base R or stats function, called as
+written. On an expression each follows CVXPY, and an argument meant only for
+ordinary data, such as `na.rm`, is an error.
+
+`power()` is different: it is CVXPY's `power(x, p)` for any argument, as
+before, and the new `cvxr_power()` is the same function. It masks the
+unrelated `stats::power()`, a `glm()` link, so with `CVXR` attached write
+`stats::power()` in a `glm()` family.
 
 ## Solver selection
 

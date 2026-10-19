@@ -20,8 +20,17 @@
 #'   \item{\code{cumsum(x)}}{Cumulative sum (affine)}
 #'   \item{\code{cummax(x)}}{Cumulative max (convex)}
 #'   \item{\code{cumprod(x)}}{Cumulative product}
-#'   \item{\code{ceiling(x)}, \code{floor(x)}}{Round up/down (MIP)}
+#'   \item{\code{ceiling(x)}, \code{floor(x)}}{Round up/down (quasilinear,
+#'     DQCP). As in CVXPY, the value rounds \code{x} to 4 decimal places
+#'     first, so \code{floor(-3e-10)} of an expression is 0, not -1.}
+#'   \item{\code{sign(x)}}{Sign (quasilinear for a scalar, DQCP). As in
+#'     CVXPY, it is -1 for \code{x <= 0}, so \code{sign(0)} of an expression
+#'     is -1, not 0.}
 #' }
+#' On a matrix expression, \code{cumsum()}, \code{cummax()} and
+#' \code{cumprod()} run down each column, as in CVXPY; use
+#' \code{\link{cumsum_axis}(x, axis = NULL)} for all entries in column-major
+#' order.
 #'
 #' @section Summary group (via S3 group generic):
 #' \describe{

@@ -444,3 +444,23 @@ test_that("is_power2 correctly identifies powers of 2", {
   expect_false(is_power2(-1))
   expect_false(is_power2(1.5))
 })
+
+## Expected values measured with CVXPY 1.9.3: maximum.py:55 reduce(np.maximum)
+## broadcasts a 3 x 1 and a 1 x 3 operand to the atom's 3 x 3 shape.
+## @cvxpy NONE
+test_that("max_elemwise/min_elemwise broadcast a column and a row", {
+  v <- matrix(c(1, -2, 3.5), 3, 1)
+  w <- matrix(c(0.5, 1, 2), 1, 3)
+  mx <- value(max_elemwise(Constant(v), w))
+  mn <- value(min_elemwise(Constant(v), w))
+  expect_equal(dim(mx), c(3L, 3L))
+  expect_equal(as.numeric(mx), c(1, 0.5, 3.5, 1, 1, 3.5, 2, 2, 3.5))
+  expect_equal(dim(mn), c(3L, 3L))
+  expect_equal(as.numeric(mn), c(0.5, -2, 0.5, 1, -2, 1, 1, -2, 2))
+  ## the solve: CVXPY's objective is 18
+  x <- Variable(c(3L, 1L))
+  prob <- Problem(Minimize(sum(max_elemwise(x, w))), list(x == v))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 18, tolerance = 1e-6)
+  ## a second solve warm-starts from the first value and must not crash
+  expect_equal(psolve(prob, solver = "CLARABEL"), 18, tolerance = 1e-6)
+})

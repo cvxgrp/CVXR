@@ -15,5 +15,5 @@ inv_pos <- function(x) {
   ## wrapper, whose `approx = TRUE` default canonicalizes to SOC.  Constructing
   ## `Power` directly emits PowCone3D and locks out every SOC-only solver.
   ## p = -1 is exactly representable, so the SOC form is exact.
-  power(x, -1)
+  .power_atom(x, -1)
 }

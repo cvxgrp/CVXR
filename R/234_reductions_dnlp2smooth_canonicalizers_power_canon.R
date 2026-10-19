@@ -29,7 +29,7 @@
     ## CVXPY does `x ** (-p)`; `p_used` is a gmp::bigq here, and R's power()
     ## rejects a bigq exponent (is.numeric() is FALSE), so coerce to double --
     ## power() re-fractionalizes it internally, matching CVXPY's Fraction path.
-    inner_power_expr <- power(x, as.numeric(-p))
+    inner_power_expr <- .power_atom(x, as.numeric(-p))
     inner_res <- .smooth_power_canon(inner_power_expr, .args(inner_power_expr))
     div_expr <- Constant(matrix(1, shape[1L], shape[2L])) / inner_res[[1L]]
     div_res <- .smooth_div_canon(div_expr, .args(div_expr))

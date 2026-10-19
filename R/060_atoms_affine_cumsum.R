@@ -7,7 +7,9 @@
 
 
 Cumsum <- new_class("Cumsum", parent = AxisAffAtom, package = "CVXR",
-  constructor = function(x, axis = NULL, id = NULL) {
+  ## cumsum.py:75 `axis = 0` (down the columns) is the default, as for
+  ## Cumprod and Cummax.
+  constructor = function(x, axis = 2L, id = NULL) {
     if (FALSE) new_object(S7_object())  ## S7 static-check guard
     if (is.null(id)) id <- next_expr_id()
     x <- as_expr(x)
@@ -94,9 +96,11 @@ method(graph_implementation, Cumsum) <- function(x, arg_objs, shape, data = NULL
 #' Cumulative sum along an axis
 #'
 #' @param x An Expression
-#' @param axis NULL (all), 1 (across rows), or 2 (down columns)
+#' @param axis 2 (down columns, the default, as CVXPY's \code{axis = 0}),
+#'   1 (across rows), or NULL (all entries, in column-major order, as a
+#'   column)
 #' @returns A Cumsum atom
 #' @export
-cumsum_axis <- function(x, axis = NULL) {
+cumsum_axis <- function(x, axis = 2L) {
   Cumsum(x, axis)
 }

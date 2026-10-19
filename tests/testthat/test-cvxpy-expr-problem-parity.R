@@ -1944,9 +1944,9 @@ test_that("CVXPY parity: all_expressions — constant evaluation", {
   expected_var <- mean((X_np - mean(X_np))^2)
   expect_equal(as.numeric(value(vr)), expected_var, tolerance = 1e-5)
 
-  ## cumsum: cumulative sum of flattened entries (column-major)
+  ## cumsum: down the columns (expression.py:1043 `cumsum(self, axis=0)`)
   cs <- cumsum_axis(X)
-  expect_equal(as.numeric(value(cs)), cumsum(as.numeric(X_np)), tolerance = 1e-10)
+  expect_equal(value(cs), apply(X_np, 2L, cumsum), tolerance = 1e-10)
 
   ## conj: complex conjugate (for real, identity)
   cj <- Conj(X)

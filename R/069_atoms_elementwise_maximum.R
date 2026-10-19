@@ -64,8 +64,11 @@ method(is_pwl, Maximum) <- function(x) {
 }
 
 # -- numeric ------------------------------------------------------
+## CVXPY SOURCE: maximum.py:55 -- reduce(np.maximum, values), which
+## broadcasts; pmax() recycles, so broadcast to the atom's shape first.
 method(numeric_value, Maximum) <- function(x, values, ...) {
-  Reduce(pmax, values)
+  shp <- .shape(x)
+  Reduce(pmax, lapply(values, .broadcast_numeric, target_shape = shp))
 }
 
 # -- graph_implementation: stub -----------------------------------

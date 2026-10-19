@@ -64,8 +64,11 @@ method(is_pwl, Minimum) <- function(x) {
 }
 
 # -- numeric ------------------------------------------------------
+## CVXPY SOURCE: minimum.py:55 -- reduce(np.minimum, values), which
+## broadcasts; pmin() recycles, so broadcast to the atom's shape first.
 method(numeric_value, Minimum) <- function(x, values, ...) {
-  Reduce(pmin, values)
+  shp <- .shape(x)
+  Reduce(pmin, lapply(values, .broadcast_numeric, target_shape = shp))
 }
 
 # -- graph_implementation: stub -----------------------------------

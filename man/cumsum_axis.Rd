@@ -4,12 +4,14 @@
 \alias{cumsum_axis}
 \title{Cumulative sum along an axis}
 \usage{
-cumsum_axis(x, axis = NULL)
+cumsum_axis(x, axis = 2L)
 }
 \arguments{
 \item{x}{An Expression}
 
-\item{axis}{NULL (all), 1 (across rows), or 2 (down columns)}
+\item{axis}{2 (down columns, the default, as CVXPY's \code{axis = 0}),
+1 (across rows), or NULL (all entries, in column-major order, as a
+column)}
 }
 \value{
 A Cumsum atom

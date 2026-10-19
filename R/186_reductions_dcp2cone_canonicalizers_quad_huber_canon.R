@@ -16,7 +16,7 @@ huber_quad_canon <- function(expr, args, solver_context = NULL) {
   s <- Variable(shape = shape)
 
   ## n^2 via power_quad_canon -> SymbolicQuadForm
-  power_expr <- power(n, 2)
+  power_expr <- .power_atom(n, 2)
   n2_result <- power_quad_canon(power_expr, .args(power_expr))
   n2 <- n2_result[[1L]]
   constr_sq <- n2_result[[2L]]

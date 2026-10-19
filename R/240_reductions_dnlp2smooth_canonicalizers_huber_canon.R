@@ -22,7 +22,7 @@
   value(n) <- pmin(abs(xv), Mv) * sign(xv)
   value(s) <- xv - value(n)
   ## n^2 + 2*M*|s|
-  power_expr <- power(n, 2)
+  power_expr <- .power_atom(n, 2)
   ps <- .smooth_power_canon(power_expr, .args(power_expr))
   abs_expr <- Abs(s)
   ## reuse the shared abs canonicalizer (dcp2cone/canonicalizers/abs_canon.R)

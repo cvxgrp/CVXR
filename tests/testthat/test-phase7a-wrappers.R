@@ -308,7 +308,7 @@ test_that("cumsum_canon for axis=1", {
 ## @cvxpy NONE
 test_that("cumsum_canon for axis=NULL", {
   x <- Variable(c(2L, 3L))
-  cs <- Cumsum(x)  # axis=NULL
+  cs <- Cumsum(x, axis = NULL)
   result <- dcp_canonicalize(cs, cs@args)
   ## axis=NULL: flattened to (6, 1), then cumsum axis=0
   expect_true(S7_inherits(result[[1L]], Variable))

@@ -40,7 +40,7 @@
     "-"  = { bcast <- broadcast_args(e1, NegExpression(e2)); AddExpression(list(bcast[[1L]], bcast[[2L]])) },
     "*"  = Multiply(e1, e2),
     "/"  = DivExpression(e1, e2),
-    "^"  = power(e1, e2),
+    "^"  = .power_atom(e1, e2),
     ## Comparison -> Constraint objects
     "==" = Equality(e1, e2),
     "<=" = Inequality(e1, e2),         # lhs <= rhs
@@ -113,6 +113,10 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
     ## x[] -- return as-is
     return(x)
   }
+  ## A user NULL selects nothing in base R, but NULL in a key means "all".
+  if ((!missing(i) && is.null(i)) || (!missing(j) && is.null(j))) {
+    cli_abort("A {.code NULL} subscript is not supported on an expression.")
+  }
   ## Determine nargs: were we called as x[i] or x[i, j]?
   ## R passes nargs() but we detect via sys.call
   cl <- sys.call()
@@ -168,13 +172,13 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
 # NOTE: H1 -- cumsum, cummax, cumprod, cummin are Math group, NOT Summary
 # NOTE: H2 -- sign() routes to the Sign atom (DQCP).  expr_sign() is
 #             the distinct *curvature-query* generic.
-# NOTE: H3 -- log2, log10, log1p routed through Log atom
+# NOTE: H3 -- log2, log10 routed through Log atom; log1p is the Log1p atom
 
 .cvxr_Math_handler <- function(x, ...) {
   switch(.Generic,
     "abs"     = Abs(x),
     "exp"     = Exp(x),
-    "log"     = Log(x),
+    "log"     = if (...length() == 0L) Log(x) else .log_base(x, ...),
     ## NOTE: H4 -- `power()`, NOT `Power()`.  CVXPY SOURCE:
     ##        atoms/elementwise/sqrt.py:24 `return power(x, Fraction(1, 2))`,
     ##        i.e. the wrapper, whose `approx = TRUE` default canonicalizes to
@@ -184,12 +188,12 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
     ##        those solvers reject the problem outright, and SCS return a
     ##        silently wrong answer on the DQCP form.  p = 1/2 is exactly
     ##        representable, so the SOC form is exact, not approximate.
-    "sqrt"    = power(x, 0.5),
+    "sqrt"    = .power_atom(x, 0.5),
     "cumsum"  = Cumsum(x),
     "sign"    = Sign(x),
     "log2"    = DivExpression(Log(x), Constant(log(2))),
     "log10"   = DivExpression(Log(x), Constant(log(10))),
-    "log1p"   = Log(AddExpression(list(x, Constant(1)))),
+    "log1p"   = Log1p(x),
     "cummax"  = Cummax(x),
     "cumprod" = Cumprod(x),
     "ceiling"  = Ceil(x),
@@ -206,6 +210,16 @@ method(`[`, Expression) <- function(x, i, j, ..., drop = FALSE) {
     "cummin"  = cli_abort("{.fn cummin} is not yet supported for CVXR expressions."),
     cli_abort("{.fn {(.Generic)}} is not supported for CVXR expressions.")
   )
+}
+
+## base R's log(x, base); numpy's log has no base. log(base) folds to one
+## constant, and a base below 1 divides by a negative, flipping curvature.
+.log_base <- function(x, base) {
+  if (!is.numeric(base) || length(base) != 1L || is.na(base) ||
+      base <= 0 || base == 1) {
+    cli_abort("{.arg base} must be a positive number other than 1.")
+  }
+  DivExpression(Log(x), Constant(log(base)))
 }
 
 # -- S3 Summary group handler -------------------------------------

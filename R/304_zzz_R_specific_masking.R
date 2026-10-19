@@ -16,16 +16,17 @@
 #'
 #' For CVXR expressions, computes the norm atom with the same meaning as
 #' base R \code{\link[base]{norm}} for every type: a vector is a one-column
-#' or one-row matrix. For other inputs, falls through to \code{Matrix::norm}
-#' which dispatches via S4 for both Matrix and base matrix objects.
+#' or one-row matrix. For any other input the call is forwarded as written
+#' to \code{Matrix::norm}, so the result is exactly base R's (including its
+#' default type \code{"O"}).
 #'
 #' @param x An Expression or matrix.
 #' @param type Norm type, as in base R: \code{"O"}/\code{"o"}/\code{"1"}
 #'   (maximum absolute column sum), \code{"I"}/\code{"i"} (maximum absolute
 #'   row sum), \code{"F"}/\code{"f"}/\code{"E"}/\code{"e"} (Frobenius),
-#'   \code{"M"}/\code{"m"} (largest absolute entry), \code{"2"} (default;
-#'   largest singular value). For an expression, any other value is passed
-#'   to \code{\link{cvxr_norm}} as \code{p}.
+#'   \code{"M"}/\code{"m"} (largest absolute entry), \code{"2"} (largest
+#'   singular value; the default for an expression only). For an expression,
+#'   any other value is passed to \code{\link{cvxr_norm}} as \code{p}.
 #' @param ... Additional arguments (unused for expressions).
 #' @returns An Expression or numeric value.
 #' @seealso \code{\link{cvxr_norm}} for the full-featured version with
@@ -45,8 +46,25 @@ norm <- function(x, type = "2", ...) {
       cvxr_norm(x, p = type)
     )
   } else {
-    ## Matrix::norm dispatches via S4 — handles dgCMatrix, dgeMatrix, base matrix
-    Matrix::norm(x, type, ...)
+    ## Forward the call as written, so an omitted type gets the base/Matrix
+    ## default ("O"), not this function's expression default "2".
+    cl <- match.call()
+    cl[[1L]] <- quote(Matrix::norm)
+    eval(cl, parent.frame())
+  }
+}
+
+## A stats-only argument on an expression is an error, as an unknown keyword
+## is in CVXPY's std/var (stats.py:42/57).
+## (%in%, not intersect(): intersect() costs ~7us per call with names.)
+.reject_stats_args <- function(dot_names, stats_args, fn, cvxr_fn) {
+  hit <- dot_names %in% stats_args
+  if (any(hit)) {
+    bad <- dot_names[hit]
+    cli_abort(c(
+      "{.arg {bad[1L]}} is a {.fn stats::{fn}} argument.",
+      "i" = "On an expression, {.fn {fn}} is {.fn {cvxr_fn}}, which takes {.arg axis}, {.arg keepdims} and {.arg ddof}."
+    ))
   }
 }
 
@@ -58,13 +76,19 @@ norm <- function(x, type = "2", ...) {
 #'
 #' @param x An Expression or numeric vector.
 #' @param ... For expressions: passed to \code{\link{cvxr_std}}
-#'   (axis, keepdims, ddof). For numeric: passed to \code{\link[stats]{sd}}.
+#'   (axis, keepdims, ddof); \code{na.rm} is an error. For numeric: passed to
+#'   \code{\link[stats]{sd}}.
 #' @returns An Expression or numeric value.
 #' @seealso \code{\link{cvxr_std}} for the full-featured version
 #' @rdname math_atoms
 #' @export
 sd <- function(x, ...) {
-  if (inherits(x, "CVXR::Expression")) cvxr_std(x, ...) else stats::sd(x, ...)
+  if (inherits(x, "CVXR::Expression")) {
+    .reject_stats_args(...names(), "na.rm", "sd", "cvxr_std")
+    cvxr_std(x, ...)
+  } else {
+    stats::sd(x, ...)
+  }
 }
 
 #' Variance
@@ -73,14 +97,20 @@ sd <- function(x, ...) {
 #' For numeric inputs, falls through to \code{\link[stats]{var}}.
 #'
 #' @param x An Expression or numeric.
-#' @param ... For expressions: passed to \code{\link{cvxr_var}}.
+#' @param ... For expressions: passed to \code{\link{cvxr_var}}
+#'   (axis, keepdims, ddof); \code{y}, \code{na.rm} and \code{use} are errors.
 #'   For numeric: passed to \code{\link[stats]{var}}.
 #' @returns An Expression or numeric value.
 #' @seealso \code{\link{cvxr_var}} for the full-featured version
 #' @rdname math_atoms
 #' @export
 var <- function(x, ...) {
-  if (inherits(x, "CVXR::Expression")) cvxr_var(x, ...) else stats::var(x, ...)
+  if (inherits(x, "CVXR::Expression")) {
+    .reject_stats_args(...names(), c("y", "na.rm", "use"), "var", "cvxr_var")
+    cvxr_var(x, ...)
+  } else {
+    stats::var(x, ...)
+  }
 }
 
 #' Outer product
@@ -91,12 +121,25 @@ var <- function(x, ...) {
 #' @param X An Expression or numeric.
 #' @param Y An Expression or numeric.
 #' @param ... For non-Expression inputs: passed to \code{\link[base]{outer}}.
+#'   For expressions, only \code{FUN = "*"} is accepted; any other
+#'   \code{FUN} or argument is an error.
 #' @returns An Expression or matrix.
 #' @seealso \code{\link{cvxr_outer}} for the CVXR-specific version
 #' @rdname math_atoms
 #' @export
 outer <- function(X, Y, ...) {
   if (inherits(X, "CVXR::Expression") || inherits(Y, "CVXR::Expression")) {
+    ## binary_operators.py:682 outer(x, y) is the product only.
+    nm <- ...names()
+    if (...length() > 1L ||
+        (...length() == 1L &&
+         (!(is.null(nm) || nm %in% c("", "FUN")) ||
+          !(identical(..1, "*") || identical(..1, base::`*`))))) {
+      cli_abort(c(
+        "On an expression, {.fn outer} is {.fn cvxr_outer}, the product.",
+        "i" = "{.arg FUN} must be {.val *}, and no other argument is accepted."
+      ))
+    }
     cvxr_outer(X, Y)
   } else {
     base::outer(X, Y, ...)
@@ -108,27 +151,36 @@ outer <- function(X, Y, ...) {
 #' For CVXR expressions, dispatches to \code{\link{DiagVec}} (vector to
 #' diagonal matrix) or \code{\link{DiagMat}} (extract diagonal from matrix),
 #' matching CVXPY's \code{cp.diag()} behavior. For other inputs, falls
-#' through to \code{Matrix::diag} which dispatches via S4 for both Matrix
-#' and base matrix objects.
+#' through to \code{Matrix::diag}, called exactly as written, which
+#' dispatches via S4 for both Matrix and base matrix objects.
 #'
 #' The \code{k} parameter (off-diagonal offset) is only available for
-#' Expression inputs. For the full-featured version with \code{k} on
-#' non-Expression inputs, use \code{\link{DiagVec}} or \code{\link{DiagMat}}
-#' directly.
+#' Expression inputs; giving it with a non-Expression \code{x} is an error.
 #'
 #' @param x An Expression, matrix, vector, or scalar.
-#' @param nrow For non-Expression: passed to \code{Matrix::diag}.
-#' @param ncol For non-Expression: passed to \code{Matrix::diag}.
-#' @param names For non-Expression: passed to \code{Matrix::diag}.
-#' @param k Integer diagonal offset for Expressions only. \code{k = 0}
-#'   (default) is the main diagonal.
+#' @param nrow For non-Expression: passed to \code{Matrix::diag}; an error
+#'   with an Expression.
+#' @param ncol For non-Expression: passed to \code{Matrix::diag}; an error
+#'   with an Expression.
+#' @param names For non-Expression: passed to \code{Matrix::diag}; an error
+#'   with an Expression.
+#' @param k Integer diagonal offset for Expressions only. \code{NULL}
+#'   (default) means \code{0}, the main diagonal.
 #' @returns An Expression, matrix, or vector.
 #' @seealso \code{\link{DiagVec}}, \code{\link{DiagMat}}
 #' @rdname math_atoms
 #' @export
-diag <- function(x, nrow, ncol, names = TRUE, k = 0L) {
+diag <- function(x = 1, nrow, ncol, names = TRUE, k = NULL) {
   if (inherits(x, "CVXR::Expression")) {
-    k <- as.integer(k)
+    ## diag.py:27 diag(expr, k=0): the Matrix-only arguments are errors.
+    bad <- c("nrow", "ncol", "names")[c(!missing(nrow), !missing(ncol), !missing(names))]
+    if (length(bad) > 0L) {
+      cli_abort(c(
+        "{.arg {bad[1L]}} is a {.fn Matrix::diag} argument.",
+        "i" = "On an expression, {.fn diag} takes only {.arg k}, the diagonal offset, by name."
+      ))
+    }
+    k <- if (is.null(k)) 0L else as.integer(k)
     if (is_vector(x)) {
       ## Vector -> diagonal matrix (CVXPY: diag_vec)
       DiagVec(.cvxr_vec(x), k = k)
@@ -139,16 +191,13 @@ diag <- function(x, nrow, ncol, names = TRUE, k = 0L) {
       cli_abort("Argument to {.fn diag} must be a vector or square matrix Expression.")
     }
   } else {
-    ## Matrix::diag dispatches via S4 — handles ddiMatrix, dgCMatrix, base matrix.
-    ## Pass arguments only when explicitly provided; Matrix::diag(x) without
-    ## extra args preserves base R semantics (scalar → identity, vector → diag matrix).
-    if (missing(nrow) && missing(ncol))
-      Matrix::diag(x)
-    else if (missing(ncol))
-      Matrix::diag(x, nrow = nrow)
-    else if (missing(nrow))
-      Matrix::diag(x, ncol = ncol)
-    else
-      Matrix::diag(x, nrow = nrow, ncol = ncol)
+    if (!is.null(k))
+      cli_abort("{.arg k} is only available when {.arg x} is a CVXR Expression; use {.fn DiagVec} or {.fn DiagMat}.")
+    ## Forward the call as written: base diag() branches on nargs(), so a
+    ## literal Matrix::diag(x, nrow, ncol, names) changes diag(3) and diag(A).
+    cl <- match.call()
+    cl[[1L]] <- quote(Matrix::diag)
+    cl$k <- NULL
+    eval(cl, parent.frame())
   }
 }

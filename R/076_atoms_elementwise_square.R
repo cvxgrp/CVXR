@@ -20,5 +20,5 @@ square <- function(x) {
   ## has no power cone (SCIP, CPLEX, Gurobi).  CVXPY reports {Zero, NonNeg,
   ## SOC} for the same problem.  For p = 2 both classes canonicalize to the
   ## same SOC, so this changes classification, not the cone program.
-  power(x, 2)
+  .power_atom(x, 2)
 }

@@ -10,7 +10,7 @@ xexp_canon <- function(expr, args, solver_context = NULL) {
   x <- args[[1L]]
   u <- Variable(shape = .shape(expr), nonneg = TRUE)
   t <- Variable(shape = .shape(expr), nonneg = TRUE)
-  power_expr <- power(x, 2)
+  power_expr <- .power_atom(x, 2)
   power_result <- power_approx_canon(power_expr, .args(power_expr))
   power_obj <- power_result[[1L]]
   constraints <- power_result[[2L]]

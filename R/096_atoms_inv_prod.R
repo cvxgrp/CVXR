@@ -18,5 +18,5 @@
 inv_prod <- function(x, approx = TRUE) {
   x <- as_expr(x)
   n <- expr_size(x)
-  power(geo_mean(x, approx = approx), -as.integer(n), approx = approx)
+  .power_atom(geo_mean(x, approx = approx), -as.integer(n), approx = approx)
 }

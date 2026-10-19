@@ -37,7 +37,7 @@
       ## constraint direction for decreasing functions. Returning +Inf
       ## unconditionally made power(ceil(x), 2) <= -5 report OPTIMAL
       ## instead of INFEASIBLE.
-      if (is_nonneg(t)) return(power(t, 1 / p_val))
+      if (is_nonneg(t)) return(.power_atom(t, 1 / p_val))
       if (p_val > 0) -Inf else Inf
     })
   } else if (.s7_is(expr, Multiply)) {

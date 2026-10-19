@@ -625,3 +625,40 @@ test_that("SpecialIndex: all elements selected equals vec", {
   expect_equal(si@shape, c(9L, 1L))
   expect_equal(si@select_vec, 1:9)
 })
+
+## A NULL subscript selects nothing in base R; NumPy has no such index and
+## inside CVXR NULL means "all", so it is an error rather than all of x.
+## @cvxpy NONE
+test_that("Index: a NULL subscript is an error", {
+  X <- Variable(c(3, 2))
+  v <- Variable(3)
+  expect_error(X[NULL, ], "NULL")
+  expect_error(X[, NULL], "NULL")
+  expect_error(X[1, NULL], "NULL")
+  expect_error(X[NULL], "NULL")
+  expect_error(v[NULL], "NULL")
+  expect_error(t(v)[NULL], "NULL")
+  ## missing subscripts still mean "all"
+  expect_equal(X[, 1]@shape, c(3L, 1L))
+  expect_equal(X[2, ]@shape, c(1L, 2L))
+})
+
+## key_utils.py:26 validate_key; NumPy rejects string and NaN keys.
+## @cvxpy NONE
+test_that("Index: a character or NA subscript is an error", {
+  X <- Variable(c(3, 2))
+  v <- Variable(3)
+  expect_error(expect_no_warning(X[, "a"]), "character")
+  expect_error(expect_no_warning(X["r1", ]), "character")
+  expect_error(expect_no_warning(v["a"]), "character")
+  expect_error(X[c(1, NA), ], "NA")
+  expect_error(X[NA_integer_, 1], "NA")
+  expect_error(X[c(-1, NA), ], "NA")
+  expect_error(X[c(TRUE, NA, FALSE), ], "NA")
+  expect_error(v[c(1, NA)], "NA")
+  expect_error(v[c(TRUE, NA, TRUE)], "NA")
+  ## integer, negative and logical subscripts are unchanged
+  expect_equal(X[c(1, 3), ]@shape, c(2L, 2L))
+  expect_equal(X[-1, ]@shape, c(2L, 2L))
+  expect_equal(X[c(TRUE, FALSE, TRUE), ]@shape, c(2L, 2L))
+})

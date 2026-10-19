@@ -101,7 +101,82 @@ test_that("log1p(x) works via Math dispatch", {
   expect_s3_class(l1p, "CVXR::Log")
 })
 
+## numpy's log has no base; this is base R's log(x, base).
+## @cvxpy NONE
+test_that("log(x, base) honors base", {
+  v <- matrix(c(2, 3, 4.5, 5, 1, 7), 2, 3)
+  expect_equal(value(log(Constant(v), 2)), log(v, 2))
+  expect_equal(value(log(Constant(v), base = 10)), log(v, base = 10))
+  expect_equal(value(log(Constant(v))), log(v))
+  x <- Variable(3)
+  expect_true(is_concave(log(x, 2)))
+  ## a base below 1 is a negative divisor and flips the curvature
+  expect_true(is_convex(log(x, 0.5)))
+  expect_error(log(x, 1), "base")
+  expect_error(log(x, 0), "base")
+  expect_error(log(x, -2), "base")
+  expect_error(log(x, c(2, 3)), "base")
+  expect_error(log(x, Variable()), "base")
+})
+
 ## ── Math group: unsupported ──────────────────────────────────────
+
+## elementwise/log1p.py:25-41: log1p is its own atom, evaluated with
+## scipy.special.log1p, with the sign of its argument.
+## @cvxpy NONE
+test_that("log1p(x) is the Log1p atom", {
+  x <- Variable(3, nonneg = TRUE)
+  expect_true(S7::S7_inherits(log1p(x), Log1p))
+  expect_true(is_nonneg(log1p(x)))
+  expect_true(is_concave(log1p(x)))
+  v <- c(1e-10, 1e-3, 2)
+  expect_equal(as.numeric(value(log1p(Constant(v)))), log1p(v))
+  ## log(1 + 1e-10) is off by a relative 8e-8, which expect_equal() cannot
+  ## see at this magnitude (it compares absolutely); Log1p calls log1p()
+  expect_identical(as.numeric(value(log1p(Constant(1e-10)))), log1p(1e-10))
+  prob <- Problem(Maximize(sum(log1p(x))), list(sum(x) <= 1))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 3 * log1p(1 / 3),
+               tolerance = 1e-6)
+})
+
+## stats.py:35 mean(x, axis=None, keepdims=False). mean() is a generic, so
+## trim/na.rm are mean.default's; on an expression they are errors and a
+## positional second argument is axis.
+## @cvxpy NONE
+test_that("mean(expr) is cvxr_mean; trim and na.rm are errors", {
+  m <- matrix(c(2, 3, 4.5, 5, 1, 7), 2, 3)
+  X <- Constant(m)
+  expect_equal(as.numeric(value(mean(X))), mean(m))
+  expect_equal(as.numeric(value(mean(X, 1))), rowMeans(m))
+  expect_equal(as.numeric(value(mean(X, axis = 2))), colMeans(m))
+  x <- Variable(c(2, 3))
+  expect_error(mean(x, trim = 0.1), "cvxr_mean")
+  expect_error(mean(x, na.rm = TRUE), "cvxr_mean")
+  expect_error(mean(x, 0.1), "axis")
+  expect_error(mean(x, 1.5), "axis")
+  expect_error(mean(x, c(1, 2)), "axis")
+  expect_error(mean(x, x), "axis")
+  ## plain objects are base R's mean
+  expect_identical(mean(c(1, 2, 30), trim = 0.4), 2)
+})
+
+## power.py:183 float(self.p.value): a constant exponent must be a scalar.
+## @cvxpy NONE
+test_that("A non-scalar constant exponent is an error", {
+  x <- Variable(2)
+  expect_error(x^c(1, 2), "scalar")
+  expect_error(x^numeric(0), "scalar")
+  expect_error(power(x, c(1, 2)), "scalar")
+  expect_error(power(x, c(1, 2), approx = FALSE), "scalar")
+  expect_error(power(x, Constant(c(1, 2))), "scalar")
+  expect_error(2^Constant(c(1, 2)), "scalar")
+  expect_error(Constant(2)^c(1, 2), "scalar")
+  ## a 1 x 1 exponent, a variable exponent and a Parameter are unchanged
+  expect_true(S7_inherits(x^matrix(2), Power))
+  expect_true(S7_inherits(power(x, Constant(matrix(3)), approx = FALSE), Power))
+  expect_false(S7_inherits(2^x, Power))
+  expect_true(S7_inherits(x^Parameter(), Power))
+})
 
 ## @cvxpy NONE
 test_that("Unsupported Math functions give clear error", {

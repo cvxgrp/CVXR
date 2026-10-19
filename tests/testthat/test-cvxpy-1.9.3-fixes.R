@@ -295,10 +295,10 @@ test_that("P5: cumsum of a 2-D parameter along each axis matches base R", {
 })
 
 ## @cvxpy NONE
-test_that("0.2: cumsum(X) of a matrix variable: atom, value and solver agree", {
+test_that("0.2: cumsum_axis(X, NULL) of a matrix variable: atom, value and solver agree", {
   Xv <- matrix(0:5, 2L, 3L, byrow = TRUE)
   X <- Variable(c(2L, 3L))
-  cs <- cumsum(X)                       # Math group -> axis = NULL
+  cs <- cumsum_axis(X, axis = NULL)
   expect_equal(dim(cs), c(6L, 1L))
 
   ## The solver-side quantity (through an auxiliary scalar) and the
@@ -313,9 +313,31 @@ test_that("0.2: cumsum(X) of a matrix variable: atom, value and solver agree", {
   ## An equality against the atom's declared shape (pre-fix: "Cannot
   ## broadcast shapes (2, 3) and (6, 3)").
   Y <- Variable(c(6L, 1L))
-  pr2 <- Problem(Minimize(0), list(X == Xv, Y == cumsum(X)))
+  pr2 <- Problem(Minimize(0), list(X == Xv, Y == cumsum_axis(X, axis = NULL)))
   psolve(pr2, solver = "CLARABEL")
   expect_equal(value(Y), matrix(cumsum(as.vector(Xv)), ncol = 1L), tolerance = 1e-6)
+})
+
+## cumsum.py:75 `axis: int | None = 0`: the default is down the columns, as
+## for cumprod and cummax.
+## @cvxpy NONE
+test_that("cumsum(X) of a matrix expression is column-wise by default", {
+  Xv <- matrix(0:5, 2L, 3L, byrow = TRUE)
+  X <- Variable(c(2L, 3L))
+  expect_equal(dim(cumsum(X)), c(2L, 3L))
+  expect_equal(dim(cumsum_axis(X)), c(2L, 3L))
+  expect_equal(dim(cumsum(X)), dim(cumprod(X)))
+  expect_equal(value(cumsum(Constant(Xv))), apply(Xv, 2L, cumsum))
+
+  Y <- Variable(c(2L, 3L))
+  pr <- Problem(Minimize(0), list(X == Xv, Y == cumsum(X)))
+  psolve(pr, solver = "CLARABEL")
+  expect_equal(value(Y), apply(Xv, 2L, cumsum), tolerance = 1e-6)
+
+  ## A column vector is unchanged.
+  v <- Variable(3)
+  expect_equal(dim(cumsum(v)), c(3L, 1L))
+  expect_equal(as.numeric(value(cumsum(Constant(c(1, 2, 3))))), c(1, 3, 6))
 })
 
 # ===================================================================

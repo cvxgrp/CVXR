@@ -19,5 +19,5 @@
   z <- Variable(.shape(args[[2L]]), nonneg = TRUE)
   v <- value(args[[2L]])
   if (!is.null(v)) value(z) <- pmax(v, .dnlp_div_MIN_INIT)
-  list(args[[1L]] * power(z, -1), list(z == args[[2L]]))
+  list(args[[1L]] * .power_atom(z, -1), list(z == args[[2L]]))
 }

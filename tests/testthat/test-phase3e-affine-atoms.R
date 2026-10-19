@@ -355,11 +355,12 @@ test_that("conv() factory function", {
 ## @cvxpy NONE
 test_that("Cumsum: preserves shape along an axis; axis = NULL is a column", {
   x <- Variable(c(3, 2))
-  cs <- Cumsum(x)
+  cs <- Cumsum(x, axis = NULL)
   expect_s3_class(cs, "CVXR::Cumsum")
   ## axis = NULL: all 6 entries, column-major, as base R cumsum() (1.9.3
   ## plan decision D2; it was c(3, 2) and disagreed with the canonicalizer).
   expect_equal(cs@shape, c(6L, 1L))
+  expect_equal(Cumsum(x)@shape, c(3L, 2L))
   expect_equal(Cumsum(x, axis = 2L)@shape, c(3L, 2L))
   expect_equal(Cumsum(x, axis = 1L)@shape, c(3L, 2L))
 })
@@ -367,7 +368,7 @@ test_that("Cumsum: preserves shape along an axis; axis = NULL is a column", {
 ## @cvxpy NONE
 test_that("Cumsum: numeric evaluation (axis=NULL)", {
   x <- Variable(c(2, 2))
-  cs <- Cumsum(x)
+  cs <- Cumsum(x, axis = NULL)
   val <- matrix(c(1, 2, 3, 4), nrow = 2)
   result <- numeric_value(cs, list(val))
   ## Column-major: cumsum(c(1,2,3,4)) = c(1,3,6,10) → 2x2

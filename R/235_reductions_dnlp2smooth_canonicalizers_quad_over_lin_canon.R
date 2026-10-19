@@ -11,7 +11,7 @@
 
 .smooth_quad_over_lin_canon <- function(expr, args) {
   if (is_constant(args[[2L]])) {
-    p2 <- power(args[[1L]], 2)
+    p2 <- .power_atom(args[[1L]], 2)
     p_res <- .smooth_power_canon(p2, .args(p2))
     summation <- SumEntries(p_res[[1L]])
     return(list((1 / as.numeric(value(args[[2L]]))) * summation, p_res[[2L]]))

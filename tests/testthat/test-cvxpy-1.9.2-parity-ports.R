@@ -134,15 +134,23 @@ test_that("asymmetric sparse matrices whose triangle VALUES match are rejected",
   S <- Matrix::sparseMatrix(i = c(2L, 2L, 1L, 3L), j = c(1L, 1L, 2L, 1L),
                             x = c(2, 3, 5, 0), dims = c(3L, 3L))
   expect_true(is_symmetric(Constant(S)))
+  K <- Matrix::sparseMatrix(i = c(2L, 1L, 3L), j = c(1L, 2L, 3L), x = c(5, -5, 0),
+                            dims = c(3L, 3L))
+  expect_true(is_skew_symmetric(Constant(K)))
+  ## Upstream's complex H case has no R counterpart: Matrix has no complex
+  ## sparse class (decision 15, CVXR 1.9.2.9153).
 
-  ## Sparse and dense classification must agree on random matrices.
+  ## Sparse and dense classification must agree on random matrices.  The
+  ## dense reference is np.allclose, as upstream (CVXR 1.9.2.9155, C0487); it
+  ## was `all.equal(..., tolerance = 1e-12)` before, which agreed only because
+  ## rsparsematrix() output is either exactly symmetric or far from it.
   set.seed(0)
   for (trial in 1:20) {
     M <- Matrix::rsparsematrix(5, 5, density = 0.4)
     if (trial %% 2 == 0) M <- M + Matrix::t(M)
     D <- as.matrix(M)
-    expect_equal(is_symmetric(Constant(M)),
-                 isTRUE(all.equal(D, t(D), tolerance = 1e-12)))
+    expect_equal(is_symmetric(Constant(M)), CVXR:::.np_allclose(D, t(D)))
+    expect_equal(is_skew_symmetric(Constant(M)), CVXR:::.np_allclose(D + t(D), 0))
   }
 })
 

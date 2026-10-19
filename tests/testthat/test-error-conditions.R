@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/error.py:39-67
+## @cvxpy cvxpy/error.py:35-67
 ##
 ## CVXPY declares seven typed exception classes so callers can catch a specific
 ## failure mode:
@@ -14,7 +14,7 @@
 ## which is not an API.  Audit finding #3.
 ##
 ## Upstream raise sites this pins:
-##     DPPError        solving_chain.py:201
+##     DPPError        solving_chain.py:204
 ##     DGPError        intermediate_chain.py:81
 ##     DQCPError       problem.py:1084
 ##     DNLPError       problem.py:1115
@@ -95,7 +95,7 @@ test_that("the typed conditions remain ordinary errors", {
 
 ## NOT TESTED HERE, deliberately: the two conditions CVXR already classed.
 ## `a * b` for two Variables does NOT raise -- it builds a Multiply, and the
-## DCPError abort lives in graph_implementation (binary_operators.R:133,291), so
+## DCPError abort lives in graph_implementation (binary_operators.R:133,295), so
 ## it fires during canonicalization, not construction.  Pinning it needs a solve
 ## and a check of which of the two "not DCP" sites wins, which is a separate
 ## question from this finding.  SolverError likewise needs an induced solver

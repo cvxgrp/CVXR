@@ -10,21 +10,7 @@ public:
   /* The vector */
   std::vector<LinOp *> linvec;
 
-  /* almost uuid */
-  std::string id;
-
   LinOpVector() {
-    id = genRandomId();
-#ifdef _R_DEBUG
-    Rcpp::Rcout << "LinOpVector id " << id << " Created!" << std::endl;
-#endif
-  }
-
-  ~LinOpVector() {
-#ifdef _R_DEBUG
-    Rcpp::Rcout << "LinOpVector id " << id << " Destroyed!" << std::endl;
-#endif
-
   }
 
 };

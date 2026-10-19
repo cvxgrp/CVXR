@@ -78,7 +78,7 @@ test_that("unspecified parameter errors", {
   p <- Parameter()
   x <- Variable()
   prob <- Problem(Minimize(p * x), list(x >= 0))
-  expect_error(psolve(prob), "unspecified parameter")
+  expect_error(psolve(prob), class = "ParameterError")
 })
 
 ## @cvxpy NONE

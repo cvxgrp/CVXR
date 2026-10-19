@@ -114,6 +114,125 @@ test_that("infeasible SOC + ExpCone mixed yields certificate duals", {
 })
 
 ## ---------------------------------------------------------------------
+## SCS: test_conic_solvers.py::TestSCS wrappers (lines 462-484) around the
+## same StandardTestInfeasibleProblems helpers.  CVXPY #3197 made SCS.invert
+## (scs_conif.py:169-192) extract the duals from y unconditionally and hand
+## them to failure_solution; CVXR ported that for Clarabel (#3228) but SCS
+## kept building duals only under SOLUTION_PRESENT (claims-audit row C0821,
+## decision 18, CVXR 1.9.2.9147).  Measured: R scs 3.2.7 and python scs 3.3.1
+## both return the Farkas ray in y on an infeasible solve, and both return
+## NaN y on an unbounded one (passed through as CVXPY does).
+## ---------------------------------------------------------------------
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_lp_ineq_constraints
+test_that("SCS infeasible LP (inequalities) yields a Farkas certificate dual", {
+  A <- matrix(c(1, 0, 0, 1, -1, -1), nrow = 3, byrow = TRUE)
+  b <- c(0, 0, -1)
+  x <- Variable(2)
+  con <- A %*% x <= b
+  prob <- Problem(Minimize(0), list(con))
+  .infeasible_guarantees(prob, list(x), list(con), solver = "SCS")
+
+  ## Farkas certificate: y >= 0, A^T y == 0, b^T y < 0.
+  y <- as.numeric(dual_value(con))
+  expect_true(all(y >= -1e-6))
+  expect_equal(as.numeric(t(A) %*% y), c(0, 0), tolerance = 1e-4)
+  expect_true(sum(b * y) < 0)
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_lp_eq_constraints
+test_that("SCS infeasible LP (equalities) yields a Farkas certificate dual", {
+  A <- matrix(c(1, 0, 0, 1, 1, 1), nrow = 3, byrow = TRUE)
+  b <- c(0, 0, 1)
+  x <- Variable(2)
+  ceq <- A %*% x == b
+  cnn <- x >= 0
+  prob <- Problem(Minimize(0), list(ceq, cnn))
+  .infeasible_guarantees(prob, list(x), list(ceq, cnn), solver = "SCS")
+
+  ## Farkas certificate: A^T y >= 0, b^T y < 0.
+  y <- as.numeric(dual_value(ceq))
+  expect_true(min(as.numeric(t(A) %*% y)) >= -1e-4)
+  expect_true(sum(b * y) < 0)
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_soc
+test_that("SCS infeasible SOC yields a certificate dual", {
+  x <- Variable(2)
+  con <- SOC(-1, x)
+  prob <- Problem(Minimize(0), list(con))
+  .infeasible_guarantees(prob, list(x), list(con), solver = "SCS")
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_power_cone_3d
+test_that("SCS infeasible PowCone3D yields a certificate dual", {
+  z <- Variable()
+  con <- PowCone3D(-1, 1, z, 0.5)
+  prob <- Problem(Minimize(0), list(con))
+  .infeasible_guarantees(prob, list(z), list(con), solver = "SCS")
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_power_cone_nd
+test_that("SCS infeasible PowConeND yields a certificate dual", {
+  x <- Variable(3)
+  z <- Variable()
+  cpn <- PowConeND(x, z, c(0.2, 0.3, 0.5))
+  c2 <- x == rep(1, 3)
+  c3 <- z == 2.0
+  prob <- Problem(Minimize(0), list(cpn, c2, c3))
+  .infeasible_guarantees(prob, list(x, z), list(cpn, c2, c3), solver = "SCS")
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_exp_cone
+test_that("SCS infeasible ExpCone yields a certificate dual", {
+  x <- Variable(); y <- Variable(); z <- Variable()
+  ce <- ExpCone(x, y, z)
+  c2 <- x == 1; c3 <- y == 1; c4 <- z == 1
+  prob <- Problem(Minimize(0), list(ce, c2, c3, c4))
+  .infeasible_guarantees(prob, list(x, y, z), list(ce, c2, c3, c4), solver = "SCS")
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_psd_cone
+test_that("SCS infeasible PSD cone yields a certificate dual", {
+  X <- Variable(c(2, 2))
+  c1 <- PSD(X)
+  c2 <- X[1, 1] == -1
+  prob <- Problem(Minimize(0), list(c1, c2))
+  .infeasible_guarantees(prob, list(X), list(c1, c2), solver = "SCS")
+})
+
+## @cvxpy test_conic_solvers.py::TestSCS::test_infeasible_soc_exp_mixed
+test_that("SCS infeasible SOC + ExpCone mixed yields certificate duals", {
+  x <- Variable(); y <- Variable()
+  c1 <- x == y
+  c2 <- SOC(x, hstack(1))       # x >= 1
+  c3 <- ExpCone(x, y, 1)        # x <= 0
+  prob <- Problem(Maximize(0), list(c1, c2, c3))
+  .infeasible_guarantees(prob, list(x, y), list(c1, c2, c3), maximize = TRUE,
+                         solver = "SCS")
+})
+
+## Unbounded: SCS fills y with NaN (both R scs 3.2.7 and python scs 3.3.1,
+## measured 2026-10-10) and CVXPY 1.9.3 exposes that NaN as the dual value
+## (StandardTestInfeasibleProblems has no unbounded case).  CVXR passes the
+## solver's y through unchanged, exactly as scs_conif.py:169-192 does; the
+## value is the solver's, not a fabricated certificate.
+## @cvxpy NONE
+test_that("SCS unbounded LP passes the solver's dual through as CVXPY does", {
+  x <- Variable(2)
+  con <- x >= 0
+  prob <- Problem(Minimize(-sum(x)), list(con))
+  v <- psolve(prob, solver = "SCS")
+  expect_equal(status(prob), "unbounded")
+  expect_equal(v, -Inf)
+  expect_null(value(x))
+  dv <- dual_value(con)
+  expect_false(is.null(dv))
+  expect_length(as.numeric(dv), 2L)
+  expect_true(all(is.nan(as.numeric(dv))))
+})
+
+## ---------------------------------------------------------------------
 ## QP-path solvers: test_qp_solvers.py::TestQp wrappers around the same
 ## StandardTestInfeasibleProblems LP helpers, parametrized by solver.
 ## ---------------------------------------------------------------------
@@ -161,11 +280,11 @@ test_that("OSQP infeasible LP (equalities) yields a Farkas certificate dual", {
 ## requires >= 1.14); the earlier @v19-pending skips here predated it and were
 ## written against 1.12.
 ##
-## Note these two run through HiGHS_QP_Solver, not HiGHS_Conic_Solver: CVXR's
-## .solve_as_qp() sends a named-solver LP down the QP path, where CVXPY 1.9
-## prefers the conic interface for a non-quadratic objective.  Both CVXR
-## interfaces carry the ray, so the certificate is available either way -- the
-## use_quad_obj = FALSE case below pins the conic one.
+## These two run through HiGHS_Conic_Solver: since the ADR D_19.8 port a named
+## solver takes an LP through its conic interface, as CVXPY 1.9 does
+## (solving_chain.py:317-329). CVXR's QP interface also carries the ray, which
+## is now reached only with a quadratic objective (CVXPY's QP interface returns
+## no dual there; docsreg_9204/highs_ray_probe.{R,py}).
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_highs_infeasible_lp_ineq_constraints
 test_that("HiGHS infeasible LP (inequalities) yields a Farkas certificate dual", {
@@ -201,8 +320,9 @@ test_that("HiGHS infeasible LP (equalities) yields a Farkas certificate dual", {
   expect_true(sum(b * y) < 0)
 })
 
-## The conic interface carries the ray as well; use_quad_obj = FALSE is what
-## routes a named-HiGHS LP to HiGHS_Conic_Solver rather than HiGHS_QP_Solver.
+## The conic interface carries the ray. Before the ADR D_19.8 port,
+## use_quad_obj = FALSE was what routed a named-HiGHS LP to HiGHS_Conic_Solver;
+## an LP now goes conic either way, and the flag is kept as written.
 test_that("HiGHS conic interface also yields the certificate", {
   skip_if_not_installed("highs")
   A <- matrix(c(1, 0, 0, 1, -1, -1), nrow = 3, byrow = TRUE)

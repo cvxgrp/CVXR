@@ -97,7 +97,23 @@ reset_expr_id <- function() {
   ## t() and mean() — registered here (not via S7 method()) to avoid
   ## demoting the S4 generic that Matrix creates. See conflicts/README.md.
   registerS3method("t", "CVXR::Expression", function(x) Transpose(x))
-  registerS3method("mean", "CVXR::Expression", function(x, ...) cvxr_mean(x, ...))
+  registerS3method("mean", "CVXR::Expression", .cvxr_mean_Expression)
+}
+
+## mean() is a generic: trim and na.rm belong to mean.default, and the
+## expression method is cvxr_mean(x, axis, keepdims) (stats.py:35).
+## (%in%, not intersect(): intersect() costs ~7us per call with names.)
+.cvxr_mean_Expression <- function(x, ...) {
+  nm <- ...names()
+  hit <- nm %in% c("trim", "na.rm")
+  if (any(hit)) {
+    bad <- nm[hit]
+    cli_abort(c(
+      "{.arg {bad[1L]}} is a {.fn base::mean} argument.",
+      "i" = "On an expression, {.fn mean} is {.fn cvxr_mean}, which takes {.arg axis} and {.arg keepdims}."
+    ))
+  }
+  cvxr_mean(x, ...)
 }
 
 ## S3 solve method for Problem -- dispatches to psolve(), returns cvxr_result

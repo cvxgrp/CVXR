@@ -65,13 +65,23 @@ test_that("DQCP parity: max(ceil(x), ceil(y))", {
 })
 
 ## ── DQCP parity: products ────────────────────────────────────────
+##
+## The three x*y tests pin CLARABEL (user decision 2026-10-10, claims-audit
+## "Decision 17" in notes/audit/claims_audit_item1.md). Upstream solves them
+## unpinned, but its CI has no MOSEK, so they run under CLARABEL there; with
+## MOSEK installed the default here is MOSEK, and CVXPY 1.9.3 + MOSEK fails
+## all three with "Max iters hit during bisection" (measured): near the
+## optimum MOSEK returns PRIMAL_ILLPOSED_CER, which is SOLVER_ERROR on both
+## sides, and the bisection then drifts into MSK_RES_TRM_STALL territory.
+## Until 1.9.2.9146 CVXR mapped that certificate to INFEASIBLE, which is why
+## these passed unpinned: an overclaim, not a better answer.
 
 ## @cvxpy test_dqcp.py::TestDqcp::test_basic_multiply_nonneg
 test_that("DQCP parity: maximize x*y, nonneg", {
   x <- Variable(nonneg = TRUE)
   y <- Variable(nonneg = TRUE)
   prob <- Problem(Maximize(x * y), list(x <= 12, y <= 6))
-  result <- psolve(prob, qcp = TRUE)
+  result <- psolve(prob, qcp = TRUE, solver = "CLARABEL")
 
   expect_equal(status(prob), "optimal")
   expect_equal(as.numeric(result), 72.0, tolerance = 0.1)
@@ -84,7 +94,7 @@ test_that("DQCP parity: maximize x*y, nonpos", {
   x <- Variable(nonpos = TRUE)
   y <- Variable(nonpos = TRUE)
   prob <- Problem(Maximize(x * y), list(x >= -12, y >= -6))
-  result <- psolve(prob, qcp = TRUE)
+  result <- psolve(prob, qcp = TRUE, solver = "CLARABEL")
 
   expect_equal(status(prob), "optimal")
   expect_equal(as.numeric(result), 72.0, tolerance = 0.1)
@@ -97,7 +107,7 @@ test_that("DQCP parity: minimize x*y, nonneg*nonpos (quasiconvex)", {
   x <- Variable(nonneg = TRUE)
   y <- Variable(nonpos = TRUE)
   prob <- Problem(Minimize(x * y), list(x <= 7, y >= -6))
-  result <- psolve(prob, qcp = TRUE)
+  result <- psolve(prob, qcp = TRUE, solver = "CLARABEL")
 
   expect_equal(status(prob), "optimal")
   expect_equal(as.numeric(result), -42.0, tolerance = 0.1)

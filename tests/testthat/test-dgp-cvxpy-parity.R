@@ -429,10 +429,31 @@ test_that("CVXPY parity: division constraint", {
 
 ## @cvxpy test_dgp2dcp.py::TestDgp2Dcp::test_qp_solver_not_allowed
 test_that("CVXPY parity: QP solver not allowed for DGP", {
-  ## CVXPY raises an error when a QP solver (e.g., OSQP) is used with gp=TRUE.
-  ## CVXR differs: DGP reduces to a DCP problem which may be solvable by QP solvers
-  ## (the log-space problem can be an LP/QP). CVXR does not enforce solver type for DGP.
-  skip("CVXR allows QP solvers for DGP (differs from CVXPY)")
+  ## CVXPY refuses a QP-only solver under gp=True before looking at the
+  ## problem: _lookup_by_name (solving_chain.py:52-66) drops the QP instance
+  ## when gp ("GP mode suppresses QP"), and _resolve_solver 305-310 names the
+  ## reason. (Measured on 1.9.3: the message that actually fires upstream is
+  ## "The solver OSQP is not installed.", because the 301-303 branch runs
+  ## first; the upstream test's assertEqual on the intended text sits after
+  ## the raise and never runs. CVXR emits the intended text.)
+  ## Before 1.9.2.9129 CVXR routed on the WRITTEN problem's is_qp(): min x
+  ## solved on OSQP (0, unbounded) while test_div failed with "No installed
+  ## conic solver" -- notes/audit/repro/09. User decision 2026-10-08: no
+  ## divergence, stick to CVXPY.
+  x <- Variable(pos = TRUE)
+  problem <- Problem(Minimize(x))
+  expect_error(psolve(problem, solver = "OSQP", gp = TRUE), class = "SolverError")
+  expect_error(psolve(problem, solver = "OSQP", gp = TRUE),
+               "must be a conic solver.*OSQP")
+  ## A monomial GP whose log-space image is an LP is refused the same way:
+  ## the refusal is about the solver, not the problem.
+  x <- Variable(pos = TRUE); y <- Variable(pos = TRUE)
+  div <- Problem(Minimize(x * y), list(y / 3 <= x, y >= 1))
+  expect_error(psolve(div, solver = "OSQP", gp = TRUE), class = "SolverError")
+  ## ... and solves on the conic solver the message suggests.
+  expect_equal(psolve(div, solver = "CLARABEL", gp = TRUE), 1 / 3, tolerance = 1e-4)
+  ## HIGHS has both interfaces in CVXR; under gp it is taken as conic.
+  expect_equal(psolve(div, solver = "HIGHS", gp = TRUE), 1 / 3, tolerance = 1e-4)
 })
 
 ## ── test_sum_scalar ─────────────────────────────────────────────
@@ -1129,6 +1150,24 @@ test_that("CVXPY parity: gmatmul errors and curvature", {
   ## Mixed-sign A: not monotone
   expect_false(CVXR:::is_incr(gm_mat, 1))
   expect_false(CVXR:::is_decr(gm_mat, 1))
+})
+
+## gmatmul.py:77-80: an A that mentions a parameter must BE a Parameter, not
+## an expression of one. The DPP rule (gmatmul.py:128-133) assumes A is
+## parameter-affine by construction; without this check gmatmul(p * q, x)
+## was called DPP and solved to a wrong answer (90.016 for 13; repro 15).
+## Not covered by an upstream test; the message is CVXPY's.
+## @cvxpy NONE
+test_that("gmatmul: a parametric A must be a bare Parameter", {
+  x <- Variable(2, pos = TRUE)
+  p <- Parameter(c(2, 2), nonneg = TRUE)
+  q <- Parameter(c(2, 2), nonneg = TRUE)
+  expect_s3_class(gmatmul(p, x), "CVXR::Gmatmul")
+  expect_error(gmatmul(2 * p, x), "Constant or a Parameter")
+  expect_error(gmatmul(p * q, x), "Constant or a Parameter")
+  expect_error(gmatmul(diag(2) %*% p, x), "Constant or a Parameter")
+  ## A constant expression of constants is still fine.
+  expect_s3_class(gmatmul(2 * diag(2), x), "CVXR::Gmatmul")
 })
 
 ## ── test_power_sign ───────────────────────────────────────────────

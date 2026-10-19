@@ -4,15 +4,15 @@
 ## solvable at all: two where CVXPY succeeds and CVXR errored, one where CVXPY
 ## errors and CVXR let poisoned data reach the solver.
 ##
-## CVXPY SOURCE: solving_chain.py:412-449 (_validate_problem_data),
-## solving_chain.py:508-512 and :556-560 (the two entry points),
-## complex2real.py:42-44 (accepts).
+## CVXPY SOURCE: solving_chain.py:416-453 (_validate_problem_data),
+## solving_chain.py:513-516 and :561-564 (the two entry points),
+## complex2real.py:46-48 (accepts).
 
 ## ---------------------------------------------------------------------------
 ## Inf is allowed in the constraint RHS and in bounds
 ##
 ## CVXPY's `inf_allowed_keys = {s.B, s.G, s.LOWER_BOUNDS, s.UPPER_BOUNDS}`
-## (solving_chain.py:427) exists because, in its own words at :419-420, "users
+## (solving_chain.py:431) exists because, in its own words at :423-424, "users
 ## sometimes use inf for unbounded constraints/variables". CVXR ran every key
 ## through one indiscriminate NaN-or-Inf check, so both problems below aborted
 ## with "Problem data 'b' contains Inf values" where CVXPY 1.9.2 returns 2.0 and
@@ -38,7 +38,7 @@ test_that("Inf in a variable bound is accepted", {
 })
 
 ## Widening the Inf rule must NOT weaken the NaN rule -- NaN is still caught on
-## every key, including the Inf-allowed ones (upstream :438-443 NaN-checks those).
+## every key, including the Inf-allowed ones (upstream :442-447 NaN-checks those).
 test_that("NaN is still rejected everywhere, including Inf-allowed keys", {
   x <- Variable(2)
   expect_error(psolve(Problem(Minimize(sum_entries(x)), list(x >= c(1, NaN))),
@@ -49,7 +49,7 @@ test_that("NaN is still rejected everywhere, including Inf-allowed keys", {
 ## it first -- but it must do so with the message the cascade exists to
 ## produce. In R every comparison against NaN is NA, so `if (!close_enough)`
 ## raised the internal "missing value where TRUE/FALSE needed" instead.
-## `np.allclose` returns False for NaN (leaf.py:640-651), so CVXPY 1.9.2 says
+## `np.allclose` returns False for NaN (leaf.py:660-667), so CVXPY 1.9.2 says
 ## "Parameter value must be real." -- measured.
 test_that("assigning NaN to a leaf reports the attribute, not an R internal", {
   p <- Parameter(2)
@@ -65,6 +65,24 @@ test_that("assigning NaN to a leaf reports the attribute, not an R internal", {
   expect_equal(as.numeric(value(w)), c(Inf, 1))
 })
 
+## The sparse arm of the same Inf - Inf path (leaf.py:635-642): a sparse
+## value with an Inf on the sparsity pattern projects to itself, so the
+## delta there is NaN and must be zeroed, not reported. The R arm called
+## base::summary on the delta and died on `nz$i` (sweep item 4, pass D3).
+## @cvxpy leaf.py::Leaf::_validate_value
+test_that("a sparse value with Inf on the sparsity pattern is accepted", {
+  s <- Variable(c(2, 2), sparsity = cbind(c(1L, 2L), c(1L, 2L)))
+  v <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(Inf, 1), dims = c(2, 2))
+  expect_no_error({ value(s) <- v })
+  expect_equal(as.vector(as.matrix(value(s))), c(Inf, 0, 0, 1))
+  ## -Inf on the pattern is accepted the same way; an Inf off the pattern is
+  ## still an attribute violation.
+  v2 <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(-Inf, 1), dims = c(2, 2))
+  expect_no_error({ value(s) <- v2 })
+  off <- Matrix::sparseMatrix(i = c(1, 2), j = c(2, 2), x = c(Inf, 1), dims = c(2, 2))
+  expect_error({ value(s) <- off }, "zero outside of sparsity pattern")
+})
+
 ## Inf in the OBJECTIVE or the constraint MATRIX is still an error: those keys
 ## are not in inf_allowed_keys.
 test_that("Inf outside the allowed keys is still rejected", {
@@ -77,7 +95,7 @@ test_that("Inf outside the allowed keys is still rejected", {
 
 ## ---------------------------------------------------------------------------
 ## The decomposed API is the second entry point and must validate too
-## (CVXPY solving_chain.py:556-560, whose comment names both entry points)
+## (CVXPY solving_chain.py:561-564, whose comment names both entry points)
 ##
 ## Pre-fix, a NaN planted in `c` went straight through solve_via_data() to
 ## Clarabel, which returned status 10 and garbage that propagated to the caller.
@@ -106,7 +124,7 @@ test_that("solve_via_data() still solves clean data", {
 ## A complex Parameter must trigger Complex2Real
 ##
 ## `problem.constants()` collects only Constant leaves, so upstream's third
-## term `problem.parameters()` (complex2real.py:42-44) is load-bearing. Without
+## term `problem.parameters()` (complex2real.py:46-48) is load-bearing. Without
 ## it the reduction was skipped, but `has_complex_params` still prepended
 ## EvalParams, turning the complex Parameter into a complex CONSTANT with no
 ## Complex2Real downstream -- so the solve died with

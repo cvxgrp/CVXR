@@ -618,24 +618,36 @@ test_that("HiGHS: options (CVXPY parity)", {
 ## @cvxpy test_conic_solvers.py::TestHIGHS::test_highs_validate_column_name
 test_that("HiGHS: validate_column_name", {
   ## validate_column_name is a pure LP-format name check (no highs dependency).
+  ## Mirrors test_conic_solvers.py:2881-2918 (CVXPY 1.9.3) set for set: the
+  ## character classes are built from Python's string.printable, so every
+  ## printable character is either allowed somewhere or asserted rejected.
   keywords <- c("st", "bounds", "min", "max", "bin", "binary", "gen", "semi", "end")
   must_not_begin_with <- strsplit("0123456789eE.=()<>[]", "")[[1]]
+  may_contain <- c(letters, LETTERS, as.character(0:9),
+                   strsplit("\"!#$%&/}{,;?@_‘’'`|~.=()<>", "")[[1]])
+  printable <- c(as.character(0:9), letters, LETTERS,
+                 strsplit("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", "")[[1]],
+                 " ", "\t", "\n", "\r", "\v", "\f")
+  must_not_contain <- setdiff(printable, may_contain)
+  may_begin_with <- union(setdiff(may_contain, must_not_begin_with),
+                          setdiff(keywords, "end"))
 
   ## Happy path: valid names raise nothing.
+  n_pairs <- min(length(may_begin_with), length(may_contain))
   valid_names <- c(
-    strrep("a", 255L),            # max length (255 chars)
-    "a", "A", "z", "_x", "x_1",   # allowed start chars + alnum/underscore body
-    "sts",                        # keyword + suffix is fine (not the keyword)
-    "x[0]", "var_2_by_2[0,0]"     # array-index style names
+    strrep("a", 255L),
+    setdiff(may_begin_with, keywords),
+    setdiff(paste0(may_begin_with[seq_len(n_pairs)], may_contain[seq_len(n_pairs)]),
+            keywords)
   )
   for (nm in valid_names) expect_silent(validate_column_name(nm))
 
   ## Unhappy path: invalid names raise an error.
   invalid_names <- c(
-    strrep("a", 256L),                    # too long (> 255)
-    keywords,                             # reserved keywords
-    paste0(must_not_begin_with, "_tail"), # forbidden leading character
-    "a b", "a\tb", "a-b", "a:b"           # disallowed interior characters
+    strrep("a", 256L),
+    keywords,
+    paste0(must_not_begin_with, "_with"),
+    paste0("a_", must_not_contain, "_name")
   )
   for (nm in invalid_names) expect_error(validate_column_name(nm))
 })

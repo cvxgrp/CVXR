@@ -276,14 +276,6 @@ std::vector<std::vector<int> > get_slice_data(LinOp &lin, int rows, int cols) {
 }
 
 /**
- * Returns the divisor from a DIV LinOp.
- */
-double get_divisor_data(LinOp &lin) {
-	if (lin.type != DIV) Rcpp::stop("get_divisor_data: expected DIV LinOp type");
-	return lin.dense_data(0, 0);
-}
-
-/**
  * Returns the ID from a VARIABLE or PARAM LinOp.
  */
 int get_id_data(LinOp &lin) {
@@ -853,11 +845,6 @@ Tensor get_mul_mat(LinOp &lin, int arg_idx) {
 			}
 		}
 
-		/* For scalars, just return the tensor directly */
-		if (block_rows == 1 && block_cols == 1) {
-			return mul_ten;
-		}
-
 		/* Block-diagonalize all matrices in the tensor
 		 * (matches CVXPY lines 960-1005) */
 		for (auto it = mul_ten.begin(); it != mul_ten.end(); ++it) {
@@ -924,11 +911,6 @@ Tensor get_mul_mat(LinOp &lin, int arg_idx) {
 	int block_rows = block.rows();
 	int block_cols = block.cols();
 
-	// Don't replicate scalars
-	if(block_rows == 1 && block_cols == 1){
-		return build_tensor(block);
-	}
-
 	int num_blocks = lin.size[1];
 	Matrix coeffs (num_blocks * block_rows, num_blocks * block_cols);
 
@@ -972,14 +954,29 @@ Tensor get_reshape_mat(LinOp &lin, int arg_idx) {
 }
 
 /**
- * DIV: diagonal matrix with 1/divisor entries.
+ * DIV: diagonal matrix whose entries are 1 / DIVISOR, entrywise.
+ *
+ * CVXPY cvxcore/src/LinOpOperations.cpp:1054-1071. The divisor is the
+ * node's linOp_data, read as a column: the R side broadcasts a scalar
+ * divisor to the expression's shape and constant-folds it, so the data is
+ * always the full divisor. Reading only dense_data(0, 0) divided every
+ * entry by the first element of a matrix or vector divisor.
  */
 Tensor get_div_mat(LinOp &lin, int arg_idx) {
 	if (lin.type != DIV) Rcpp::stop("get_div_mat: expected DIV LinOp type");
-	double divisor = get_divisor_data(lin);
-	int n = lin.size[0] * lin.size[1];
-	Matrix coeffs = sparse_eye(n);
-	coeffs /= divisor;
+	if (lin.linOp_data == nullptr) Rcpp::stop("get_div_mat: DIV LinOp has no divisor data");
+	Matrix constant = get_constant_data(*lin.linOp_data, true);
+	int n = constant.rows();
+
+	std::vector<Triplet> tripletList;
+	tripletList.reserve(n);
+	for (int k = 0; k < constant.outerSize(); ++k) {
+		for (Matrix::InnerIterator it(constant, k); it; ++it) {
+			tripletList.push_back(Triplet(it.row(), it.row(), 1.0 / it.value()));
+		}
+	}
+	Matrix coeffs(n, n);
+	coeffs.setFromTriplets(tripletList.begin(), tripletList.end());
 	coeffs.makeCompressed();
 	return build_tensor(coeffs);
 }

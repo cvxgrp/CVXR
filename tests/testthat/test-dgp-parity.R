@@ -83,7 +83,7 @@ test_that("CVXPY parity: sum vector", {
   w <- Variable(2, pos = TRUE)
   h <- Variable(2, pos = TRUE)
   prob <- Problem(Minimize(sum(h)),
-                  list(multiply(w, h) >= 10, sum(w) <= 10))
+                  list(w * h >= 10, sum(w) <= 10))   ## CVXPY multiply(w, h)
   val <- psolve(prob, gp = TRUE)
   expect_equal(val, 4.0, tolerance = 1e-2)
   expect_equal(as.numeric(value(h)), c(2, 2), tolerance = 1e-2)
@@ -96,7 +96,7 @@ test_that("CVXPY parity: sum matrix", {
   w <- Variable(c(2, 2), pos = TRUE)
   h <- Variable(c(2, 2), pos = TRUE)
   prob <- Problem(Minimize(sum(h)),
-                  list(multiply(w, h) >= 10, sum(w) <= 20))
+                  list(w * h >= 10, sum(w) <= 20))   ## CVXPY multiply(w, h)
   val <- psolve(prob, gp = TRUE)
   expect_equal(val, 8.0, tolerance = 1e-2)
 })
@@ -188,7 +188,7 @@ test_that("CVXPY parity: sum_squares vector", {
   w <- Variable(2, pos = TRUE)
   h <- Variable(2, pos = TRUE)
   prob <- Problem(Minimize(sum_squares(h)),
-                  list(multiply(w, h) >= 10, sum(w) <= 10))
+                  list(w * h >= 10, sum(w) <= 10))   ## CVXPY multiply(w, h)
   val <- psolve(prob, gp = TRUE)
   expect_equal(val, 8.0, tolerance = 1e-2)
   expect_equal(as.numeric(value(h)), c(2, 2), tolerance = 1e-2)

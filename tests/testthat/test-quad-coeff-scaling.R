@@ -7,7 +7,7 @@
 ## is elementwise, so the placeholder is a VECTOR and each component carries its
 ## own affine coefficient.  The extractor took a single `scalar_coeff` and, for a
 ## non-scalar placeholder, fell back to 1.0 -- discarding every coefficient.
-## CVXPY's DIAGONAL path (coeff_extractor.py:245-262) builds the contribution
+## CVXPY's DIAGONAL path (coeff_extractor.py:244-262) builds the contribution
 ## from c_part per component instead.
 ##
 ## WHY THIS WENT UNNOTICED, and how these tests are built to catch it:

@@ -131,15 +131,19 @@ test_that("Clarabel warm-start preserves dual values", {
   expect_equal(as.numeric(dual_value(eq_con2)), -1.0, tolerance = 1e-2)
 })
 
-# ── CVXPY parity: test_clarabel_parameter_update ─────────────────────────────
-## Mirrors CVXPY test_conic_solvers.py::test_clarabel_parameter_update
-## (lines 442-475). Exercises all 4 parameter types (P, A, b, q) with
-## equality + inequality constraints. Three cycles:
+# ── Pre-1.9.3 body of test_clarabel_parameter_update ─────────────────────────
+## Mirrors the body TestClarabel::test_clarabel_parameter_update had before
+## CVXPY 1.9.3; at v1.9.3 it survives only as
+## TestCuClarabel::test_clarabel_parameter_update (test_conic_solvers.py
+## 618-651, solving with cp.CLARABEL), which is N/A here (CuClarabel,
+## notes/cvxpy_na_tests.txt). The 1.9.3 test is ported below. Exercises all 4
+## parameter types (P, A, b, q) with equality + inequality constraints. Three
+## cycles:
 ##   1. cold → warm (same params)
 ##   2. warm → cold (new params)
 ##   3. consecutive cold (no data update)
 
-## @cvxpy test_conic_solvers.py::TestClarabel::test_clarabel_parameter_update
+## @cvxpy NONE
 test_that("Clarabel warm-start: CVXPY parameter update parity", {
   set.seed(42L)
 
@@ -182,8 +186,43 @@ test_that("Clarabel warm-start: CVXPY parameter update parity", {
   expect_equal(r5, r4, tolerance = 1e-4)
 })
 
+# ── CVXPY parity: test_clarabel_parameter_update (v1.9.3) ────────────────────
+## Mirrors CVXPY test_conic_solvers.py::TestClarabel::test_clarabel_parameter_update
+## (lines 500-501), which delegates to
+## solver_test_helpers.py::StandardTestQPs::test_qp_parameter_update
+## (lines 1326-1342): a cold solve, then all four parameters updated and the
+## problem solved warm and cold with enforce_dpp; objective, primal and duals
+## checked after each. Expected values are upstream's (CVXPY 1.9.3 gives
+## -6.75, x = (1.5, 0), duals (0, 8) and 3 on CLARABEL).
+
+## @cvxpy test_conic_solvers.py::TestClarabel::test_clarabel_parameter_update
+test_that("Clarabel warm-start: CVXPY 1.9.3 QP parameter update parity", {
+  x <- Variable(2)
+  p <- Parameter(2, nonneg = TRUE, value = c(4, 0.25))
+  q <- Parameter(2, value = c(-4, 2))
+  a <- Parameter(2, value = c(1, 1))
+  b <- Parameter(value = 2)
+  con_nonneg <- x >= 0
+  con_lin <- t(a) %*% x <= b
+  prob <- Problem(Minimize(sum(p * square(x)) / 2 + t(q) %*% x),
+                  list(con_nonneg, con_lin))
+
+  psolve(prob, solver = "CLARABEL", warm_start = FALSE)
+  value(p) <- c(2, 1)
+  value(q) <- c(-6, 2)
+  value(a) <- c(1, 2)
+  value(b) <- 1.5
+  for (ws in c(TRUE, FALSE)) {
+    val <- psolve(prob, solver = "CLARABEL", warm_start = ws, enforce_dpp = TRUE)
+    expect_equal(val, -6.75, tolerance = 1e-4)
+    expect_equal(as.numeric(value(x)), c(1.5, 0), tolerance = 1e-4)
+    expect_equal(as.numeric(dual_value(con_nonneg)), c(0, 8), tolerance = 1e-4)
+    expect_equal(as.numeric(dual_value(con_lin)), 3, tolerance = 1e-4)
+  }
+})
+
 # ── CVXPY parity: parametric least-squares ───────────────────────────────────
-## Mirrors CVXPY test_qp_solvers.py::test_warm_start (lines 538-558),
+## Mirrors CVXPY test_qp_solvers.py::test_warm_start (lines 585-605),
 ## adapted for Clarabel (conic path).
 
 ## @cvxpy test_qp_solvers.py::TestQp::test_warm_start
@@ -224,4 +263,63 @@ test_that("Clarabel warm-start falls back on dimension change", {
   val <- psolve(prob2, solver = "CLARABEL", warm_start = TRUE)
   expect_true(is.finite(val))
   expect_equal(val, 0.0, tolerance = 1e-4)
+})
+
+# ── Cone definition change (recorded divergence, ADR D_PORT.6) ───────────────
+
+## @cvxpy NONE
+test_that("Clarabel warm-start re-solves when a power-cone exponent changes", {
+  ## The warm path updates P, q, A, b through clarabel::solver_update(); the
+  ## cone list is not updatable, and a PowCone3D exponent held in a Parameter
+  ## changes the cones without changing any dimension. CVXPY 1.9.3 has the same
+  ## defect (clarabel_conif.py:254, repro notes/audit/repro/17_powcone_param_alpha.*):
+  ## it returned the first optimum 4.898979 for the second solve. CVXR falls
+  ## through to the cold path instead. max sum(z) s.t. (x, y, z) in PowCone3D(a),
+  ## x <= 2, y <= 3 has optimum sum(2^a * 3^(1 - a)).
+  x <- Variable(2)
+  y <- Variable(2)
+  z <- Variable(2)
+  alpha <- Parameter(2)
+  value(alpha) <- c(0.5, 0.5)
+  prob <- Problem(Maximize(sum_entries(z)),
+                  list(PowCone3D(x, y, z, alpha), x <= 2, y <= 3))
+
+  r1 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r1, 2 * sqrt(6), tolerance = 1e-4)
+
+  value(alpha) <- c(0.2, 0.2)
+  r2 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r2, 2 * 2^0.2 * 3^0.8, tolerance = 1e-4)
+})
+
+# ── Sparsity-pattern change between warm solves ─────────────────────────────
+
+## @cvxpy NONE
+test_that("Clarabel warm-start re-solves when the pattern of A changes", {
+  ## A parameter that becomes 0 leaves the pattern of A, and R clarabel's
+  ## solver_update() writes the new values into the old pattern without
+  ## checking it (CVXPY keeps a fixed pattern through ReducedMat and Python
+  ## clarabel raises, so it never sees this). With p = (1, 0) -> (0, 1) the
+  ## nnz is unchanged and the warm path returned 5 (the first optimum) for 6.
+  x <- Variable(2)
+  p1 <- Parameter()
+  p2 <- Parameter()
+  prob <- Problem(Maximize(x[1] + x[2]),
+                  list(p1 * x[1] + p2 * x[2] <= 1, x >= 0, x <= 5))
+
+  value(p1) <- 1
+  value(p2) <- 0
+  r1 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r1, 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(1, 5), tolerance = 1e-5)
+
+  value(p1) <- 0
+  value(p2) <- 1
+  r2 <- psolve(prob, solver = "CLARABEL", warm_start = TRUE)
+  expect_equal(status(prob), "optimal")
+  expect_equal(r2, 6, tolerance = 1e-6)
+  expect_equal(as.numeric(value(x)), c(5, 1), tolerance = 1e-5)
 })

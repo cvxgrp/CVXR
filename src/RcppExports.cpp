@@ -463,17 +463,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// LinOp__get_id
-std::string LinOp__get_id(SEXP xp);
-RcppExport SEXP _CVXR_LinOp__get_id(SEXP xpSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
-    rcpp_result_gen = Rcpp::wrap(LinOp__get_id(xp));
-    return rcpp_result_gen;
-END_RCPP
-}
 // LinOpVector__new
 SEXP LinOpVector__new();
 RcppExport SEXP _CVXR_LinOpVector__new() {
@@ -606,6 +595,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ProblemData__get_tensor
+Rcpp::List ProblemData__get_tensor(SEXP xp, Rcpp::IntegerVector param_ids, Rcpp::IntegerVector param_sizes, Rcpp::IntegerVector col_offsets, int constr_length);
+RcppExport SEXP _CVXR_ProblemData__get_tensor(SEXP xpSEXP, SEXP param_idsSEXP, SEXP param_sizesSEXP, SEXP col_offsetsSEXP, SEXP constr_lengthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type xp(xpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type param_ids(param_idsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type param_sizes(param_sizesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type col_offsets(col_offsetsSEXP);
+    Rcpp::traits::input_parameter< int >::type constr_length(constr_lengthSEXP);
+    rcpp_result_gen = Rcpp::wrap(ProblemData__get_tensor(xp, param_ids, param_sizes, col_offsets, constr_length));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_build_matrix_0", (DL_FUNC) &_CVXR_build_matrix_0, 4},
@@ -646,7 +650,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_LinOp__set_slice", (DL_FUNC) &_CVXR_LinOp__set_slice, 2},
     {"_CVXR_LinOp__set_data_ndim", (DL_FUNC) &_CVXR_LinOp__set_data_ndim, 2},
     {"_CVXR_LinOp__set_linOp_data", (DL_FUNC) &_CVXR_LinOp__set_linOp_data, 2},
-    {"_CVXR_LinOp__get_id", (DL_FUNC) &_CVXR_LinOp__get_id, 1},
     {"_CVXR_LinOpVector__new", (DL_FUNC) &_CVXR_LinOpVector__new, 0},
     {"_CVXR_LinOpVector__push_back", (DL_FUNC) &_CVXR_LinOpVector__push_back, 2},
     {"_CVXR_LinOp_at_index", (DL_FUNC) &_CVXR_LinOp_at_index, 2},
@@ -659,6 +662,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CVXR_ProblemData__getJ", (DL_FUNC) &_CVXR_ProblemData__getJ, 1},
     {"_CVXR_ProblemData__get_param_ids", (DL_FUNC) &_CVXR_ProblemData__get_param_ids, 1},
     {"_CVXR_ProblemData__get_num_vecs", (DL_FUNC) &_CVXR_ProblemData__get_num_vecs, 2},
+    {"_CVXR_ProblemData__get_tensor", (DL_FUNC) &_CVXR_ProblemData__get_tensor, 5},
     {NULL, NULL, 0}
 };
 

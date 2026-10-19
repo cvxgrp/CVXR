@@ -1,7 +1,7 @@
 ## @cvxpy tests/test_atoms.py, tests/test_conic_solvers.py
 ##
 ## `sqrt()` and `inv_pos()` must canonicalize through the SOC path, as CVXPY
-## does -- sqrt.py:19 is `power(x, Fraction(1, 2))` and inv_pos.py:7 is
+## does -- sqrt.py:24 is `power(x, Fraction(1, 2))` and inv_pos.py:23 is
 ## `power(x, -1)`, both the `power()` WRAPPER, whose `approx = TRUE` default
 ## selects PowerApprox (SOC).  Building the `Power` class directly takes the
 ## exact path and emits PowCone3D.

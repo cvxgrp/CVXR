@@ -5,6 +5,7 @@ rsrc_tree/zzz_R_specific/s7_dispatch_perf.R
 rsrc_tree/utilities/scopes.R
 rsrc_tree/zzz_R_specific/generics.R
 rsrc_tree/zzz_R_specific/utility.R
+rsrc_tree/utilities/performance_utils.R
 rsrc_tree/utilities/sign.R
 rsrc_tree/utilities/shape.R
 rsrc_tree/utilities/error.R
@@ -258,6 +259,7 @@ rsrc_tree/utilities/coeff_extractor.R
 rsrc_tree/utilities/perspective_utils.R
 rsrc_tree/reductions/dcp2cone/cone_matrix_stuffing.R
 rsrc_tree/reductions/cvx_attr2constr.R
+rsrc_tree/reductions/cone2cone/cone_tree.R
 rsrc_tree/reductions/cone2cone/exact.R
 rsrc_tree/reductions/solvers/utilities.R
 rsrc_tree/reductions/solvers/solver.R
@@ -290,6 +292,7 @@ rsrc_tree/reductions/solvers/qp_solvers/gurobi_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/cplex_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/piqp_qpif.R
 rsrc_tree/reductions/solvers/qp_solvers/xpress_qpif.R
+rsrc_tree/problems/problem_form.R
 rsrc_tree/reductions/solvers/solving_chain.R
 rsrc_tree/reductions/solvers/nlp_solving_chain.R
 rsrc_tree/zzz_R_specific/visualize_annotations.R

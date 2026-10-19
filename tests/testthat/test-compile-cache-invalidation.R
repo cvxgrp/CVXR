@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/problems/problem.py:831-841
+## @cvxpy cvxpy/problems/problem.py:831-842
 ##
 ## A compile that ABORTS must leave the cache empty, never stale.
 ##

@@ -145,16 +145,12 @@ test_that("AxisAtom rejects out-of-range axis", {
 })
 
 ## @cvxpy NONE
-test_that("AxisAtom negative axis normalization", {
+test_that("AxisAtom rejects a negative axis", {
+  ## Negative axes used to be normalized for the shape only, which made the
+  ## solver and value() disagree (1.9.3 plan defect 0.1, decision D2).
   x <- Variable(c(3, 4))
-  a <- AxisAtom(x, axis = -1L)
-  ## axis=-1 on 2D → axis=2 → reduces rows → (1, ncol)
-
-  expect_equal(a@shape, c(1L, 4L))
-
-  b <- AxisAtom(x, axis = -2L)
-  ## axis=-2 on 2D → axis=1 → reduces cols → (nrow, 1)
-  expect_equal(b@shape, c(3L, 1L))
+  expect_error(AxisAtom(x, axis = -1L), "Negative axis")
+  expect_error(AxisAtom(x, axis = -2L), "Negative axis")
 })
 
 ## @cvxpy NONE

@@ -725,27 +725,51 @@ test_that("constants: extracts all constants", {
 ## CVXPY SOURCE: test_problem.py::test_dual_variables()
 
 ## @cvxpy test_problem.py::TestProblem::test_dual_variables
-test_that("dual variables: LP with multiple constraints (Clarabel)", {
-  x <- Variable(2)
-  z <- Variable(2)
-  ## R matrix(c(1,3,2,4), 2, 2) = [[1,2],[3,4]] (column-major)
-  ## Matching CVXPY: np.array([[1,2],[3,4]]) @ z == [-1,-4]
-  p <- Problem(
-    Minimize(norm1(x + z)),
-    list(
-      x >= c(2, 3),
-      matrix(c(1, 3, 2, 4), 2, 2) %*% z == c(-1, -4),
-      p_norm(x + z, 2) <= 100
+test_that("dual variables: LP with multiple constraints (Clarabel, SCS, CVXOPT)", {
+  ## Upstream loops over CLARABEL, SCS, CVXOPT, each if installed
+  ## (test_problem.py:1048-1065). A fresh problem per solver: constraint
+  ## objects cache their duals.
+  solvers <- intersect(c("CLARABEL", "SCS", "CVXOPT"), installed_solvers())
+  if (length(solvers) == 0L) skip("none of CLARABEL, SCS, CVXOPT installed")
+  for (solver in solvers) {
+    ## Upstream places=1 for SCS, places=5 otherwise, i.e. |actual - expected|
+    ## < 0.05 or < 5e-6 per entry -- an absolute bound, so expect_lt rather
+    ## than expect_equal's relative one.
+    eps <- if (solver == "SCS") 0.05 else 5e-6
+    x <- Variable(2)
+    z <- Variable(2)
+    ## CVXPY's nested list [[1, 2], [3, 4]] is read column by column (each inner
+    ## list is a column), i.e. the matrix [[1, 3], [2, 4]] = R matrix(c(1, 2, 3, 4), 2, 2).
+    p <- Problem(
+      Minimize(norm1(x + z)),
+      list(
+        x >= c(2, 3),
+        matrix(c(1, 2, 3, 4), 2, 2) %*% z == c(-1, -4),
+        p_norm(x + z, 2) <= 100
+      )
     )
-  )
-  result <- psolve(p, solver = CLARABEL_SOLVER, verbose = FALSE)
-  ## Verified with CVXPY (uv run python): result=3.5, x=[2,3], z=[-2,0.5]
-  expect_equal(result, 3.5, tolerance = 1e-2)
-  expect_equal(as.numeric(value(x)), c(2, 3), tolerance = 1e-2)
-  expect_equal(as.numeric(value(z)), c(-2, 0.5), tolerance = 1e-2)
-  ## Dual values verified with CVXPY Clarabel
-  expect_equal(as.numeric(dual_value(p@constraints[[1]]))[2], 1.0, tolerance = 1e-2)
-  expect_equal(as.numeric(dual_value(p@constraints[[3]])), 0, tolerance = 1e-2)
+    result <- psolve(p, solver = solver, verbose = FALSE)
+    ## Upstream expected values (test_problem.py:1059-1065); CVXPY 1.9.3 agrees.
+    expect_lt(abs(result - 4), eps, label = solver)
+    expect_lt(max(abs(as.numeric(value(x)) - c(4, 3))), eps, label = solver)
+    expect_lt(max(abs(as.numeric(value(z)) - c(-4, 1))), eps, label = solver)
+    expect_lt(max(abs(as.numeric(dual_value(p@constraints[[1]])) - c(0, 1))), eps, label = solver)
+    expect_lt(max(abs(as.numeric(dual_value(p@constraints[[2]])) - c(-1, 0.5))), eps, label = solver)
+    expect_lt(abs(as.numeric(dual_value(p@constraints[[3]])) - 0), eps, label = solver)
+
+    ## Second problem in the same loop (test_problem.py:1067-1076): every dual is zero.
+    A <- Variable(c(2, 2))
+    B <- Variable(c(2, 2))
+    C <- Variable(c(3, 2))
+    T_ <- matrix(2, 2, 3)
+    p <- Problem(Minimize(1), list(A >= T_ %*% C, A == B, C == t(T_)))
+    psolve(p, solver = solver, verbose = FALSE)
+    for (k in 1:3) {
+      d <- as.numeric(dual_value(p@constraints[[k]]))
+      expect_length(d, c(4L, 4L, 6L)[k])
+      expect_lt(max(abs(d)), eps, label = paste(solver, "T problem dual", k))
+    }
+  }
 })
 
 # ── indexing in solve ─────────────────────────────────────────────────

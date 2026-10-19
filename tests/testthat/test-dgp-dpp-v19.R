@@ -122,7 +122,7 @@ test_that("DGP bounds: solving without a parameter value raises", {
   p <- Parameter(pos = TRUE)
   x <- Variable(pos = TRUE, bounds = list(p, NULL))
   expect_error(psolve(Problem(Minimize(x), list(x <= 10.0)), solver = "CLARABEL", gp = TRUE),
-               "unspecified parameter")
+               class = "ParameterError")
 })
 
 ## @cvxpy test_dgp_dpp.py::TestDgpVariableBounds::test_non_log_log_affine_bounds_rejected

@@ -254,3 +254,211 @@ test_that("ProblemForm parity: GP with named SCS solver solves correctly", {
   val <- psolve(prob, gp = TRUE, solver = "SCS")
   expect_equal(val, 2, tolerance = 1e-2)
 })
+
+# ===================================================================
+# Solver resolution (ADR D_19.8). Each test is one class of the selection
+# matrix, notes/solver_selection_matrix_2026-10-14.md, measured against CVXPY
+# 1.9.3 (docsreg_9204/selmatrix.{py,R}).
+# ===================================================================
+
+## Run `code` with exactly `excluded` excluded and the commercial preference
+## set to `commercial`, restoring both afterwards.
+problem_form_with_solvers <- function(excluded, commercial, code) {
+  old_ex <- CVXR:::.cvxr_env$excluded_solvers
+  old_opt <- options(CVXR.default_to_commercial_solvers = commercial)
+  on.exit({ set_excluded_solvers(if (is.null(old_ex)) character(0) else old_ex)
+            options(old_opt) }, add = TRUE)
+  set_excluded_solvers(excluded)
+  for (id in c("cvxr_mixed_integer_not_lp",
+               paste0("cvxr_default_solvers_unavailable_", installed_solvers())))
+    rlang::reset_warning_verbosity(id)
+  force(code)
+}
+
+problem_form_iface <- function(prob, solver = NULL) {
+  sv <- problem_data(prob, solver = solver)$chain@solver
+  if (S7::S7_inherits(sv, CVXR:::QpSolver)) "qp" else "conic"
+}
+
+## Matrix D3 (solving_chain.py:69-83): when no default solver is available,
+## the fallback warns and names the solver it took. Upstream mocks
+## pick_default_solver to return None; here the default solvers are excluded.
+## @cvxpy test_problem_form.py::TestResolveAndBuildChain::test_fallback_when_default_missing
+test_that("the fallback solver warns that the default solvers are unavailable", {
+  require_solver("ECOS")
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum(x)), list(x >= 1))
+  problem_form_with_solvers(
+    c("CLARABEL", "OSQP", "SCS", "HIGHS", "SCIP"), FALSE, {
+      expect_warning(val <- psolve(prob),
+                     "default solvers are not available.*ECOS")
+      expect_equal(solver_stats(prob)@solver_name, "ECOS")
+      expect_equal(val, 2, tolerance = 1e-6)
+      expect_equal(as.numeric(value(x)), c(1, 1), tolerance = 1e-6)
+    })
+})
+
+## Matrix D4 (solving_chain.py:71-76): the fallback walks INSTALLED_SOLVERS,
+## conic interface before QP for each name, so a QP lands on ECOS, not PIQP.
+## @cvxpy NONE
+test_that("the fallback solver tries each name's conic interface first", {
+  require_solver("ECOS")
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum_squares(x - 1)), list(x >= 0))
+  problem_form_with_solvers(
+    c("CLARABEL", "OSQP", "SCS", "HIGHS", "SCIP", "MOSEK", "GUROBI", "CPLEX",
+      "XPRESS"), TRUE, {
+      expect_warning(val <- psolve(prob), "default solvers are not available")
+      expect_equal(solver_stats(prob)@solver_name, "ECOS")
+      expect_equal(val, 0, tolerance = 1e-6)
+    })
+})
+
+## Matrix D1 (problem_form.py:356-360): the commercial-first preference covers
+## QPs and MIQPs too, not only conic problems.
+## @cvxpy NONE
+test_that("the commercial-first default applies to a QP and an MIQP", {
+  require_solver("MOSEK")
+  x <- Variable(2)
+  qp <- Problem(Minimize(sum_squares(x - 1)), list(x >= 0))
+  y <- Variable(2, integer = TRUE)
+  miqp <- Problem(Minimize(sum_squares(y - 0.4)), list(sum(y) >= 1))
+  problem_form_with_solvers(character(0), TRUE, {
+    expect_equal(psolve(qp), 0, tolerance = 1e-6)
+    expect_equal(solver_stats(qp)@solver_name, "MOSEK")
+    expect_equal(psolve(miqp), 0.52, tolerance = 1e-6)
+    expect_equal(solver_stats(miqp)@solver_name, "MOSEK")
+  })
+})
+
+## Matrix D2 and D7 (problem_form.py:362-371; no early MIQP rejection
+## upstream): an MIQP goes to SCIP's conic interface, by default when no
+## commercial solver is wanted, and when SCIP is named.
+## @cvxpy NONE
+test_that("an MIQP is solved by SCIP, by default and when named", {
+  require_solver("SCIP")
+  y <- Variable(2, integer = TRUE)
+  miqp <- Problem(Minimize(sum_squares(y - 0.4)), list(sum(y) >= 1))
+  problem_form_with_solvers(character(0), FALSE, {
+    expect_equal(psolve(miqp), 0.52, tolerance = 1e-6)
+    expect_equal(solver_stats(miqp)@solver_name, "SCIP")
+  })
+  y2 <- Variable(2, integer = TRUE)
+  miqp2 <- Problem(Minimize(sum_squares(y2 - 0.4)), list(sum(y2) >= 1))
+  expect_equal(psolve(miqp2, solver = "SCIP"), 0.52, tolerance = 1e-6)
+})
+
+## Matrix D6 (solving_chain.py:317-329): a named solver with both interfaces
+## tries QP first only for a quadratic objective, so an LP goes conic. Duals
+## measured equal to CVXPY 1.9.3 on all four (docsreg_9204/d6_duals.{R,py}).
+## @cvxpy NONE
+test_that("a named solver with both interfaces takes an LP through its conic interface", {
+  for (sv in c("HIGHS", "GUROBI", "CPLEX", "XPRESS")) {
+    if (!CVXR:::.solver_package_available(sv)) next
+    x <- Variable(3)
+    c2 <- sum(x) == 4
+    c3 <- 2 * x[1] + x[2] <= 5
+    prob <- Problem(Minimize(-3 * x[1] - x[2] + x[3]),
+                    list(x >= c(1, 0, -1), c2, c3, x[3] <= 3))
+    expect_equal(problem_form_iface(prob, sv), "conic", info = sv)
+    expect_equal(psolve(prob, solver = sv), -6, tolerance = 1e-6, info = sv)
+    expect_equal(as.numeric(dual_value(c2)), -1, tolerance = 1e-6, info = sv)
+    expect_equal(as.numeric(dual_value(c3)), 2, tolerance = 1e-6, info = sv)
+    q <- Variable(2)
+    qp <- Problem(Minimize(sum_squares(q - 1)), list(q >= 0))
+    expect_equal(problem_form_iface(qp, sv), "qp", info = sv)
+  }
+})
+
+## RECORDED DIVERGENCE (user, 2026-10-14): solver selection honors
+## use_quad_obj = FALSE, which CVXPY 1.9.3's can_solve ignores (it then picks
+## a QP solver and fails on the objective's SOC; measured,
+## notes/upstream_report_cvxpy_use_quad_obj.md). CVXR 1.9.2.9211 solved these.
+## @cvxpy NONE
+test_that("use_quad_obj = FALSE keeps a QP solver out of the selection", {
+  x <- Variable(2)
+  qp <- Problem(Minimize(sum_squares(x - 1)), list(x >= 0))
+  problem_form_with_solvers(c("MOSEK", "GUROBI", "CPLEX", "XPRESS"), TRUE, {
+    expect_equal(psolve(qp, use_quad_obj = FALSE), 0, tolerance = 1e-6)
+    expect_equal(solver_stats(qp)@solver_name, "CLARABEL")
+  })
+  expect_error(psolve(qp, solver = "OSQP", use_quad_obj = FALSE),
+               "does not support the required cone types: SOC",
+               class = "SolverError")
+  require_solver("GUROBI")
+  x2 <- Variable(2)
+  qp2 <- Problem(Minimize(sum_squares(x2 - 1)), list(x2 >= 0))
+  expect_equal(psolve(qp2, solver = "GUROBI", use_quad_obj = FALSE), 0,
+               tolerance = 1e-6)
+  expect_false(S7::S7_inherits(
+    problem_data(qp2, solver = "GUROBI", use_quad_obj = FALSE)$chain@solver,
+    CVXR:::QpSolver))
+})
+
+## Matrix D8 (solver.py:168-169): REQUIRES_CONSTR is checked against the
+## problem before canonicalization, so SCS refuses a problem with no
+## constraints at selection time.
+## @cvxpy NONE
+test_that("SCS refuses a problem without constraints at solver selection", {
+  x <- Variable(2)
+  prob <- Problem(Minimize(sum(x)))
+  expect_error(psolve(prob, solver = "SCS"),
+               "cannot solve this problem", class = "SolverError")
+})
+
+## MOSEK's MI_SUPPORTED_CONSTRAINTS (mosek_conif.py:114-115) has no PSD cone:
+## MOSEK cannot solve a mixed-integer SDP, and says so at selection time.
+## @cvxpy NONE
+test_that("MOSEK is not selected for a mixed-integer SDP", {
+  require_solver("MOSEK")
+  X <- Variable(c(2, 2), PSD = TRUE)
+  z <- Variable(integer = TRUE)
+  prob <- Problem(Minimize(matrix_trace(X) + z), list(X[1, 1] >= 1, z >= 0.5))
+  expect_error(psolve(prob, solver = "MOSEK"),
+               "does not support the required cone types: PSD",
+               class = "SolverError")
+})
+
+## solving_chain.py:71-73: the fallback never takes a commercial solver, so
+## under the opt-out no commercial solver is chosen unless named. Measured vs
+## cvxpy 1.9.3 (docsreg_9204/commercial_probe.{R,py}).
+## @cvxpy NONE
+test_that("with the commercial opt-out, auto-selection never picks a commercial solver", {
+  require_solver("SCIP")
+  y <- Variable(2, integer = TRUE)
+  miqp <- Problem(Minimize(sum_squares(y - 0.4)), list(sum(y) >= 1))
+  x <- Variable(integer = TRUE)
+  mi_exp <- Problem(Minimize(exp(x)), list(x >= 1.5))
+  problem_form_with_solvers(character(0), FALSE, {
+    expect_equal(psolve(miqp), 0.52, tolerance = 1e-6)
+    expect_false(solver_stats(miqp)@solver_name %in% CVXR:::.COMMERCIAL_CONIC_SOLVERS)
+    ## SCIP has no exponential cone and ECOS_BB is never auto-selected.
+    expect_error(suppressWarnings(psolve(mi_exp)),
+                 "You need a mixed-integer solver", class = "SolverError")
+  })
+  ## A named commercial solver is unaffected by the opt-out.
+  require_solver("MOSEK")
+  x2 <- Variable(integer = TRUE)
+  p2 <- Problem(Minimize(exp(x2)), list(x2 >= 1.5))
+  problem_form_with_solvers(character(0), FALSE,
+    expect_equal(psolve(p2, solver = "MOSEK"), exp(2), tolerance = 1e-6))
+})
+
+## RECORDED DIVERGENCE (user, 2026-10-14): ECOS_BB is never auto-selected.
+## CVXPY's fallback can pick it, and on min exp(x), x >= 1.5, x integer it
+## returns 1 with x = 0 and status "optimal" -- in CVXPY 1.9.3 (ecos 2.0.14)
+## and in CVXR (ECOSolveR 0.6.1) alike (docsreg_9204/ecosbb_probe.{R,py}).
+## Naming it still works.
+## @cvxpy NONE
+test_that("ECOS_BB is never auto-selected, only when named", {
+  require_solver("ECOS_BB")
+  x <- Variable(2, integer = TRUE)
+  prob <- Problem(Minimize(sum(x)), list(x >= 1.5))
+  problem_form_with_solvers(setdiff(installed_solvers(), c("ECOS", "ECOS_BB")),
+                            TRUE, {
+    expect_error(suppressWarnings(psolve(prob)),
+                 "You need a mixed-integer solver", class = "SolverError")
+    expect_equal(psolve(prob, solver = "ECOS_BB"), 4, tolerance = 1e-6)
+    expect_equal(solver_stats(prob)@solver_name, "ECOS_BB")
+  })
+})

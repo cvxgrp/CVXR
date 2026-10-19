@@ -76,11 +76,13 @@ export(convolve)
 export(cummax_expr)
 export(cumsum_axis)
 export(curvature)
+export(curvatures)
 export(cvar)
 export(cvxr_diff)
 export(cvxr_mean)
 export(cvxr_norm)
 export(cvxr_outer)
+export(cvxr_power)
 export(cvxr_std)
 export(cvxr_var)
 export(deep_flatten)
@@ -122,6 +124,7 @@ export(is_constant)
 export(is_convex)
 export(is_dcp)
 export(is_dgp)
+export(is_diag)
 export(is_dnlp)
 export(is_dpp)
 export(is_dqcp)
@@ -159,6 +162,7 @@ export(length_expr)
 export(log1p_atom)
 export(log1p_expr)
 export(log_det)
+export(log_log_curvature)
 export(log_normcdf)
 export(log_sum_exp)
 export(loggamma)
@@ -254,10 +258,15 @@ import(S7)
 importFrom(Matrix,
   Diagonal,
   Matrix,
+  colSums,
   crossprod,
+  determinant,
+  format,
+  rowSums,
   sparseMatrix,
   t,
-  tcrossprod
+  tcrossprod,
+  which
 )
 importFrom(Rcpp,evalCpp)
 importFrom(clarabel,clarabel_solver)

@@ -20,6 +20,6 @@
 #' @importFrom scs scs
 #' @importFrom cli cli_abort cli_warn cli_inform cli_text cli_bullets cli_rule cli_alert_info cli_alert_success
 #' @importFrom gmp as.bigq is.bigq as.bigz is.bigz numerator denominator
-#' @importFrom Matrix sparseMatrix Matrix Diagonal t crossprod tcrossprod
+#' @importFrom Matrix sparseMatrix Matrix Diagonal t crossprod tcrossprod colSums rowSums which determinant format
 ## usethis namespace: end
 NULL

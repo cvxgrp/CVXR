@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/atoms/affine/wraps.py:107-130
+## @cvxpy cvxpy/atoms/affine/wraps.py:107-129
 ## @cvxpy cvxpy/reductions/complex2real/canonicalizers/matrix_canon.py:197-200
 ## @cvxpy cvxpy/reductions/cvx_attr2constr.py:151
 ##
@@ -50,7 +50,7 @@ test_that("nsd_wrap is a no-op numerically and requires a square matrix", {
 test_that("nsd_wrap has an NLP diff-engine converter, like its siblings", {
   ## registry.R registers the pass-through converters per CLASS, not on the
   ## Wrap base (mirroring CVXPY's ATOM_CONVERTERS, which lists "nsd_wrap"
-  ## explicitly at registry.py:249). A new Wrap subclass without its own line
+  ## explicitly at registry.py:269). A new Wrap subclass without its own line
   ## would abort the diff engine on any DNLP problem containing it.
   conv <- diff_engine_convert
   for (cls in list(nsd_wrap, psd_wrap, nonneg_wrap, nonpos_wrap,
@@ -61,7 +61,7 @@ test_that("nsd_wrap has an NLP diff-engine converter, like its siblings", {
 })
 
 test_that("nsd_wrap of a complex argument is Hermitian but not symmetric", {
-  ## CVXPY wraps.py:124-125 -- "symmetric" means REAL symmetric.
+  ## CVXPY wraps.py:125-126 -- "symmetric" means REAL symmetric.
   Z <- Variable(c(2, 2), hermitian = TRUE)
   w <- nsd_wrap(Z)
   expect_true(is_hermitian(w))

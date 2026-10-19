@@ -709,30 +709,19 @@ test_that("DGP medium: division constraint", {
 ## CVXPY: test_qp_solver_not_allowed
 ## DGP problems cannot use QP-only solvers (OSQP, etc.) because the
 ## DGP -> DCP reduction produces conic constraints. CVXPY raises a SolverError.
-## In CVXR, this should also raise an error when using gp=TRUE with a QP solver.
+## CVXR raises the same error when using gp=TRUE with a QP-only solver
+## (1.9.2.9129; CVXPY solving_chain.py:52-66, 305-310).
 ## @cvxpy test_dgp2dcp.py::TestDgp2Dcp::test_qp_solver_not_allowed
 test_that("DGP medium: QP solver rejected for DGP", {
-  ## CVXPY: test_qp_solver_not_allowed
-  ## CVXPY raises SolverError when gp=TRUE with QP solver (OSQP).
-  ## CVXR does NOT enforce this restriction — it silently proceeds.
-  ## The DGP->DCP reduction for simple problems like min(x), x>0 may
-  ## produce a problem that OSQP can actually handle.
-  ## We document this behavioral difference and test the actual behavior.
   x <- Variable(pos = TRUE)
   prob <- Problem(Minimize(x))
-
-  result <- tryCatch(
-    psolve(prob, solver = "OSQP", gp = TRUE),
-    error = function(e) e$message
-  )
-
-  if (is.character(result)) {
-    ## Got an error — this is the CVXPY-expected behavior
-    expect_true(nchar(result) > 0L)
-  } else {
-    ## CVXR silently solves — document this known behavioral difference
-    expect_true(is.numeric(result))
-  }
+  expect_error(psolve(prob, solver = "OSQP", gp = TRUE), class = "SolverError")
+  ## Auto-selection under gp never takes the QP path either: the same problem
+  ## solves (unbounded in log space, objective exp(-Inf) = 0) on a conic solver.
+  prob2 <- Problem(Minimize(x))
+  val <- suppressWarnings(psolve(prob2, gp = TRUE))
+  expect_equal(status(prob2), "unbounded")
+  expect_equal(val, 0)
 })
 
 ## -- 3. dgp_sum_in_constraint ----------------------------------------

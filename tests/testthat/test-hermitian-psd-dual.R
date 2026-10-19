@@ -1,6 +1,6 @@
 ## Dual variable of a PSD constraint on a Hermitian matrix.
 ##
-## CVXPY 1.9.2 (complex2real.py:340-349) added a factor of 2 that CVXR was
+## CVXPY 1.9.2 added a factor of 2 (complex2real.py:363-377) that CVXR was
 ## missing: the recovered dual was exactly HALF its correct value, silently,
 ## for every complex PSD constraint.
 ##

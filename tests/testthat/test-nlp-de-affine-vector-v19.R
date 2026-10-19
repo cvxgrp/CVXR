@@ -9,6 +9,32 @@
 ## also solves and asserts the optimum. Box bounds use `bounds = list(lo, hi)`.
 ## `.de_nlp_solve` / `nlp_derivative_check` live in helper-nlp-diff-engine.R.
 
+## gh-3442 shape: elementwise product (cp.multiply -> `*`) of gathers whose index arrays contain DUPLICATES, so
+## each gather Jacobian has more nonzeros than its source variable (heap
+## corruption in derivative-structure init before sparsediff 0.6.1). CVXPY
+## 0-based rows/cols -> R 1-based. Start point drawn after set.seed(seed).
+.de_dup_gather_problem <- function(seed = 0L) {
+  nb <- 4
+  rows <- c(0L, 0L, 1L, 2L, 2L, 3L) + 1L
+  cols <- c(1L, 2L, 2L, 0L, 3L, 1L) + 1L
+  theta <- Variable(nb, name = "theta", bounds = list(-0.5, 0.5))
+  v <- Variable(nb, name = "v", bounds = list(0.9, 1.1))
+  x <- Variable(length(rows), name = "x")
+  C <- cos(theta[rows] - theta[cols])
+  vv <- v[rows] * v[cols]
+  set.seed(seed)
+  value(theta) <- runif(nb, -0.4, 0.4)
+  value(v) <- runif(nb, 0.95, 1.05)
+  value(x) <- rep(0, length(rows))
+  list(prob = Problem(Minimize(sum_entries(x)), list(x == vv * C)),
+       theta = theta, v = v, x = x, rows = rows, cols = cols)
+}
+
+## @cvxpy nlp_tests/stress_tests_diff_engine/test_affine_vector_atoms.py::TestDuplicateIndexGathers::test_multiply_duplicate_index_gathers_derivatives
+test_that("DE affine-vector: multiply of duplicate-index gathers passes the derivative check", {
+  nlp_derivative_check(.de_dup_gather_problem()$prob)
+})
+
 ## @cvxpy nlp_tests/stress_tests_diff_engine/test_affine_vector_atoms.py::TestAffineDiffEngine::test_row_broadcast
 test_that("DE affine-vector: row broadcast sum(x + Y)", {
   set.seed(0); m <- 3; n <- 4
@@ -68,6 +94,25 @@ test_that("DE affine-vector: duplicate fancy indices", {
   .de_nlp_solve(prob)
   expect_equal(status(prob), "optimal")
   expect_true(all(abs(as.numeric(value(X)) - (-2)) < 1e-4))
+})
+
+## @cvxpy nlp_tests/stress_tests_diff_engine/test_affine_vector_atoms.py::TestAffineDiffEngine::test_multiply_duplicate_index_gathers_solve
+test_that("DE affine-vector: duplicate-index gathers solve and match the scalar-indexed loop", {
+  g <- .de_dup_gather_problem()
+  .de_ipopt_solve(g$prob)
+  expect_equal(status(g$prob), "optimal")
+  gathered_value <- value(g$prob)
+
+  x2 <- Variable(length(g$rows))
+  cons <- lapply(seq_along(g$rows), function(k) {
+    i <- g$rows[k]; j <- g$cols[k]
+    x2[k] == g$v[i] * g$v[j] * cos(g$theta[i] - g$theta[j])
+  })
+  prob2 <- Problem(Minimize(sum_entries(x2)), cons)
+  .de_ipopt_solve(prob2)
+  expect_equal(status(prob2), "optimal")
+  ## numpy isclose(a, b, atol = 1e-5) with its default rtol = 1e-5.
+  expect_lte(abs(gathered_value - value(prob2)), 1e-5 + 1e-5 * abs(value(prob2)))
 })
 
 ## @cvxpy nlp_tests/stress_tests_diff_engine/test_affine_vector_atoms.py::TestAffineDiffEngine::test_promote_row

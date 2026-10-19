@@ -1,6 +1,6 @@
 ## @cvxpy cvxpy/atoms/affine/kron.py:96-102
-## @cvxpy cvxpy/atoms/affine/transpose.py:71-75
-## @cvxpy cvxpy/atoms/affine/trace.py:100-104
+## @cvxpy cvxpy/atoms/affine/transpose.py:77-80
+## @cvxpy cvxpy/atoms/affine/trace.py:103-104
 ##
 ## Three structure predicates that CVXR under-reported.  All three were
 ## CONSERVATIVE -- they lost a valid deduction rather than asserting a false one,

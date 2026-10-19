@@ -124,6 +124,46 @@ test_that("project: PSD projects to PSD cone", {
   expect_true(all(eigs >= -1e-10))
 })
 
+## @cvxpy test_expressions.py::TestExpressions::test_discrete_leaf_accepts_python_scalar
+test_that("discrete leaf: constructor accepts a scalar logical or number (gh-3284)", {
+  ## R's analog of a Python bool/int is a length-1 logical, double or integer.
+  for (attr in c("boolean", "integer")) {
+    for (kind in list(Variable, Parameter)) {
+      for (val in list(FALSE, TRUE, 0, 1, 0L, 1L)) {
+        args <- list(value = val)
+        args[[attr]] <- TRUE
+        leaf <- do.call(kind, args)
+        expect_equal(as.numeric(value(leaf)), as.numeric(val))
+      }
+    }
+  }
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_project_python_scalar_discrete
+test_that("project: scalar logical or number on a discrete leaf, shape preserved", {
+  ## Upstream asserts 0-d in, 0-d out; R has no 0-d, so a scalar stays length 1.
+  for (attr in c("boolean", "integer")) {
+    args <- list()
+    args[[attr]] <- TRUE
+    for (leaf in list(do.call(Variable, args), do.call(Parameter, args))) {
+      for (case in list(list(FALSE, 0), list(TRUE, 1), list(0, 0), list(1, 1),
+                        list(0L, 0), list(1L, 1))) {
+        projected <- project(leaf, case[[1L]])
+        expect_equal(as.numeric(projected), case[[2L]])
+        expect_length(projected, 1L)
+      }
+    }
+  }
+})
+
+## @cvxpy test_expressions.py::TestExpressions::test_project_python_scalar_rounds
+test_that("project: scalar path still rounds and clips", {
+  expect_equal(as.numeric(project(Variable(boolean = TRUE), 0.6)), 1)
+  expect_equal(as.numeric(project(Variable(boolean = TRUE), -3)), 0)
+  expect_equal(as.numeric(project(Variable(integer = TRUE), 2.4)), 2)
+  expect_equal(as.numeric(project(Variable(integer = TRUE), -2.6)), -3)
+})
+
 # ═══════════════════════════════════════════════════════════════════════
 # expr_copy (CVXPY test_expressions.py::test_var_copy/test_param_copy)
 # ═══════════════════════════════════════════════════════════════════════
@@ -612,6 +652,34 @@ test_that("shape: adding incompatible shapes raises error", {
   expect_error(a + b, "broadcast|shape|mismatch|incompatible|conform")
 })
 
+## @cvxpy test_expressions.py::TestExpressions::test_add_zero
+test_that("shape: adding a zero keeps or broadcasts the shape (CVXPY test_add_zero)", {
+  ## Upstream's four assertIs identity checks are Python-specific: CVXPY folds
+  ## x + 0 to x itself, CVXR builds an AddExpression. Assert shape and value instead.
+  x <- Variable(2)
+  expect_equal((x + 0)@shape, c(2L, 1L))
+  expect_equal((0 + x)@shape, c(2L, 1L))
+  expect_equal((x + rep(0, 2))@shape, c(2L, 1L))
+  expect_equal((rep(0, 2) + x)@shape, c(2L, 1L))
+  value(x) <- c(3, 4)
+  expect_equal(as.numeric(value(x + 0)), c(3, 4))
+
+  ## A larger-shaped zero broadcasts. Upstream's 1-D x of shape (2,) broadcasts
+  ## against (3, 2) as the row (1, 2), so the R counterpart is a row Variable.
+  a <- Variable()
+  expect_equal((a + rep(0, 3))@shape, c(3L, 1L))
+  expect_equal((rep(0, 3) + a)@shape, c(3L, 1L))
+  xr <- Variable(c(1, 2))
+  expect_equal((xr - matrix(0, 3, 2))@shape, c(3L, 2L))
+  expect_equal((matrix(0, 3, 2) - xr)@shape, c(3L, 2L))
+
+  ## Incompatible shapes raise.
+  expect_error(x + rep(0, 3), "broadcast")
+
+  prob <- Problem(Minimize(sum_entries(a + rep(0, 3))), list(a >= 1))
+  expect_equal(psolve(prob, solver = "CLARABEL"), 3)
+})
+
 ## @cvxpy test_shape.py::TestShape::test_mul_scalars
 test_that("shape: matmul dimension mismatch raises error", {
   ## CVXPY: mul_shapes((), (5,9)) → ValueError (scalar not permitted in matmul)
@@ -674,9 +742,8 @@ test_that("expressions: DGP log-log curvature queries", {
   ## posynomial = x*x*x + x -> curvature == LOG_LOG_CONVEX
   ## llcv = 1/(x*x*x + x) -> curvature == LOG_LOG_CONCAVE
   ##
-  ## In CVXR, curvature() returns DCP curvature strings, not log-log.
-
-  ## But is_log_log_affine/convex/concave are available.
+  ## The curvature() strings are asserted in test-cvxpy-expr-problem-parity.R;
+  ## this checks the is_log_log_affine/convex/concave predicates.
   x <- Variable(name = "x", pos = TRUE)
 
   monomial <- x * x * x
@@ -1159,17 +1226,20 @@ test_that("expressions: 1D array in matmul (already covered, additional checks)"
 ## @cvxpy test_expressions.py::TestExpressions::test_float_is_invalid_index
 test_that("expressions: float index on CVXR expressions", {
   ## CVXPY: x[1.0] raises IndexError("float is an invalid index type.")
-  ## In R, float indices are truncated to integer by default for base R.
-  ## CVXR may or may not reject float indices depending on implementation.
-  x <- Variable(2)
-  ## R typically coerces 1.0 to 1L in indexing. Check if CVXR rejects it:
-  tryCatch({
-    e <- x[1.5, 1]
-    ## If it works, it means R truncated the float. This is not an error in R.
-    expect_true(TRUE)  # Document that CVXR allows float indices (R behavior)
-  }, error = function(e) {
-    expect_true(grepl("float|invalid|index", conditionMessage(e), ignore.case = TRUE))
-  })
+  ## (key_utils.py:40-44), a test on Python's float TYPE. R has no such
+  ## distinction to test: an unsuffixed literal like `2` is a double, so
+  ## `x[2, 1]` and `x[2.5, 1]` are the same type, and only the value differs.
+  ## N/A FOR R (user decision 2026-10-08, notes/audit/permissive_comments_2c.md
+  ## item 5): CVXR follows base R's documented rule (?Extract: numeric indices
+  ## are coerced as by as.integer, so they truncate toward zero, with no
+  ## warning). `.validate_index_key()` (index.R:25) does exactly that.
+  ## MEASURED (notes/audit/repro/11_float_index.{py,R}): x[2.5, 1] is x[2, 1],
+  ## as (1:3)[1.5] is 1. This test asserts that behavior.
+  x <- Variable(c(3, 2))
+  value(x) <- matrix(1:6, 3, 2)
+  e <- x[2.5, 1]
+  expect_equal(e@shape, c(1L, 1L))
+  expect_equal(as.numeric(value(e)), 2)
 })
 
 ## @cvxpy test_expressions.py::TestExpressions::test_hermitian
@@ -1367,6 +1437,52 @@ test_that("expressions: sum_squares with axis optimization", {
   psolve(prob_constr, solver = "CLARABEL")
   expect_equal(status(prob_constr), OPTIMAL)
   expect_true(max(colSums(value(X5)^2)) <= 1 + 1e-5)
+})
+
+## @cvxpy test_expressions.py::test_sum_squares_with_axis
+test_that("expressions: sum_squares with axis on the QP path (use_quad_obj)", {
+  ## CVXPY's parametrized test runs the (3,4) axis cases with
+  ## use_quad_obj=True ("QP path"). Before 1.9.2.9141 CVXR's quad canon
+  ## returned NULL for any axis, so the atom silently took the SOC canon
+  ## under Clarabel and a QP-only solver (OSQP) refused the problem with
+  ## "QP solver cannot handle conic constraints" (claims-audit row C0670,
+  ## repro notes/audit/repro/24_quad_over_lin_axis_qp.{R,py}).
+  require_solver("OSQP"); require_solver("CLARABEL")
+  set.seed(42)
+  Y <- matrix(rnorm(12), 3, 4)
+  for (ax in c(2L, 1L)) {
+    for (solver in c("OSQP", "CLARABEL")) {
+      X <- Variable(c(3, 4))
+      prob <- Problem(Minimize(sum_entries(sum_squares(X - Y, axis = ax))))
+      expect_true(is_qp(prob))
+      psolve(prob, solver = solver, use_quad_obj = TRUE)
+      expect_equal(status(prob), OPTIMAL)
+      expect_equal(value(X), Y, tolerance = 1e-3)
+    }
+  }
+
+  ## Per-block scaling: a pure quadratic has the same minimizer under any
+  ## positive scale, so weight each output and add a linear tilt. With
+  ##   minimize sum(w * quad_over_lin(X - A, 2, axis)) + sum(b * X)
+  ## the minimizer is X = A - b / w along the reduced axis (w shaped like the
+  ## atom's output: a bare numeric vector would broadcast to a matrix).
+  ## Values agree with CVXPY 1.9.3 (OSQP and Clarabel): -8 and -6.25.
+  A <- matrix(c(1, 2, 3, 4, 5, 6), 3, 2)
+  b <- matrix(c(0.5, -1, 2, -0.5, 1, -2), 3, 2)
+  cases <- list(
+    list(ax = 2L, w = matrix(c(1, 3), 1L, 2L),    val = -8),
+    list(ax = 1L, w = matrix(c(1, 2, 4), 3L, 1L), val = -6.25)
+  )
+  for (cs in cases) {
+    Xstar <- A - sweep(b, cs$ax, as.numeric(cs$w), "/")
+    X <- Variable(c(3, 2))
+    prob <- Problem(Minimize(
+      sum_entries(cs$w * quad_over_lin(X - A, 2, axis = cs$ax)) + sum_entries(b * X)))
+    val <- psolve(prob, solver = "OSQP", eps_abs = 1e-9, eps_rel = 1e-9)
+    expect_equal(status(prob), OPTIMAL)
+    expect_equal(val, cs$val, tolerance = 1e-5)
+    expect_equal(value(X), Xstar, tolerance = 1e-5)
+  }
 })
 
 # =========================================================================

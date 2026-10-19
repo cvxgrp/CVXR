@@ -206,3 +206,70 @@ test_that("OSQP warm-start matches CVXPY test_warm_start pattern", {
   r2_cold <- psolve(prob, solver = "OSQP", warm_start = FALSE)
   expect_equal(r2_warm, r2_cold, tolerance = 1e-3)
 })
+
+# ── Sparsity-pattern change between warm solves ─────────────────────────────
+## A parameter that becomes 0 leaves the pattern of A. The warm path used to
+## compare only the stored values and push them into OSQP's old pattern: with
+## the nnz unchanged it returned the first optimum (4.75 for 5.74), and with
+## the nnz changed osqp_update_data_mat failed with error code 2 instead of
+## the cold path taking over. CVXPY keeps a fixed pattern through ReducedMat
+## and never sees this. The problem is
+##   max x1 + x2 - 0.01 * (x1^2 + x2^2)  s.t.  p1 x1 + p2 x2 <= 1, 0 <= x <= 5.
+
+.osqp_pattern_prob <- function() {
+  x <- Variable(2)
+  p1 <- Parameter()
+  p2 <- Parameter()
+  prob <- Problem(Maximize(x[1] + x[2] - 0.01 * sum_squares(x)),
+                  list(p1 * x[1] + p2 * x[2] <= 1, x >= 0, x <= 5))
+  list(prob = prob, x = x, p1 = p1, p2 = p2)
+}
+
+## @cvxpy NONE
+test_that("OSQP warm-start re-solves when the pattern of A changes, nnz equal", {
+  pp <- .osqp_pattern_prob()
+  value(pp$p1) <- 1
+  value(pp$p2) <- 0
+  r1 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(status(pp$prob), "optimal")
+  expect_equal(r1, 5.74, tolerance = 1e-4)
+
+  value(pp$p1) <- 0
+  value(pp$p2) <- 1
+  r2 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(status(pp$prob), "optimal")
+  expect_equal(r2, 5.74, tolerance = 1e-4)
+  expect_equal(as.numeric(value(pp$x)), c(5, 1), tolerance = 1e-4)
+})
+
+## @cvxpy NONE
+test_that("OSQP warm-start re-solves when the nnz of A drops", {
+  pp <- .osqp_pattern_prob()
+  value(pp$p1) <- 1
+  value(pp$p2) <- 1
+  r1 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(r1, 0.995, tolerance = 1e-4)
+
+  value(pp$p1) <- 1
+  value(pp$p2) <- 0
+  r2 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(status(pp$prob), "optimal")
+  expect_equal(r2, 5.74, tolerance = 1e-4)
+  expect_equal(as.numeric(value(pp$x)), c(1, 5), tolerance = 1e-4)
+})
+
+## @cvxpy NONE
+test_that("OSQP warm-start re-solves when the nnz of A grows", {
+  pp <- .osqp_pattern_prob()
+  value(pp$p1) <- 1
+  value(pp$p2) <- 0
+  r1 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(r1, 5.74, tolerance = 1e-4)
+
+  value(pp$p1) <- 1
+  value(pp$p2) <- 1
+  r2 <- psolve(pp$prob, solver = "OSQP", warm_start = TRUE)
+  expect_equal(status(pp$prob), "optimal")
+  expect_equal(r2, 0.995, tolerance = 1e-4)
+  expect_equal(as.numeric(value(pp$x)), c(0.5, 0.5), tolerance = 1e-3)
+})

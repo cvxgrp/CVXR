@@ -2,7 +2,7 @@
 ##
 ## `ConeMatrixStuffing.invert` gives each dual the shape of its constraint, in
 ## F (column-major) order, EXCEPT for an exemption list transliterated from
-## CVXPY (cone_matrix_stuffing.py:473-478): scalars, ExpCone, SOC, and
+## CVXPY (cone_matrix_stuffing.py:499-503): scalars, ExpCone, SOC, and
 ## multi-cone PSD. Both halves matter, so both are asserted here -- a future
 ## "simplification" that drops an exemption has to fail something.
 ##

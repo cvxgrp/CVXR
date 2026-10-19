@@ -122,6 +122,19 @@ test_that("SCIP: socp_3 (axis 1 and 2)", {
   verify_obj(h1$prob, h1$expect_obj, 1e-2, "SCIP")
 })
 
+## A continuous SOCP must not get the LP-only settings (presolve, heuristics and
+## propagation off); CVXPY 1.9.3 (#3467) fixed a single SOC block being taken for
+## an LP. CVXR already tests length(soc_dims) > 0 (scip_conif.R); this guards it.
+## @cvxpy test_conic_solvers.py::TestSCIP::test_scip_socp_dense
+test_that("SCIP: dense SOCP (30 x 10) solves optimal", {
+  set.seed(0)
+  A <- matrix(rnorm(30 * 10), 30, 10)
+  w <- Variable(10)
+  prob <- Problem(Minimize(p_norm(A %*% w, 2)), list(sum(w) == 1, w >= 0))
+  psolve(prob, solver = "SCIP")
+  expect_equal(status(prob), "optimal")
+})
+
 # ── Native variable bounds ─────────────────────────────────────────
 
 ## @cvxpy test_param_cone_prog.py::TestParamConeProg::test_var_bounds test_conic_solvers.py::TestSCIP::test_scip_lp_bound_attr

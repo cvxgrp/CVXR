@@ -269,6 +269,17 @@ test_that("scalar_value extracts from 1x1 sparse matrix", {
   expect_equal(scalar_value(m), 3)
 })
 
+## CVXPY's ndarray arm is `matrix.item()`, which raises on more than one
+## element; the R fallthrough used to return the first element silently
+## (sweep item 4, pass A1).
+## @cvxpy matrix_utilities.py::scalar_value
+test_that("scalar_value rejects a non-scalar value instead of taking its first element", {
+  expect_error(scalar_value(matrix(1:4, 2, 2)), "scalar")
+  expect_error(scalar_value(c(1, 2)), "scalar")
+  m <- Matrix::sparseMatrix(i = c(1, 2), j = c(1, 2), x = c(3, 4))
+  expect_error(scalar_value(m), "scalar")
+})
+
 # ── Objective arithmetic ────────────────────────────────────────────
 
 ## @cvxpy test_objectives.py::TestObjectives::test_add_problems

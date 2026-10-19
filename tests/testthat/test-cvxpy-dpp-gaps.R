@@ -44,6 +44,11 @@ test_that("DPP gap: quad_over_lin with parameter in denominator", {
   expect_false(abs(sol1 - sol2) < 1e-3)  # sol1 != sol2
   expect_equal(sol1, sol3, tolerance = 1e-3)  # sol1 == sol3
 
+  ## Cannot solve as a QP with DPP: a parameter in quad_over_lin's denominator
+  ## is not DPP (quad_over_lin.py is_atom_convex), so enforce_dpp refuses.
+  expect_false(is_dpp(prob))
+  expect_error(psolve(prob, solver = "OSQP", enforce_dpp = TRUE), class = "DPPError")
+
   ## DGP path: works for DPP + DGP
   x2 <- Variable(2, pos = TRUE)
   y2 <- Parameter(pos = TRUE, value = 1)
@@ -233,23 +238,49 @@ test_that("nested power DGP-DPP detection matches CVXPY", {
   expect_false(with_dpp_scope(is_log_log_convex(pow2)))
 })
 
+## @cvxpy test_dpp.py::TestDgp::test_nested_power_not_dpp
+test_that("log-log curvature caches are keyed on the DPP scope", {
+  ## CVXPY's compute_once prefixes every cache key with the active scopes
+  ## (performance_utils.py _cache_key), so is_log_log_convex() answers
+  ## independently in and out of a DPP scope. Before 1.9.2.9125 CVXR's
+  ## log-log, quasiconvex, and is_dqcp caches used a plain key and returned
+  ## whichever answer was computed first.
+  alpha <- Parameter(pos = TRUE, value = 1.0)
+  x <- Variable(pos = TRUE)
+  ## in scope first, then out of scope
+  pow2 <- power(power(x, alpha), alpha)
+  expect_false(with_dpp_scope(is_log_log_convex(pow2)))
+  expect_true(is_log_log_convex(pow2))
+  ## out of scope first, then in scope
+  pow3 <- power(power(x, alpha), alpha)
+  expect_true(is_log_log_convex(pow3))
+  expect_false(with_dpp_scope(is_log_log_convex(pow3)))
+  ## the problem-level answers must not depend on query order either
+  prob <- Problem(Minimize(pow2), list(x >= 1))
+  expect_false(is_dpp(prob, "dgp"))
+  expect_true(is_dgp(prob))
+})
+
 ## @cvxpy test_dpp.py::TestDgp::test_non_dpp_problem_raises_error
 test_that("DPP-DGP gap: non-DPP DGP problem behavior", {
   skip_if_not_installed("scs")
 
   alpha <- Parameter(pos = TRUE, value = 1.0)
   x <- Variable(pos = TRUE)
-  ## (alpha*x)^alpha: inner is monomial, outer power with param exponent
-  ## CVXPY: is_dgp() TRUE, is_dgp(dpp=True) FALSE
-  ## CVXR: is_dgp() TRUE, with_dpp_scope(is_dgp()) TRUE (more permissive)
+  ## (alpha*x)^alpha: inner is monomial, outer power with param exponent.
+  ## CVXPY: is_dgp() True, is_dgp(dpp=True) False. Until 1.9.2.9125 CVXR
+  ## answered TRUE in scope too, but only because the log-log curvature
+  ## cache ignored the scope (the test used to assert that answer).
   dgp <- Problem(Minimize(power(alpha * x, alpha)), list(x == alpha))
   expect_true(is_dgp(dgp@objective))
-  ## CVXR is more permissive with DGP-DPP detection for nested param powers
-  ## CVXPY would raise DPPError with enforce_dpp=True; CVXR solves directly
-  expect_true(with_dpp_scope(is_dgp(dgp@objective)))
+  expect_false(with_dpp_scope(is_dgp(dgp@objective)))
 
-  ## Should solve correctly (DPP fast path or EvalParams)
-  suppressWarnings(psolve(dgp, solver = "SCS", gp = TRUE))
+  ## enforce_dpp = TRUE raises DPPError, as in CVXPY.
+  expect_error(psolve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = TRUE),
+               class = "DPPError")
+
+  ## enforce_dpp = FALSE solves through EvalParams (with the DPP warning).
+  suppressWarnings(psolve(dgp, solver = "SCS", gp = TRUE, enforce_dpp = FALSE))
   expect_equal(as.numeric(value(x)), 1.0, tolerance = 1e-2)
 })
 
@@ -797,11 +828,69 @@ test_that("DPP-DGP gap: gmatmul in DGP-DPP", {
   sltn <- exp(solve(value(A), log(b)))
   expect_equal(as.numeric(value(x)), sltn, tolerance = 1e-2)
 
-  ## gmatmul(A, param): CVXPY says NOT DGP-DPP (because second arg is param,
-  ## not variable), but CVXR is more permissive.
+  ## gmatmul(A_param, X_param): BOTH A and X carry parameters, so under a
+  ## DPP scope the atom is not log-log affine (gmatmul.py:115-135): after
+  ## Dgp2Dcp it would be A %*% log(X), a product of two parameters.
   ## CVXPY: assertFalse(expr.is_dgp(dpp=True)) and assertTrue(expr.is_dgp(dpp=False))
   x_par <- Parameter(2, pos = TRUE)
   expr2 <- gmatmul(A, x_par)
-  ## CVXR: both DGP and DGP-DPP return TRUE (more permissive)
-  expect_true(is_log_log_convex(expr2))
+  expect_false(with_dpp_scope(is_dgp(expr2)))
+  expect_true(is_dgp(expr2))
+})
+
+## @cvxpy test_dpp.py::TestDgp::test_gmatmul
+test_that("gmatmul with parameters in both A and X solves correctly", {
+  skip_if_not_installed("clarabel")
+  ## CVXPY 1.9.3 cannot solve this case: is_dpp is False, so the problem
+  ## takes the EvalParams path, where Canonical.copy (canonical.py:110,
+  ## type(self)(*(args + data))) rebuilds the atom as gmatmul(X, A) because
+  ## gmatmul's constructor takes A FIRST. It then errors "requires that X be
+  ## positive" (A nonneg) or silently solves the swapped problem (A pos).
+  ## CVXR names the get_data element so expr_copy binds A correctly.
+  ## Reference: min sum(G * x) + sum(1 / x) over x > 0 has optimum
+  ## 2 * sum(sqrt(G)) at x = 1 / sqrt(G), with G = exp(A %*% log(P)).
+  ## 13.838989 is also what CVXPY 1.9.3 returns for the constant-A problem.
+  P <- matrix(c(2, 1, 1, 3), 2, 2)
+  A <- matrix(c(0.5, 1, 2, 0.5), 2, 2)
+  G <- exp(A %*% log(P))
+  pp <- Parameter(c(2, 2), pos = TRUE)
+  value(pp) <- P
+  Ap <- Parameter(c(2, 2), nonneg = TRUE)
+  value(Ap) <- A
+  xp <- Variable(c(2, 2), pos = TRUE)
+  prob <- Problem(Minimize(sum_entries(gmatmul(Ap, pp) * xp) +
+                           sum_entries(inv_pos(xp))))
+  expect_false(is_dpp(prob, "dgp"))
+  val <- suppressWarnings(psolve(prob, gp = TRUE, solver = "CLARABEL"))
+  expect_equal(val, sum(2 * sqrt(G)), tolerance = 1e-4)
+  expect_equal(as.numeric(value(xp)), as.numeric(1 / sqrt(G)), tolerance = 1e-3)
+
+  ## Changing both parameters and re-solving gives the new optimum.
+  P2 <- matrix(c(3, 1, 2, 2), 2, 2)
+  A2 <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+  value(pp) <- P2
+  value(Ap) <- A2
+  val2 <- suppressWarnings(psolve(prob, gp = TRUE, solver = "CLARABEL"))
+  expect_equal(val2, sum(2 * sqrt(exp(A2 %*% log(P2)))), tolerance = 1e-4)
+})
+
+## @cvxpy NONE
+test_that("expr_copy keeps gmatmul's A and X in place (EvalParams path)", {
+  skip_if_not_installed("clarabel")
+  P <- matrix(c(2, 1, 1, 3), 2, 2)
+  A <- matrix(c(0.5, 1, 2, 0.5), 2, 2)
+  G <- exp(A %*% log(P))
+  pp <- Parameter(c(2, 2), pos = TRUE)
+  value(pp) <- P
+  g <- gmatmul(A, pp)
+  gc <- CVXR:::expr_copy(g, args = list(Constant(P)))
+  expect_equal(as.matrix(value(gc@A)), A)
+  expect_equal(as.matrix(value(gc@args[[1L]])), P)
+  expect_equal(as.matrix(value(gc)), G)
+
+  ## ignore_dpp forces EvalParams, which copies the atom with X baked in.
+  xp <- Variable(c(2, 2), pos = TRUE)
+  prob <- Problem(Minimize(sum_entries(g * xp) + sum_entries(inv_pos(xp))))
+  val <- psolve(prob, gp = TRUE, solver = "CLARABEL", ignore_dpp = TRUE)
+  expect_equal(val, sum(2 * sqrt(G)), tolerance = 1e-4)
 })

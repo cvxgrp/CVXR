@@ -1,4 +1,4 @@
-## @cvxpy cvxpy/atoms/affine/binary_operators.py:590-660
+## @cvxpy cvxpy/atoms/affine/binary_operators.py:643-709
 ##
 ## vdot() is CONJUGATE-LINEAR in its first argument.
 ##
@@ -20,6 +20,11 @@
 ## Ledger + paired CVXPY reproducer:
 ##   notes/audit/completeness_ledger.md finding 2
 ##   notes/audit/repro/02_vdot_conjugation.{py,R}
+## MEASURED again 2026-10-07 against CVXPY 1.9.3 with solves
+## (notes/audit/repro/12_vdot_real_convex.{py,R}): vdot(square(z), c) is
+## non-DCP in both and both refuse to solve it; the affine real problem
+## (3.0, z = (0, 1, 2)) and the complex problem with Re(vdot(w, z)) == 1
+## (11.571429, vdot at the optimum 1+2i) agree to 6 digits.
 
 library(testthat)
 library(CVXR)
@@ -94,8 +99,8 @@ test_that("vdot solves a real least-squares problem correctly", {
 })
 
 test_that("vdot accepts nested lists, flattened independently", {
-  ## CVXPY SOURCE: binary_operators.py:616-617 (deep_flatten on both args) and
-  ## reshape.py:164-184. Measured upstream: cp.vdot([[a],[b]], [1., 2.]) with
+  ## CVXPY SOURCE: binary_operators.py:669-670 (deep_flatten on both args) and
+  ## reshape.py:166-186. Measured upstream: cp.vdot([[a],[b]], [1., 2.]) with
   ## a = 3, b = 4 gives 11.0.
   a <- Variable(); b <- Variable()
   value(a) <- 3; value(b) <- 4
